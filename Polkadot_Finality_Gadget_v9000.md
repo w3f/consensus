@@ -48,7 +48,7 @@ We say that it is impossible for any child of $B$ to have a supermajority in $S$
 Note that it is possible for an intolerant $S$ to both have a supermajority for $S$ and for it to be impossible to have such a supermajority under these definitions, as we regard such sets as impossible anyway.
 
 **Lemma 2**
-(i) If $B' \geq B$ and it is imposible for $S$ to hav a supermajority for $B$, then it is imposible for $S$ to have a supermajority for $B'$.
+(i) If $B' \geq B$ and it is imposible for $S$ to have a supermajority for $B$, then it is imposible for $S$ to have a supermajority for $B'$.
 (ii) If $S \subseteq T$ and it is impossible for $S$ to have a supermajority for $B$
 (iii) If $g(S)$ exists and $B \nsim g(S)$ then it is impossible for $S$ to have a supermajority for $B$.
 
@@ -97,7 +97,7 @@ We ask queries of the following form:
 
 - Why was $E_{r''-1} \not\geq B$  when you prevoted for or precomitted to $B'' \not\geq B$ in round $r'' > r$?
 
-Which any honest validator should be able to respond to as is shown in Lemma **?** below. 
+Which any honest validator should be able to respond to as is shown in Lemma **3** below. 
 
 The response is of the following form:
 
@@ -119,8 +119,7 @@ If any give a valid response, by a similar argument to the above, $S \union T$ w
 
 So we either discover $f+1$ equivocations in a vote or else $n-f > f+1$ voters fail to validly respond like a honest voter could do to a query.
 
-
-**Lemma** An honest validator can answer the first type of query.
+**Lemma 3** An honest validator can answer the first type of query.
 
 We first need to show that for any prevote or precommit in round $r$ cast by an honest validator $v$ for a block $B''$, at the time of the vote we had $B'' \geq E_{r-1,v}$. Prevotes should be for the head of a chain containing either $E_{r-1,v}$ or $g(V_{r,v})$ Since $g(V_{r,v}) \geq E_{r-1},v$, in either case we have $B'' \geq E_{r-1,v}$. Precommits should be for $g(V_{r,v})$ but $v$ waits until $g(V_{r,v}) \geq E_{r-1,v}$ befor precommiting so again this holds.
 
@@ -157,8 +156,7 @@ Now we can show deadlock freeness for the asynchronous gossip network model, whe
 
 If all honest voters reach a vote, then they will vote and all honest participants see their votes. We need to deal with the two conditions that might block the algorithm even then. To reach the prevote of round $r$, a particpant may be held up at the condition that round $r-1$ must be completable. To reach the precommit, a voter may be held up by the condition that $g(V_{r,v}) \geq E_{r-1,v}$.
 
-For the first case, the prevote, let $S$ be the set of all prevotes from round $r-1$ that any honest voter saw before they precommitted in round $r-1$. By Lemma 1, when voter $v'$ precommitted, they do it for block $g(V_{r-1,v'}) \leq g(S)
-$. Let $T$ be the set of precommits in round $r$ cast by honest voters. Then or any block $B \not\leq g(S)$, $T$ does not contain any votes that are $\geq B$ and so it is impossible for $T$ to have a supermajority for $B$. In particular, it is impossible for $T$ to have a supermajority for any child of $g(S)$. 
+For the first case, the prevote, let $S$ be the set of all prevotes from round $r-1$ that any honest voter saw before they precommitted in round $r-1$. By Lemma 1, when voter $v'$ precommitted, they do it for block $g(V_{r-1,v'}) \leq g(S)$. Let $T$ be the set of precommits in round $r$ cast by honest voters. Then or any block $B \not\leq g(S)$, $T$ does not contain any votes that are $\geq B$ and so it is impossible for $T$ to have a supermajority for $B$. In particular, it is impossible for $T$ to have a supermajority for any child of $g(S)$. 
 
 Now consider a voter $v$. By our network assumption, there is a time $t$ by which they have seen the votes in $S$ and $T$. Consider any $t' \geq t$. At this point we have $g(V_{r,v,t;}) \geq g(S)$. It is impossible for $C_{r,v,t'}$ to have a supermajority for any child of $g(S)$ and so $E_{r-1,v,t'} \leq g(S)$, whether or not this inequality is strict, we satisfy one of the two conditions for $v$ to see that round $r-1$ is completable at time $t'$. Thus if all honest voters reach the precommit vote of round $r-1$, all honest voters reach the prevote of round $r$.
 
@@ -248,26 +246,26 @@ Let $B$ be the latest block that is ever finalised in rounds  $<r$ (even if no h
 
 The danger with voting for the last blockhash in the best chain is that maybe no one else will have seen and processed the next block. It would also be nice to make the most of BLS multisig/aggregation, which allows a single signature for many messages/signers than can be checked in time proportional to the number of different mssages signed. 
 
-To get round the first alone, it might be better to vote for a block 3/4 along (rounding further) the unfinalised chain , rather than for th head.
+To get round the first alone, it might be better to vote for a block 3/4 along (rounding further) the unfinalised chain , rather than for the head.
 
-But the second suggests that maybe we should be including signatures for several of the latest blocks in a chain. We could include that last 2 or 3. We could also do e.g. the the blocks with block numbers with the last 2 multiples of each power of two sinc th last finalised block, which gives log unfinalis chain length messages but should have many blocks in common.
+But the second suggests that maybe we should be including signatures for several of the latest blocks in a chain. We could include that last 2 or 3. We could also do e.g. the the blocks with block numbers with the last 2 multiples of each power of two since the last finalised block, which gives log unfinalis chain length messages but should have many blocks in common.
 
-When presented with a vote that includs many blocks, we should interpret them as being for th last block we've seen if any. Then we need to be able to update that vote to a later block when that is seen. This retains monotonicity of a supermajrity for/ it is impossible to have a supermajority for over time.
+When presented with a vote that includs many blocks, we should interpret them as being for the last block we've seen if any. Then we need to be able to update that vote to a later block when that is seen. This retains monotonicity of a supermajrity for/ it is impossible to have a supermajority for over time.
 
-It does not matter if some of the votes are for a block that does not exist as everyone will ignore that part of the vote. But including votes for block that are seen but are not on a chain is an equivocation and is slashable. We need to count such votes as votes for the had of every chain in the vote (as someone might interpret them as for any one of them).
+It does not matter if some of the votes are for a block that does not exist as everyone will ignore that part of the vote. But including votes for block that are seen but are not on a chain is an equivocation and is slashable. We need to count such votes as votes for the head of every chain in the vote (as someone might interpret them as for any one of them).
 
-Thn if we need to BLS aggregate votes that are $\geq B$ for a commit message or query response, it is ok to use any vote that is $\geq B$, not necessarily the vote for th head. This should reduc the number of blockhashs sign, in the optimistic case down to 1.
+Then if we need to BLS aggregate votes that are $\geq B$ for a commit message or query response, it is ok to use any vote that is $\geq B$, not necessarily the vote for the head. This should reduce the number of blockhash signatures, in the optimistic case down to 1.
 
 ###  Block production rule
 
-If we adopt that rule that block producers should build on the best chain including the finalised block, then if we don't finalis another block this will eventually include some prefix  beyond th finalis block, and therefore the protocol is live by Lemma 11.
+If we adopt that rule that block producers should build on the best chain including the finalised block, then if we don't finalise another block this will eventually include some prefix beyond the finalised block, and therefore the protocol is live by Lemma 11.
 
-But the issue is that if agreement is much slower than block production, then we might have a prevote for a short chain on the last finalised block, then the best chain does not include that block and we build a long chain that is eventually never finalised. This could be fixed by buildong on $E_{r-1}$ or $E_r$. But if we do that, and these change very quickly, then we may never come to agreement on the best chain. 
+But the issue is that if agreement is much slower than block production, then we might have a prevote for a short chain on the last finalised block, then the best chain does not include that block and we build a long chain that is eventually never finalised. This could be fixed by building on $E_{r-1}$ or $E_r$. But if we do that, and these change very quickly, then we may never come to agreement on the best chain. 
 
 So we have two possible chain selection rules for block producers:
 
-1. Build on the best chain including the last finalise block B.
-2. Build on best chain including hichiver of $\{E_r,E_{r-1},B\}$ is latest and $\geq B$.
+1. Build on the best chain including the last finalised block B.
+2. Build on best chain including whichever of $\{E_r,E_{r-1},B\}$ is latest and $\geq B$.
 
 1 is better if finalisation is happening quickly compared to block production and 2 is best if block production is much faster. We could also consider hybrid rules like adopt 1 unless we see that the protocol is stuck or slow, then we switch to 2.
 
@@ -275,14 +273,14 @@ So we have two possible chain selection rules for block producers:
 
 ### Why do we wait at the end of a round and sometimes before precommitting?
 
-If the network  is badly behaved, then these steps may involve waiting an arbitrarily long time. When the network is well behaved (after the GST in our model), we should not be waiting. Indeed there is little point not waiting to recieve 2/3 of voters' votes as we cannot finalise anything without them. But if the gossip network is not perfct, an some messages never arrive, then we may need to implement voters asking other voters for votes from previous rouns in a similar way to the challenge procedure, to avoid deadlock.
+If the network  is badly behaved, then these steps may involve waiting an arbitrarily long time. When the network is well behaved (after the GST in our model), we should not be waiting. Indeed there is little point not waiting to recieve 2/3 of voters' votes as we cannot finalise anything without them. But if the gossip network is not perfect, an some messages never arrive, then we may need to implement voters asking other voters for votes from previous rouns in a similar way to the challenge procedure, to avoid deadlock.
 
-In exchange for this, we get the property that we do not need to pay attention to votes from before the previous round in order to vote correctly in this one. Without waiting, we could be in a situation where we might have finalised a block in some round r, but the network becomes unreliable for many rounds and gets few votes on time, in which case we' need to remember the votes from round r to finalise the block later. 
+In exchange for this, we get the property that we do not need to pay attention to votes from before the previous round in order to vote correctly in this one. Without waiting, we could be in a situation where we might have finalised a block in some round $r$, but the network becomes unreliable for many rounds and gets few votes on time, in which case we would need to remember the votes from round $r$ to finalise the block later. 
 
 ### Why have a primary?
 
-We only need the primary for liveness. We need some form of coordination to defeat the repeated vote splitting attack. The idea behind that attak is that if we are in a situation where almost 2/3 of voters vote for something an the rest vote for another, then the Byzantine voters can control when we see a supermajority for something. If they can carefully time this, they may be able to split the next vote. Without the primary, they could do this for prevotes, getting a supermajority for a block $B$ late, then split precommits so we don't see that it is impossible fo thre to be a supermajority for $B$ until late. If $B$ is not the best block given the last finalised block but $B'$  with the same block number, they could stop either from being finalised like this even if the (unknown) fration of Byzantine players is small.
+We only need the primary for liveness. We need some form of coordination to defeat the repeated vote splitting attack. The idea behind that attack is that if we are in a situation where almost 2/3 of voters vote for something an the rest vote for another, then the Byzantine voters can control when we see a supermajority for something. If they can carefully time this, they may be able to split the next vote. Without the primary, they could do this for prevotes, getting a supermajority for a block $B$ late, then split precommits so we don't see that it is impossible fo thre to be a supermajority for $B$ until late. If $B$ is not the best block given the last finalised block but $B'$  with the same block number, they could stop either from being finalised like this even if the (unknown) fraction of Byzantine players is small.
 
-When the network is well-behaved, an honest primary can defeat this attack by deciding how much we should agree on. We could also use a common coin for the same thing, where poeple would prevote for either the best chain containing $E_{r-1,v}$ or $g(V_{r-1,v})$ depending on the common coin. With on-chain voting, it is possible that we could use probabilistic finality of the block production mechanism - that if we don't finalise a block and always build on the best hain containing the last finalised block then not only will the best chain eventually converge, but if a block is behind the head of the best chain, then with positive probability, it will eventually be in the best chain everyone sees.
+When the network is well-behaved, an honest primary can defeat this attack by deciding how much we should agree on. We could also use a common coin for the same thing, where poeple would prevote for either the best chain containing $E_{r-1,v}​$ or $g(V_{r-1,v})​$ depending on the common coin. With on-chain voting, it is possible that we could use probabilistic finality of the block production mechanism - that if we don't finalise a block and always build on the best hain containing the last finalised block then not only will the best chain eventually converge, but if a block is behind the head of the best chain, then with positive probability, it will eventually be in the best chain everyone sees.
 
 In our setup, having a primary is the simplest option for this.
