@@ -53,10 +53,11 @@ signature or private scalar.  In comparison, DFinity's VSS + VRF
 scheme produces a BLS signature, or even shared private scalar.
 If the message is known in advance, then PVSS could seemingly
 produce a BLS signature, although I need to think more about the
-timing of protocol messages in doing so.  If correct, this would
+timing of protocol messages in doing so.  If correct, this might
 answer an important open question of DFinity's Timo Hanke, but
 maybe not the answer he wants, as PVSS probably need to be run for
-every signature produced.
+every signature produced, and DFinity's solution runs the DFG 
+infrequently.
 
 Schoenmakers' PVSS avoids pairings but incorporates two rounds of
 DLEQ proofs.  These are complex operations, but might prove faster
@@ -102,7 +103,7 @@ TODO: link
 
 If we have a network randomness scheme picking block producers or
 many another specific random results, then they could include a VRF
-of the previous block.  As above, each node's only options are to
+of the block number.  As above, each node's only options are to
 produce a block or not produce a block, so whatever alternatives
 nodes they have who could produce a block give them influence over
 the random number, but another user might produce a block first
@@ -153,8 +154,6 @@ collaborative PRNGs here.
 Relevant questions:
 - Can we produce a security proof for Alistair's VRF leveraging?
 - How does Ouroboros handle similar situations?
-- Why does DFinity want a VRF so bad?
-- Are the issues with using PVSS? 
 - Is PVSS + VRF better?
 
 ## Finality gadget leader assignments
