@@ -113,14 +113,14 @@ numbers we might argue can be used like collaboratively produced
 ones.  Alistair says we cannot wait for finalisation here, but
 disagreement results from multiple chains running in parallel.
 
-### Algorand ??
+### Algorand
 
 Algorand has similarities to Tindermint, but selects validators
 randomly from a pool, instead of using a fixed set, and does a
 Byzantine agreement for each block.  All nodes produce possible
 blocks and a VRFs helps choose among them.
 
-### RANDAO ??
+### RANDAO
 
 Nodes commit to a hash onion and use the layers like a local VRF,
 revealing one layer whenever doing so allows them to produce a block.
@@ -180,4 +180,23 @@ cannot accumulate.
 Are there other fishermen related uses?  Rob mentioned ordering 
 fishermen, which sounds problematic.
 
+
+# Timing
+
+TODO: Comment on relative block time vs. more absolute synced clock times.
+
+### RANDAO
+
+We noticed possible timing issues with RANDAO that impact most other
+schemes:  An attacker can manipulate the timing of their blocks to
+help maintain a forked chain.  TODO: Add details.
+
+### Ouroboros rate metering
+
+Ouroboros paper 3 describes minimum rate requirement for protection
+against long term attacks.  The idea goes that a long-term attacker
+starts with relatively little stake, so initially they produce blocks
+slower than the overall network, but as their stake increases this
+rate goes up.  Ouroboros wants to prevent this initial slow start,
+but this requires 
 
