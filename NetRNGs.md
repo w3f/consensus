@@ -184,6 +184,9 @@ fishermen, which sounds problematic.
 
 TODO: Comment on relative block time vs. more absolute synced clock times.
 
+We seemingly need a bound on clock skew between validators, which
+we must enforce using the peer-to-peer network.
+
 ### RANDAO
 
 We noticed possible timing issues with RANDAO that impact most other
