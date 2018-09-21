@@ -183,6 +183,8 @@ fishermen, which sounds problematic.
 # Timing
 
 TODO: Comment on relative block time vs. more absolute synced clock times.
+  ability to have timeout that depend on network activity?  (relative absolute time??)
+  but think about the network conditions
 
 We seemingly need a bound on clock skew between validators, which
 we must enforce using the peer-to-peer network.
@@ -201,4 +203,11 @@ starts with relatively little stake, so initially they produce blocks
 slower than the overall network, but as their stake increases this
 rate goes up.  Ouroboros wants to prevent this initial slow start,
 but this requires 
+
+
+
+### Ideas
+
+Unavailability game
+Time or relative time signing
 
