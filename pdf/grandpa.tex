@@ -38,7 +38,7 @@ Each round has two phases, each of which has an associated vote, prevote and pre
 For block $B$, we write $\mathrm{chain}(B)$ for the chain whose head is $B$. The block number, $n(B)$ of a block $B$ is the length of $\mathrm{chain}(B)$.
 
 For blocks $B'$, $B$, $B$ is later than $B'$ if it has a higher block number.
-We write $B > B'$ or that $B$ is descendant of $B'$ for $B$, $B'$ appearing in the same blockchain with $B'$ later i.e. $B \in \mathrm{chain}(B')$ with $n(B') > n(B)$ and $B < B'$ or $B$ is an ancestor of $B'$ for $B' \in \mathrm{chain}(B)$ with $n(B) > n(B')$ . $B \geq B'$ an $B \leq B'$ are similar except allowing $B = B$. We write $B \sim B'$ or $B$ and $B'$ are on the same chain if $B<B'$,$B=B'$ or $B> B'$ and $B \nsim B'$ or $B$ and $B'$ are not on the same chain if there is no such chain.
+We write $B > B'$ or that $B$ is descendant of $B'$ for $B$, $B'$ appearing in the same blockchain with $B'$ later i.e. $B \in \mathrm{chain}(B')$ with $n(B') > n(B)$ and $B < B'$ or $B$ is an ancestor of $B'$ for $B' \in \mathrm{chain}(B)$ with $n(B) > n(B')$. $B \geq B'$ and $B \leq B'$ are similar except allowing $B = B$. We write $B \sim B'$ or $B$ and $B'$ are on the same chain if $B<B'$,$B=B'$ or $B> B'$ and $B \nsim B'$ or $B$ and $B'$ are not on the same chain if there is no such chain.
 
 Blocks are ordered as a tree with the genesis block as root. So any two blocks have a common ancestor but two blocks not on the same chain do not have a common descendant.
 
@@ -73,7 +73,7 @@ Note that it is possible for an intolerant $S$ to both have a supermajority for 
 \begin{lemma} \label{lem:impossible}
 \begin{itemize}
 \item[(i)] If $B' \geq B$ and it is impossible for $S$ to have a supermajority for $B$, then it is impossible for $S$ to have a supermajority for $B'$.
-\item[(ii)] If $S \subseteq T$ and it is impossible for $S$ to have a supermajority for $B$
+\item[(ii)] If $S \subseteq T$ and it is impossible for $S$ to have a supermajority for $B$, then it is impossible for T$ to have a supermajority for $B$.
 \item[(iii)] If $g(S)$ exists and $B \nsim g(S)$ then it is impossible for $S$ to have a supermajority for $B$.
 \end{itemize}
 \end{lemma}
