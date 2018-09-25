@@ -42,9 +42,11 @@ We need to incorporate into the definition of Byzantine agreement that we have a
 
 \begin{definition} A protocol for multi-valued Byzantine agreement has a set of values $S$, a a set of voters $V$, a constant fraction of which may be Byzantine, each of whom start with an initial value $s_v \in S$ for each $v \in V$ and in the end each voter decides a final value $f_v \in S$ such that the following holds:
 
-Agreement: All honest voters decide the same value for $f_v$
-Termination: All honest voters eventually decide a value
-Validity: If all honest voters have the same initial value, then they all decide that value
+\begin{itemize}
+\item {\bf Agreement}: All honest voters decide the same value for $f_v$
+\item {\bf Termination}: All honest voters eventually decide a value
+\item {\bf Validity}: If all honest voters have the same initial value, then they all decide that value
+\end{itemize}
 
 \end{definition}
 
@@ -52,25 +54,39 @@ We cam change this definition to assume that instead of having an initial value,
 
 \begin{definition} A protocol for multi-valued Byzantine finality gadget problem has a set of values $S$, a a set of voters $V$, a constant fraction of which may be Byzantine, each of whom has access to an oracle $A$ with the property that and in the end each voter decides a final value $f_v \in S$ such that the following holds:
 
-Agreement: All honest voters decide the same value for $f_v$
-Termination: All honest voters eventually decide a value
-Validity: All honest voters decide a value that A returned to some honest voter sometime.
+\begin{itemize}
+\item {\bf Agreement:} All honest voters decide the same value for $f_v$
+\item {\bf Termination:} All honest voters eventually decide a value
+\item {\bf Validity:} All honest voters decide a value that A returned to some honest voter sometime.
+\end{itemize}
 
 \end{definition}
 
 Note that, in the case $|S| > 2$, this definition of validity is stronger than that the obvious generalisation for Multi-valued Byzantine agreement, that all honest voters decide a value that some honest voter started with. This is because this would be impossible if the fraction of Byzantine voters is bigger than $1/|S|$ as we cannot detect Byzantine voters who act like honest voters except for lying about their initial value so if fewer than $1/|S|$ voters act like they have some initial value, the protocol cannot know if any are honest. 
 
-But for the case $|S|=2$, the two possible definitions of validity are equivalent. This means that we can reduce the binary version of the Byzantine finality gadget problem above to binary Byzantine agreement by each voter just calling $A$ at the start to obtain their initial value since if $A$ does not return the same value to every honest voter all the time then it returns both values to honest voters some times. Thus there are many existing algorithms for the binary Byzantine finality gadget problem. However the interesting problem in this case is whether the celebrated impossibility result of \cite{flp} generalizes to this finality gadget problem i.e. whether this oracle which is guaranteed to achieve eventual consensus makes it possible to have an asynchronous and deterministic protocol for agreement. A reduction is not immediately obvious. It turns out that the finality gadget version is indeed impossible see ?.
+But for the case $|S|=2$, the two possible definitions of validity are equivalent. This means that we can reduce the binary version of the Byzantine finality gadget problem above to binary Byzantine agreement by each voter just calling $A$ at the start to obtain their initial value since if $A$ does not return the same value to every honest voter all the time then it returns both values to honest voters some times. Thus there are many existing algorithms for the binary Byzantine finality gadget problem. However the interesting problem in this case is whether the celebrated impossibility result of \cite{flp} generalizes to this finality gadget problem i.e. whether this oracle which is guaranteed to achieve eventual consensus makes it possible to have an asynchronous and deterministic protocol for agreement. A reduction is not immediately obvious. It turns out that the finality gadget version is indeed impossible see \ref{ssec:impossibility}.
 
 Now how do we extend this to agreeing on a chain of blocks? We will need the block production mechanism to build on finalised blocks, so the best chain rule must include them. We assume a kind of conditional eventual consensus. If we keep building on our last finalised block $B$ and don't finalise any new blocks, then eventually we have consensus on a longer chain than just $B$, which the finality gadget can use to finalise another block. We also want a protocol that does not terminate, but instead keeps on finalising more blocks. 
 
 \begin{definition} A protocol for the blockchain Byzantine finality gadget problem has a a set of voters $V$, a constant fraction of which may be Byzantine, each of whom has access to an oracle for the best chain given the last finalised block with the property that, as long as no new block is finalised, it achieves eventual consensus on some child of the last finalised block  such that the following holds:
 
-Safety: All honest voters finalise the same block at each block number
-Liveness: All honest voters keep finalising blocks
-Validity: If an honest voter finalises a block $B$ then that block was seen in the best chain observed by some honest voter containing some previously finalised ancestor of $B$
+\begin{itemize}
+\item{\bf Safety:} All honest voters finalise the same block at each block number.
+\item{\bf Liveness:} All honest voters keep finalising blocks.
+\item{\bf Validity:} If an honest voter finalises a block $B$ then that block was seen in the best chain observed by some honest voter containing some previously finalised ancestor of $B$,
+\end{itemize}
 
 \end{definition}
+
+We also consider temporal versions of the last two properties:
+
+\begin{itemize}
+\item{\bf Fast termination:} If the last finalised block has number $n$ and, until another block is finalised, the best chain observed by all validators will incluse the same block with block number $n+1$, then a block with number $n+1$ will be finalised within time $T$.
+\item{\bf Recent validity:} If an honest voter finalises a block $B$ then that block was seen in the best chain observed by some honest voter containing some previously finalised ancestor of $B$ more recently than time $T$ ago.
+\end{itemize}
+These will typically only hold woth high probability. In the asynchronous case, we would need to measure time in rounds of the protocol rather than seconds to make sinse of these properties.
+
+Lastly we are interested in the property of {\bf accountable safety}. This is that, if there are more than $f+1$ validators and blocks on different chains are finalised, then we can identify at least $f+1$ Byzantine validators. This wil hopefully allow us to remove them from the validator set and punish them. 
 
 \subsection{Our approach}
 
@@ -428,7 +444,7 @@ In our setup, having a primary is the simplest option for this.
 
 Here we give an extension of the \cite{flp} result that shows the impossibility of having an asynchronous and deterministic finality gadget protocol and give an asynchronous protocol that uses a common coin primitive.
 
-\subsection{Impossibility of a deterministic protocol}
+\subsection{Impossibility of a deterministic protocol} \label{ssec:impossibility}
 
 The asynchronous binary fault tolerant agreement problem is as follows:
 
