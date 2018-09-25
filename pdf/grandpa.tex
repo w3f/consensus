@@ -6,6 +6,10 @@
 \usepackage{fullpage}
 
 \usepackage{hyperref}
+\usepackage{url}
+\usepackage[numbers]{natbib}
+
+\bibliographystyle{plainnat}
 
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{definition}[theorem]{Definition}
@@ -22,21 +26,21 @@
 
 \section{Introduction}
 
-We consider the question of finality for blockchain protocols: whn will a block be reverted. Many such protocols, such as the oiginal blockhain, Bitcoin, have the property of eventual consensus - that an ever growing prfix of the chain will be agreed upon by all participants forever onwards. But they generally only give probabilistic finality on a specific block - that under some assumptions about the network and participants, if we see a few bloks building on a given block, we cn estimate the probability that it is final.
+We consider the question of finality for blockchain protocols: when will a block be reverted. Many such protocols, such as the original blockchain, Bitcoin, have the property of eventual consensus - that an ever growing prefix of the chain will be agreed upon by all participants forever onward. But they generally only give probabilistic finality on a specific block - that under some assumptions about the network and participants, if we see a few blocks building on a given block, we can estimate the probability that it is final.
 
-But what we'd prefer is to have provable finality - for example a signed statement by a set of authorities, the set of whom ca be tracked, that the block is final. This is useful to prove what happened to light clients, who do not have the full chain or are not actively listening to the network, and to communicate woth other chains, possibily as pat of a scalability solution, whee not anyone receives or stores all the data in the system. 
+But what we'd prefer is to have provable finality - for example a signed statement by a set of authorities, the set of whom ca be tracked, that the block is final. This is useful to prove what happened to light clients, who do not have the full chain or are not actively listening to the network, and to communicate with other chains, possibly as part of a scalability solution, whee not anyone receives or stores all the data in the system. 
 
-Another popular consensus mechainism for blockchains is to get Byzantine agreement on each block. This gives provable finality immediately. However this is slow if we have a large set of participants in the Byzntine agreement.
+Another popular consensus mechanism for blockchains is to get Byzantine agreement on each block. This gives provable finality immediately. However this is slow if we have a large set of participants in the Byzantine agreement.
 
-The approach that we will take is similar to the approach that Ethereum plans to take with Casper the Friendly Finality Gadget(Casper FFG), which combies these approaches. We will use a block production mechanism and chain selection rule that gove eventual consensus anf then add a finality gadget, a protocol that finalises blocks that the participants already agree on, to get provable finality.
+The approach that we will take is similar to the approach that Ethereum plans to take with Casper the Friendly Finality Gadget(Casper FFG)\cite{CasperFFG}, which combines these approaches. We will use a block production mechanism and chain selection rule that give eventual consensus and then add a finality gadget, a protocol that finalises blocks that the participants already agree on, to get provable finality.
 
-We present a finality gadget that works in a partially synchronous network model, GRANDPA, as well as an asynchronous finality gadgetr, that can cope with 1/5 Byzantine guys.
+We present a finality gadget that works in a partially synchronous network model, GRANDPA, as well as an asynchronous finality gadget, that can cope with 1/5 Byzantine guys.
 
-\subsubsection{Formalising the problem}
+\subsection{Formalising the problem}
 
-We need to incorporate into the definition of Byzantine agreement that we have access to a protocol that would acgieve eventual consensus if we did not affect it. Consider a typical definition of multi-values Byantine agreement. We have a	set of particpants $V$, most of which obey the protocol, but a constant fraction may be Byzantine i.e. behave arbiraily
+We need to incorporate into the definition of Byzantine agreement that we have access to a protocol that would achieve eventual consensus if we did not affect it. Consider a typical definition of multi-values Byzantine agreement. We have a	set of participants $V$, most of which obey the protocol, but a constant fraction may be Byzantine i.e. behave arbitrarily
 
-\begin{definition} A protocol for multi-valued Byzantine agreement has a set of values $S$, a a set of voters $V$, a constant vfraction of which may be Byzantine, each of whom start with an intial value $s_v \in S$ for each $v \in V$ and in the end each voter decides a final value $f_v \in S$ such that the following holds:
+\begin{definition} A protocol for multi-valued Byzantine agreement has a set of values $S$, a a set of voters $V$, a constant fraction of which may be Byzantine, each of whom start with an initial value $s_v \in S$ for each $v \in V$ and in the end each voter decides a final value $f_v \in S$ such that the following holds:
 
 Agreement: All honest voters decide the same value for $f_v$
 Termination: All honest voters eventually decide a value
@@ -44,9 +48,9 @@ Validity: If all honest voters have the same initial value, then they all decide
 
 \end{definition}
 
-We cam change this definition to assume that instead of having an initial value, all voters havce access to an external protocol, an oracle for values, that achieves eventual consensus in that it retirns the same value to all voters when called after some time.
+We cam change this definition to assume that instead of having an initial value, all voters have access to an external protocol, an oracle for values, that achieves eventual consensus in that it returns the same value to all voters when called after some time.
 
-\begin{definition} A protocol for multi-valued Byzantine finality gagdet problem has a set of values $S$, a a set of voters $V$, a constant vfraction of which may be Byzantine, each of whom has access to an oracle $A$ with the property that and in the end each voter decides a final value $f_v \in S$ such that the following holds:
+\begin{definition} A protocol for multi-valued Byzantine finality gadget problem has a set of values $S$, a a set of voters $V$, a constant fraction of which may be Byzantine, each of whom has access to an oracle $A$ with the property that and in the end each voter decides a final value $f_v \in S$ such that the following holds:
 
 Agreement: All honest voters decide the same value for $f_v$
 Termination: All honest voters eventually decide a value
@@ -54,34 +58,34 @@ Validity: All honest voters decide a value that A returned to some honest voter 
 
 \end{definition}
 
-Note that, in the case $|S| > 2$, this definition of validity is stronger than that the obvious generalisation for Multi-valued Byzantine agreement, that all honest voters decide a value that some honest voter started with. This is because this would be impossible if the fraction of Byantine vaoters is bigger than $1/|S|$ as we cannot detect Byzantine vioters who act like honest voters except for lying about their initial value so if fewer than $1/|S|$ voters act like they have some intial value, the protocol cannot know if any are honest. 
+Note that, in the case $|S| > 2$, this definition of validity is stronger than that the obvious generalisation for Multi-valued Byzantine agreement, that all honest voters decide a value that some honest voter started with. This is because this would be impossible if the fraction of Byzantine voters is bigger than $1/|S|$ as we cannot detect Byzantine voters who act like honest voters except for lying about their initial value so if fewer than $1/|S|$ voters act like they have some initial value, the protocol cannot know if any are honest. 
 
-But for the case $|S|=2$, the two possible definitions of validity are equivalent. This means that we can reduce the binary version of the Byzantine finality gadget problem above to binary Byzantine agreement by ecah voter just calling $A$ at the start to obtain their initial value since if $A$ does not return the same value to every honest voter all the timem then it returns both values to honest voters some times. Thus there are many existing algorithms for the binary Byzantine finality gadget problem. However the interesting problem in this case is whether the celebrated impossibility result of [FLD] generalizes to this finality gadget problem i.e. whether this oracle which is guaranteed to achieve eventual consensus makes it possible to have an asynchronous and deterministic protocol for agreement. A reduction is not immediately obvious. It turns out that the finality gadget version is indeed impossible see ?.
+But for the case $|S|=2$, the two possible definitions of validity are equivalent. This means that we can reduce the binary version of the Byzantine finality gadget problem above to binary Byzantine agreement by each voter just calling $A$ at the start to obtain their initial value since if $A$ does not return the same value to every honest voter all the time then it returns both values to honest voters some times. Thus there are many existing algorithms for the binary Byzantine finality gadget problem. However the interesting problem in this case is whether the celebrated impossibility result of \cite{flp} generalizes to this finality gadget problem i.e. whether this oracle which is guaranteed to achieve eventual consensus makes it possible to have an asynchronous and deterministic protocol for agreement. A reduction is not immediately obvious. It turns out that the finality gadget version is indeed impossible see ?.
 
 Now how do we extend this to agreeing on a chain of blocks? We will need the block production mechanism to build on finalised blocks, so the best chain rule must include them. We assume a kind of conditional eventual consensus. If we keep building on our last finalised block $B$ and don't finalise any new blocks, then eventually we have consensus on a longer chain than just $B$, which the finality gadget can use to finalise another block. We also want a protocol that does not terminate, but instead keeps on finalising more blocks. 
 
-\begin{definition} A protocol for the blockchain Byzantine finality gagdet problem has a a set of voters $V$, a constant fraction of which may be Byzantine, each of whom has access to an oracle for the best chain given the last finalised block with the property that, as long as no new block is finalised, it achieves eventual consensus on some child of the last finalised block  such that the following holds:
+\begin{definition} A protocol for the blockchain Byzantine finality gadget problem has a a set of voters $V$, a constant fraction of which may be Byzantine, each of whom has access to an oracle for the best chain given the last finalised block with the property that, as long as no new block is finalised, it achieves eventual consensus on some child of the last finalised block  such that the following holds:
 
 Safety: All honest voters finalise the same block at each block number
 Liveness: All honest voters keep finalising blocks
-Validity: If an honest voter finalises a block $B$ then that block was seen in the best chain observed by some honest voter containiung some previously finalised ancestor of $B$
+Validity: If an honest voter finalises a block $B$ then that block was seen in the best chain observed by some honest voter containing some previously finalised ancestor of $B$
 
 \end{definition}
 
-\subsubsection{Our approach}
+\subsection{Our approach}
 
-To come up with a solution to the blockchain Byzantine finality gagdet problem, we will typically look at various Byzantine agreement protocols and use those to find protocols for the  multi-valued Byzantine finality gadget problem. Protocols for that with appropriate properties can used to find protocols for the blockchain Byzantine finality gadget problem by considering running them in parallel at every block number. If the one block protocol has the right propertires then they will agree on blockls consistently so if we finalise a block then we also finalise its ancestors and we can come up with a succinct protocol.
+To come up with a solution to the blockchain Byzantine finality gadget problem, we will typically look at various Byzantine agreement protocols and use those to find protocols for the  multi-valued Byzantine finality gadget problem. Protocols for that with appropriate properties can used to find protocols for the blockchain Byzantine finality gadget problem by considering running them in parallel at every block number. If the one block protocol has the right properties then they will agree on blocks consistently so if we finalise a block then we also finalise its ancestors and we can come up with a succinct protocol.
 
-For example, suppose we have a one block protocol that calls for a vote on blocks which requires a participant to observe a supermjaority, say votes from  $2/3$ of voters, for some block (or else the participant observes that the vote is undecided). Now imagine running this vote in parallel for every block number and have any honest voter vote for blocks from a particular chain. Byzantine voters may vote more than once, but if we count a vote for a block as a vote for each ancestor of the block in the vote for the instance of the one block protocol with its number, then Byzantine voters must also vote for chains, though they can vote for multiple chains. If we do this, then we see that if a block has a supermajority in a vote, then so does all its ancestorsn in their votes. Thus the blocks witha  supermajority form a chain. Furthrmor, if only 1/3 of votrs quivicate then from if a participant sees a subset of th votes for chains, then they must see a prefix of the chain of blocks that all the votes have supermajorities for. Inutitively, the protocol can agree on the prefix that 2/3 of voters agree on using this. 
-
-
+For example, suppose we have a one block protocol that calls for a vote on blocks which requires a participant to observe a supermajority, say votes from  $2/3$ of voters, for some block (or else the participant observes that the vote is undecided). Now imagine running this vote in parallel for every block number and have any honest voter vote for blocks from a particular chain. Byzantine voters may vote more than once, but if we count a vote for a block as a vote for each ancestor of the block in the vote for the instance of the one block protocol with its number, then Byzantine voters must also vote for chains, though they can vote for multiple chains. If we do this, then we see that if a block has a supermajority in a vote, then so does all its ancestors in their votes. Thus the blocks with a  supermajority form a chain. Furthermore, if only 1/3 of voters equivocate then from if a participant sees a subset of th votes for chains, then they must see a prefix of the chain of blocks that all the votes have supermajorities for. Intuitively, the protocol can agree on the prefix that 2/3 of voters agree on using this. 
 
 
 
 
 
 
-\section{Preliminaries}
+
+
+\section{Preliminaries} \label{sec:prelims}
 
 
 
@@ -133,7 +137,7 @@ Note that it is possible for an intolerant $S$ to both have a supermajority for 
 \begin{lemma} \label{lem:impossible}
 \begin{itemize}
 \item[(i)] If $B' \geq B$ and it is impossible for $S$ to have a supermajority for $B$, then it is impossible for $S$ to have a supermajority for $B'$.
-\item[(ii)] If $S \subseteq T$ and it is impossible for $S$ to have a supermajority for $B$, then it is imposible for $T$ to have a supermajority for $B$.
+\item[(ii)] If $S \subseteq T$ and it is impossible for $S$ to have a supermajority for $B$, then it is impossible for $T$ to have a supermajority for $B$.
 \item[(iii)] If $g(S)$ exists and $B \nsim g(S)$ then it is impossible for $S$ to have a supermajority for $B$.
 \end{itemize}
 \end{lemma}
@@ -419,4 +423,94 @@ We only need the primary for liveness. We need some form of coordination to defe
 When the network is well-behaved, an honest primary can defeat this attack by deciding how much we should agree on. We could also use a common coin for the same thing, where people would prevote for either the best chain containing $E_{r-1,v}$ or $g(V_{r-1,v})$ depending on the common coin. With on-chain voting, it is possible that we could use probabilistic finality of the block production mechanism - that if we don't finalise a block and always build on the best chain containing the last finalised block then not only will the best chain eventually converge, but if a block is behind the head of the best chain, then with positive probability, it will eventually be in the best chain everyone sees.
 
 In our setup, having a primary is the simplest option for this.
+
+\section{The asynchronous finality gadget problem}
+
+Here we give an extension of the \cite{flp} result that shows the impossibility of having an asynchronous and deterministic finality gadget protocol and give an asynchronous protocol that uses a common coin primitive.
+
+\subsection{Impossibility of a deterministic protocol}
+
+The asynchronous binary fault tolerant agreement problem is as follows:
+
+We have  number of voters which each have an initial $v_i$ in $\{0,1\}$
+
+We may have one or more faulty nodes, which here means going offline at some point. Nodes have asynchronous communication - so any message arrives but we have no guarantee when it will.
+The goal is to have all non-faulty nodes output the same $v$, which must be $0$ if all inputs $v_i$ are $0$ and $1$ if all are $1$.
+
+Fischer, Lynch and Paterson\cite{flp} showed that this is impossible if there is one faulty node.
+
+The binary fault-tolerant finality gadget problem is similar, except now there is an oracle $A$ that any node can call at any time with the following properties:
+
+either $A$ always outputs $x$ in $\{0,1\}$ to all nodes at all times
+or else there is an $x$ in $\{0,1\}$ and
+for each node $i$, there is a $T_i$ such that when $i$ calls $A$ before $T_i$. it gives $x$ but if it calls $A$ after $T_i$, it returns not $x$ .
+
+and we want that if A never switches, then all non-faulty nodes output x. If A does switch then all non-faulty nodes should output the same thing, but it can be 0 or 1. 
+
+Then this is also impossible, even for one faulty node, which just goes offline. Note that this generalises Byzantine agreement, since if we could each node $i$ could call $A$ once at the start and use the output as $v_i$. (For the multi-valued case, we will define the problem so that this reduction does not hold.)
+
+
+\begin{proof}[Proof sketch] We follow the notation of  \cite{flp} and assume for a contradiction that we use a correct protocol. 
+Let $r$ be a run of the protocol where $A$ gives $0$ all the time. Then by correctness $r$ decides $0$. Now we consider what can happen when $A$ switches to $1$ after each configuration in $r$. If it switches to $1$ at the start, then the protocol decides $1$. If we switch to $1$ when all node have already decided $0$, then we decide $0$.
+
+We claim that some configuration in the run $r$, where there are two runs from it where $A$ is always $1$ that decide $0$ and $1$. We call such states $1$-bivalent. Too see this, assume for a contradiction that $r$ contains no such configurations. Then there is are successive configurations $C$,$C'$ such that if $A$ return $1$ in the future from $C$ then we always decide $0$ but from $C'$, we always decide $1$.  Let events be $(p,m,x)$ where node (processor/validator) $p$ receives message $m$ (which my be null) and executes some code where any calls to A return $x$ in $\{0,1\}$, then sends some messages. Then there is some event $(p,m,0)$ that when applied to $C$ gives $C'$. Now suppose that $p$ goes offline at $C$, then if $A$ always returns $1$ afterwards, then we still decide $1$. Thus there is a run $r'$ that starts at $C$ where $p$ tales no steps, $A$ always returns $1$ and all other nodes still output $1$.
+But since $p$ takes no steps in $r'$, we can apply $r'$ after $(p, m, 0)$ and so we have that $C'$ has a run where $A$ always returns $1$ but decides $1$, which is a contradiction.
+
+Now let $C$ be a $1$-bivalent configuration. We can follow the FLP proof to show that there is a run from $C$ for which $A$ always returns $1$, all messages are delivered but all configurations are 1-bivalent and so the protocol never decides. This completes the proof by contradiction that there is no correct protocol.
+\end{proof}
+
+\subsection{1/5 BFT finality gadget using a common coin}
+
+\begin{enumerate}
+\item Everyone prevotes for the best chain including the block they were locked to last round.
+\item Wait to receive prevotes from $4/5$ of validators, $V_r$.
+\item Precommit $g_{3/5}(V_r)$
+\item Wait to receive precommits from $4/5$ of validators, $C_r$. 
+\item Call the common coin, $s_r$
+\item If $s_r=1$, finalise $g_{3/5}(C_r)$
+\item lock to $g_{(3-2s_r)/5}(C_r)$ for next round.
+\end{enumerate}
+
+The common coin does not return a coin until $4/5$ call it. Then assuming $4/5$ are honest, it returns an $s_r$ sampled uniformly from $\{0,1\}$, identical for all who called it, and before $4/5$ called it, no-one has any information about the result.
+
+Here $g_{t}(S)$ is the $t$-GHOST function where $g$ from subsection \ref{sec:prelims} is $g_{2/3}$. It might not be unique in general but it is here with under $1/5$ Byzantine.
+
+The idea behind the proof of asynchronous liveness is that for a particular block $B'$, some value of the common coin, either all the validators who received $4/5$ of precommits before the common coin was decided lock to $B'$ or none do. If we had a fixed threshold for locking, an adversarial choice of the number of precommits for $B'$ or its descendants could lead to some validators locking to it and some not (and indeed there would be runs that do this indefinitely as this is how the impossibility result works for this type of algorithm.)
+
+\begin{lemma} If we there are enough precommits to finalise a block $B$ in round $r$, then all honest validators who prevote in future rounds will be locked to $B$ or its descendants when they do.
+\end{lemma}
+
+We want to show that this is asynchronously live:
+
+\begin{proposition} Suppose that block $B$ is finalised before round $r$. With probability at least $1/2$ over the common coin in round $r$, if all validators agree that the best chain including the last finalised block $B$ includes a decedent $B'$, at the prevote step of rounds $r+1$ and $r+1$, then a descendant of $B$ is finalised the next time $s_r=1$ after round $r+1$ or earlier.
+\end{proposition}
+
+\begin{proof} By the previous lemma, all honest validators prevote in round $r$ for $B$ or its descendants and so all honest validators precommit to $B$ or its descendants.
+
+Let $V_r$ be the set of prevotes of all validators.  By a lemma from the other thing, all honest validators precommit $g_{3/5}(V_r)$ or its ancestors. Thus $g_{3/5}(V_r)$ is $B$ or a descendant of $B$.
+
+For the case $g_{3/5}(V_r)=B$, all honest validators precommit $B$ and so any honest validator sees that
+$B = g_{1/5}(C_r) = g_{3/5}(C_r)$. Thus all honest validators
+lock $B$ and so are free to prevote for $B'$ or its descendants in round $r+1$. Thus we finalise $B'$ in round $r+1$.
+
+Otherwise, let $B''$ be the child of $B$ in the chain of $g_{3/5}(V_r)$. We seek to show that we finalise either $B'$ or $B''$ in round $r+2$ or earlier.
+
+Let $S$ be the set of honest validators who precommit in round $r$ before the common coin is flipped. Let $S'$ be the set of honest validators who call the common coin before it is decided. Note that $S' \subset S$. 
+Since $4/5$ of validators call the coin before it decided, $S'$ and $S$ each contain at least $3/5$ of the validators.
+
+
+Let $h$ be the number of validators in $S$ that precommit $B''$ or its descendants. Note that the other $h-|S|$ validators just precommit $B$.
+
+Now consider a particular validator $v \in S'$ and the set $C_r$ of precommits they received in step 4. the number of validators with precommits in  $C_r$ is at least $4n/5$. All the honest validators  
+with precommits in $C_r$ are in $S$.
+ Thus we have that the number of votes for $B''$ or its descendants in $C_r$, $m_v$ has $h-n/5 \leq m_v < h+n/5$. Since any descendant of $B$ that is not $B''$ or its descendants receives less than $n/5$ precommits for it or its descendants, we have that either $g_{1/5}(C_r)=B$ or $g_{1/5}(C_r)\geq B'$ and similarly for $g_{3/5}(C_r)$. Now note that if $h > 2n/5$, for $v \in S'$, $m_v \geq n/5$ and so $g_{1/5}(C_r) \geq B'$. On the other hand if $h \leq 2n/5$, $m_v < 3n/5$ and so $g_{3/5}(C_r)=B$.
+
+If $h > 2n/5$ and $s_r=1$, then every honest validator locks a block $\geq B'$. Thus is round $r+1$, thy all prevote $\geq B'$.
+Since every honest validator waits until receiving prevotes from $4/5$ of voters, these prevotes contain vote $\geq B'$ from $3n/5$ voters and so they prevote for  $g_{3/5}(V_{r+1}) \geq B$.
+\end{proof}
+
+
+ 
+\bibliography{grandpa}
+
 \end{document}
