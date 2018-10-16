@@ -176,7 +176,7 @@ Note that we can easily update $g(S)$ to $g(S \cup \{v\})$, by checking if any c
 We say that it is possible for a set $S$ to have a supermajority for $B$ if $2f+1$ validators either vote for a block $\not \geq B$ or equivocate in $S$. Note that if $S$ is tolerant, it is possible for $S$ to have a supermajority for $B$ if and only if there is a tolerant $T \supseteq S$ that has a supermajority for $B$.
 
 
-We say that it is impossible for any child of $B$ to have a supermajority in $S$ if $S$ has votes from at least $2f+1$ validators and it is impossible for $S$ to have a supermajority for each child of $B$ appearing on the chain of any vote in $S$. Again, provided $S$ is tolerant, this holds if and only if for any possible child of $B$, there is no tolerant $T \subset S$ that has a supermajority for that child.
+We say that it is impossible for any child of $B$ to have a supermajority in $S$ if $S$ has votes from at least $2f+1$ validators and it is impossible for $S$ to have a supermajority for each child of $B$ appearing on the chain of any vote in $S$. Again, provided $S$ is tolerant, this holds if and only if for any possible child of $B$, there is no tolerant $T \subseteq S$ that has a supermajority for that child.
 
 Note that it is possible for an intolerant $S$ to both have a supermajority for $S$ and for it to be impossible to have such a supermajority under these definitions, as we regard such sets as impossible anyway.
 
@@ -419,11 +419,23 @@ Suppose that $t_r \geq GST$, the primary of round $r$ is honest and all votes ha
 
 \subsection{Changing the voter set on-chain in an asynchronously safe way}
 
+\subsubsection{Changing the voter set in an asynchronously safe way}
+
 Suppose we have an on-chain protocol that decides we need a different voter set. Once everyone finalises the block, they know that we need to change the set. The protocol can cope with changing the voter set from some round $r$. The main difficulty is that the chain has no idea what the current round number is and even if we have a block that instructs us to change the voter set at round $r$, we might only finalise the block after round $r$. So instead we will not take advantage of the ability to change set from one round to the next. 
 
 A block $B$ can contain an instruction that we should change to the voter set to some other set after some integer $m \geq 0$ blocks. If our best chain for a prevote contains such a block $B$, then we do not prevote for more than $m$ blocks after $B$, even if our best chain is longer. Thus if the current voter set has $n-f$ honest voters, they will only finalise $m$ blocks after such a $B$. We only accept votes and commit messages up top $m$ blocks after $B$ from the current set of validators.  
 
 When some block $B'$ that is $m$ blocks after $B$ has been finalised, then the new validator set starts again at round $1$ with $E_{0}=B'$. Votes will need to contain additional metadata that indicates the validator set somehow.
+
+\subsubsection{Unsafe fallback for changing the voter set after stalling}
+
+In extreme circumstances, we may need to deal with $1/3$ of voters being offline. There is no asynchronously safe way of doing this. It also breaks the chain of signed statements by the existing set of voters saying who the future set of voters should be. And it means we may be vulnerable to being cut of by Byzantine participants. However if we are in a state when many voters go offline but the network is not partitioned, then we want a way to agree on a set of new voters to restart the finality gadget.
+
+Every 100 blocks or so, we should put a valid commit message on chain. Honest block producers should put the most recent message on the chain, provided that there is one for a more recent block than 100 blocks ago. Then if a participant sees that their best chain has not had such a message for 1000 blocks and are not aware of any more recent blocks being finalised, then they set a new validator set to be one determined by the 900th block since the last commit message on chain. 
+
+The protocol for selecting voters should require recent messages on chain signed by those voters so that this is likely to give a set of voters very few of whom are offline.
+
+We should consider having to manually approve finality agreed upon by this new set to alleviate the security concerns above. But this still gives a way to canonically agree on a new set, in the event of WW3 or bad initialisation of a new chain.
 
 \subsection{Alternatives to the last block hash}
 
@@ -499,7 +511,10 @@ Then this is also impossible, even for one faulty node, which just goes offline.
 \begin{proof}[Proof sketch] We follow the notation of  \cite{flp} and assume for a contradiction that we use a correct protocol. 
 Let $r$ be a run of the protocol where $A$ gives $0$ all the time. Then by correctness $r$ decides $0$. Now we consider what can happen when $A$ switches to $1$ after each configuration in $r$. If it switches to $1$ at the start, then the protocol decides $1$. If we switch to $1$ when all node have already decided $0$, then we decide $0$.
 
-We claim that some configuration in the run $r$, where there are two runs from it where $A$ is always $1$ that decide $0$ and $1$. We call such states $1$-bivalent. Too see this, assume for a contradiction that $r$ contains no such configurations. Then there is are successive configurations $C$,$C'$ such that if $A$ return $1$ in the future from $C$ then we always decide $0$ but from $C'$, we always decide $1$.  Let events be $(p,m,x)$ where node (processor/validator) $p$ receives message $m$ (which my be null) and executes some code where any calls to A return $x$ in $\{0,1\}$, then sends some messages. Then there is some event $(p,m,0)$ that when applied to $C$ gives $C'$. Now suppose that $p$ goes offline at $C$, then if $A$ always returns $1$ afterwards, then we still decide $1$. Thus there is a run $r'$ that starts at $C$ where $p$ tales no steps, $A$ always returns $1$ and all other nodes still output $1$.
+We claim that some configuration in the run $r$, where there are two runs from it where $A$ is always $1$ that decide $0$ and $1$. We call such states $1$-bivalent.
+To see this, assume for a contradiction that $r$ contains no such configurations. Then there is are successive configurations $C$,$C'$ such that if $A$ return $1$ in the future from $C$ then we always decide $0$ but from $C'$, we always decide $1$.
+Let events be $(p,m,x)$ where node (processor/validator) $p$ receives message $m$ (which my be null) and executes some code where any calls to A return $x$ in $\{0,1\}$, then sends some messages. 
+Then there is some event $(p,m,0)$ that when applied to $C$ gives $C'$. Now suppose that $p$ goes offline at $C$, then if $A$ always returns $1$ afterwards, then we still decide $1$. Thus there is a run $r'$ that starts at $C$ where $p$ tales no steps, $A$ always returns $1$ and all other nodes still output $1$.
 But since $p$ takes no steps in $r'$, we can apply $r'$ after $(p, m, 0)$ and so we have that $C'$ has a run where $A$ always returns $1$ but decides $1$, which is a contradiction.
 
 Now let $C$ be a $1$-bivalent configuration. We can follow the FLP proof to show that there is a run from $C$ for which $A$ always returns $1$, all messages are delivered but all configurations are 1-bivalent and so the protocol never decides. This completes the proof by contradiction that there is no correct protocol.
@@ -604,8 +619,6 @@ If $h < 3f+1$ and $s_r=0$, then every $v \in S'$ locks only $B$. But then all su
 Crucially note that $h$ depends only on $S$, which is determined when $4f+1$ voters call the common coin and before it is flipped. Thus $s_r$ is independent of $h$. If $h < 3f+1$ then $s_r=0$ with probability $1/2$ and if $h \geq 3f+1$ then $s_r=1$ with probability $1/2$. So with probability $1/2$, we have either both $h < 3f+1$ and $s_r=0$ or both $h \geq 3f+1$ and $s_r=1$. Thus with probability at least $1/2$, we finalise $B'$ or $B''$ before the next round after $r+1$ when $s_r=1$.
 \end{proof}
 
-
- 
 \bibliography{grandpa}
 
 \end{document}
