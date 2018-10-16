@@ -103,7 +103,7 @@ For example, suppose we have a one block protocol that calls for a vote on block
 
 To ensure safety, each participant maintains an estimate $E_r$ of the last block that could have been finalised in a round $r$. This has the property that in  future rounds it overestimates the block that could have been finalised so that in round $r$, the chain with head $E_{r-1}$ contains all blocks that could have been finalised. Any honest voter only votes in round $r$ for chains containing their estimate $E_{r-1}$ and this guarantees that any block that could have been finalised in round $r-1$ will be finalised in round $r$.
 
-\subsection{related work}
+\subsection{Related Work}
 
 \subsubsection{Comparison with Casper}
 
@@ -507,52 +507,101 @@ Now let $C$ be a $1$-bivalent configuration. We can follow the FLP proof to show
 
 \subsection{1/5 BFT finality gadget using a common coin}
 
+
+
+
+In this section, we will assume the asynchronous gossip network model. By the previous impossibility result, we will need to use randomness to get a finality gadget in this model. We assume that we have access to a common coin protocol.
+
+
+For every vote, We have $n$ voters , at most $f$ of which are Byzantine and $n = 5f+1$.  For a voter $v$, Let $V_{r,v}$, $C_{r,v}$ be the set of prevotes and precommits from round $r$ that $v$ has seen.
+
 \begin{enumerate}
 \item Everyone prevotes for the best chain including the block they were locked to last round.
-\item Wait to receive prevotes from $4/5$ of validators, $V_r$.
-\item Precommit $g_{3/5}(V_r)$
-\item Wait to receive precommits from $4/5$ of validators, $C_r$. 
+\item Wait until $V_{v,r}$ contains prevotes from $n-f$ voters.
+\item Precommit $g_{3/5}(V_{r,v})$
+\item Call a precommit for $B$ justified if $B \leq g_{3/5}(V_{r,v})$ and if $B < g_{3/5}(V_{r,v})$ then the child $B'$ of $B$ on the chain of $g_{3/5}(V_{r,v})$ has that there are votes from $f+1$ voters in $V_{r,v}$ that are not $\geq B'$.
+Wait until $C_{r,v}$ has justified precommits from $n-f$ voters. 
 \item Call the common coin, $s_r$
-\item If $s_r=1$, finalise $g_{3/5}(C_r)$
-\item lock to $g_{(3-2s_r)/5}(C_r)$ for next round.
+\item If $s_r=1$, finalise $g_{4/5}(C_r)$
+\item lock to $g_{(4-3s_r)/5}(C_r)$ for next round.
 \end{enumerate}
 
-The common coin does not return a coin until $4/5$ call it. Then assuming $4/5$ are honest, it returns an $s_r$ sampled uniformly from $\{0,1\}$, identical for all who called it, and before $4/5$ called it, no-one has any information about the result.
+The common coin is a (secure cryptographic implementation of) the following protocol. It does not return a coin until more than $4f+1$ voters (for the prevote vote in the next round in case of ambiguity) call it. It returns at the latest shortly after all honest voters call it.
+ When it does, it returns an $s_r$ sampled uniformly from $\{0,1\}$, identical for all who called it, and before $4f+1$ called it, no-one has any information about the result.
 
-Here $g_{t}(S)$ is the $t$-GHOST function where $g$ from subsection \ref{sec:prelims} is $g_{2/3}$. It might not be unique in general but it is here with under $1/5$ Byzantine.
+Here $g_{t}(S)$ is the $t$-GHOST function defined as follows. We construct a chain starting with the genesis block and adding the child of the current block such that most voters have votes $\geq$ it until there are $nt$ or less votes for any child of the current block, when we return the current block.
 
-The idea behind the proof of asynchronous liveness is that for a particular block $B'$, some value of the common coin, either all the validators who received $4/5$ of precommits before the common coin was decided lock to $B'$ or none do. If we had a fixed threshold for locking, an adversarial choice of the number of precommits for $B'$ or its descendants could lead to some validators locking to it and some not (and indeed there would be runs that do this indefinitely as this is how the impossibility result works for this type of algorithm.)
+The idea behind the proof of asynchronous liveness is that for a particular block $B'$, some value of the common coin, either all the honest voters who received $4/5$ of precommits before the common coin was decided lock to $B'$ or none do. If we had a fixed threshold for locking, an adversarial choice of the number of precommits for $B'$ or its descendants could lead to some voters locking to it and some not (and indeed there would be runs that do this indefinitely as this is how the impossibility result works for this type of algorithm.)
 
-\begin{lemma} If we there are enough precommits to finalise a block $B$ in round $r$, then all honest validators who prevote in future rounds will be locked to $B$ or its descendants when they do.
+Firstly we note that much of the machinery of ? and ? carries over to the $1/5$ byzantine case.
+
+\begin{lemma} \label{lem:ghost-monotonicity-general}
+Let $T$ be a set of votes such that at most $f$ voters have multiple votes in $T$. Let $t \geq (n+f)/2n$ Then
+\begin{enumerate}
+\item The above definition uniquely defines $g_t(T)$.
+\item If $S \subseteq T$ has $g_t(S) \neq$ nil, then $g_t(S) \leq g_t(T)$ for $t \geq (n+f)/2n$.
+\item If $S_i \subseteq T$ for $1 \leq i \leq n$ then all non-nil $g_t(S_i)$ are on a single chain with head $g(T)$.
+\item If $r \leq s$, then $g_r(T) \geq g_s(T)$.
+\end{enumerate}
 \end{lemma}
+So with $n=5f+1$, $g_{3/5}$ is sufficient for uniqueness.
+
+First we need to show that the protocol is deadlock free. As long as all honest voters prevote and precommit, any participant eventually sees prevotes and precomits from $n-f$ voters. We just need to show that honest prevotes are eventually seen as justified.
+\begin{lemma} Suppose that an honest voter $v$ precommits $B$ in round $r$. If $V'_{r,v}$ is the set of prevotes they saw at the time they precommited and another participant $v'$ sees all these prevotes i.e. $V_{r,v'} \supseteq V'_{r,v}$, then $v'$ sees $v$'s precommit for $B$ as justified. \end{lemma}
+\begin{proof} $v$ precommits $B = g_{3/5}(V'_{r,v})$. Since $V_{r,v'} \supseteq V'_{r,v}$, $B \leq g_{3/5}(V_{r,v'})$ by Lemma \ref{lem:ghost-monotonicity-general} 2. So we just need to show that if  $B < g_{3/5}(V_{r,v'})$, $V_{r,v'}$ contains votes from $f+1$ voters that are not $\geq B'$ where $B'$ is the child of $B$ in the chain of $g_{3/5}(V_{r,v'})$. Since $B = g_{3/5}(V'_{r,v})$, from the definition of $g$, $B'$, like any child of $B$, does not have votes from $3f+1$ voters $\geq B'$ in $V'_{r,v}$. Since $V'_{r,v}$ contains votes from $4f+1$ voters, there are votes from at least $f+1$ voters that are $\not \geq B'$ in $V'_{r,v}$ and so also in $V_{r,v'}$.
+\end{proof}
+
+Our network assumption and a simple induction shows that we do not deadlock.
+\begin{corollary} All honest voters eventually prevote and precommit in evrey round and all honest participants reach every round.\end{corollary}
+
+\begin{lemma} \label{lem:possibly-final-implies-permanent-lock}
+If there are enough precommits to finalise a block $B$ in round $r$, then all honest voters who prevote in future rounds will be locked to $B$ or its descendants when they do. At the end of the next round $r' > r$ with $s_{r'}=1$, all participants will have finalised $B$.
+\end{lemma}
+\begin{proof}
+For $B$ to be finalised in round $r$, there need to be votes from more than $n-f$ voters that are $\geq B$ and $s_r=1$. Any honest participant $v$ also sees that $s_r=1$ and so they lock $g_{1/5}(C_{r,v})$. $C_{r,v}$ contains votes from at least $4f+1$ voters. At most $f$  voters can have votes  $\not\geq B$ in $C_{r,v}$ if they also voted $\geq B$ and at most $f$ voters do not have votes in $C_{r,v}$.
+ Thus at least $2f+1$ voters have votes $\geq B$ in $C_{r,v}$. Because $g_{1/5}$ is not unique in general, to show that $g_{1/5}(C_{r,v}) \geq B$, we also need to show that no block $B' \nsim B$ has $f+1$ voters have votes $\geq B'$ in $C_{r,v}$. If this holds then the procedure to calculate $g_{1/5}$ will not follow chain that does not include $B$ and so it will return a block $\geq B$.
+ Letting $V_r$ be the set of prevotes ever cast, note that any honest voter $v'$ prevotes for a block $g_{3/5}(V_{r,v'}) \leq g_{3/5}{V_r}$ and so as before honest voters precommit to blocks in one chain. Since many honest voters precommit $\geq B$, all precommit $\sim B$, and so if $f+1$ voters have votes $\geq B'$ in $B$ then since at least one of those are honest $B' \sim B$. Thus we have $g_{1/5}(C_{r,v}) \geq B$.
+
+Since all honest voters prevote $\geq B$ in round $r+1$, any participant who waits for votes from $4f+1$ voters will see $g_{3/5}(V_{r+1}) \geq B$ and so all honest voters precommit $\geq B$ in round $r+1$. Since only at most $f$ validators vote $\not \geq B$, only precommits $\geq B$ are ever seen as justified by honest validators. Therefore all honest participants will see $g_{345}(C_{r+1}) \geq 
+B$.
+If $s_r=1$, this is enough to finalise $B$.Since $g_{1/5}(C_{r+1}) \geq g_{4/5}(C_{r+1}) \geq 
+B$, whatever the common coin, all honest particupants lock $\geq B$. By induction, this holds for all future rounds.
+
+\end{proof}
 
 We want to show that this is asynchronously live:
 
-\begin{proposition} Suppose that block $B$ is finalised before round $r$. With probability at least $1/2$ over the common coin in round $r$, if all validators agree that the best chain including the last finalised block $B$ includes a decedent $B'$, at the prevote step of rounds $r+1$ and $r+1$, then a descendant of $B$ is finalised the next time $s_r=1$ after round $r+1$ or earlier.
+\begin{proposition} Suppose that block $B$ is finalised before round $r$. With probability at least $1/2$ over the common coin in round $r$, if all validators agree that the best chain including the last finalised block $B$ includes a decedent $B''$, at the prevote step of rounds $r+1$ and $r+2$, then a descendant of $B$ is finalised the next time $s_r=1$ after round $r+2$ or earlier.
 \end{proposition}
 
-\begin{proof} By the previous lemma, all honest validators prevote in round $r$ for $B$ or its descendants and so all honest validators precommit to $B$ or its descendants.
+\begin{proof} By the Lemma \ref{lem:possibly-final-implies-permanent-lock}, all honest voters prevote in round $r$ for $B$ or its descendants and so all honest voters precommit to $B$ or its descendants.
 
-Let $V_r$ be the set of prevotes of all validators.  By a lemma from the other thing, all honest validators precommit $g_{3/5}(V_r)$ or its ancestors. Thus $g_{3/5}(V_r)$ is $B$ or a descendant of $B$.
+Let $V_r$ be the set of prevotes of all voters.  Using Lemma \ref{lem:ghost-monotonicity-general}, all honest voters precommit $g_{3/5}(V_r)$ or its ancestors. Since some must precommit $\geq B$ for it to be finalised,  $g_{3/5}(V_r) \geq B$.
 
-For the case $g_{3/5}(V_r)=B$, all honest validators precommit $B$ and so any honest validator sees that
-$B = g_{1/5}(C_r) = g_{3/5}(C_r)$. Thus all honest validators
-lock $B$ and so are free to prevote for $B'$ or its descendants in round $r+1$. Thus we finalise $B'$ in round $r+1$.
+For the case $g_{3/5}(V_r)=B$, all honest voters precommit $B$ and so any honest participant sees that
+$B = g_{1/5}(C_r) = g_{4/5}(C_r)$. Thus all honest participants
+lock $B$ and so are free to prevote for $B''$ or its descendants in round $r+1$. Thus we finalise $B''$ in round $r+1$ or the next round when $s_r=1$ after that.
 
-Otherwise, let $B''$ be the child of $B$ in the chain of $g_{3/5}(V_r)$. We seek to show that we finalise either $B'$ or $B''$ in round $r+2$ or earlier.
+Otherwise, let $B'$ be the child of $B$ in the chain of $g_{3/5}(V_r)$. We seek to show that we finalise either $B'$ or $B''$.
 
-Let $S$ be the set of honest validators who precommit in round $r$ before the common coin is flipped. Let $S'$ be the set of honest validators who call the common coin before it is decided. Note that $S' \subset S$. 
-Since $4/5$ of validators call the coin before it decided, $S'$ and $S$ each contain at least $3/5$ of the validators.
+Let $S$ be the set of honest voters who precommit in round $r$ before $4f+1$ voters call the common coin. Let $S'$ be the set of honest voters who call the common coin before it is decided. % Note that $S' \subset S$. 
+Since $4f+1$  voters call the coin before it decided and honest voters who do so saw precommits from $4f+1$ voters, $S'$ and $S$ each contain at least $3f+1$ voters.
 
+Let $h$ be the number of voters in $S$ that precommit $B'$ or its descendants. Note that the other $|S|-h$ voters just precommit $B$.
 
-Let $h$ be the number of validators in $S$ that precommit $B''$ or its descendants. Note that the other $h-|S|$ validators just precommit $B$.
+Now consider a particular voter $v$ and the set $C_{r,v}$ of precommits they received in step 4. the number of validators with precommits in  $C_{r,v}$ is at least $4f+1$. 
+If $v \in S'$,
+All the honest validators  
+with precommits in $C_{r,v}$ are in $S$. In this case we have that the number of votes for $B'$ or its descendants in $C_{r,v}$, $m_v$ has $h-f \leq m_v < h+f$. For $v \notin S'$, since $f$ honest vali8dators can be outside $S$, we have $h-2f \leq m_v \leq h+2f$ 
 
-Now consider a particular validator $v \in S'$ and the set $C_r$ of precommits they received in step 4. the number of validators with precommits in  $C_r$ is at least $4n/5$. All the honest validators  
-with precommits in $C_r$ are in $S$.
- Thus we have that the number of votes for $B''$ or its descendants in $C_r$, $m_v$ has $h-n/5 \leq m_v < h+n/5$. Since any descendant of $B$ that is not $B''$ or its descendants receives less than $n/5$ precommits for it or its descendants, we have that either $g_{1/5}(C_r)=B$ or $g_{1/5}(C_r)\geq B'$ and similarly for $g_{3/5}(C_r)$. Now note that if $h > 2n/5$, for $v \in S'$, $m_v \geq n/5$ and so $g_{1/5}(C_r) \geq B'$. On the other hand if $h \leq 2n/5$, $m_v < 3n/5$ and so $g_{3/5}(C_r)=B$.
+Since any descendant of $B$ that is not $B'$ or its descendants receives less than $f$ precommits for it or its descendants, we have that either $g_{1/5}(C_{r,v})=B$ or $g_{1/5}(C_{r,v})\geq B'$ and similarly for $g_{4/5}(C_{r,v})$. Now note that if $h \geq 3f+1$, $m_v \geq f+1$ and so $g_{1/5}(C_{r,v}) \geq B'$. On the other hand if $h < 3f+1$, for $v \in S'$, $m_v < 4f+1$ and so $g_{4/5}(C_{r,v})=B$.
 
-If $h > 2n/5$ and $s_r=1$, then every honest validator locks a block $\geq B'$. Thus is round $r+1$, thy all prevote $\geq B'$.
-Since every honest validator waits until receiving prevotes from $4/5$ of voters, these prevotes contain vote $\geq B'$ from $3n/5$ voters and so they prevote for  $g_{3/5}(V_{r+1}) \geq B$.
+If $h \geq 3f+1$ and $s_r=1$, then every honest voter locks a block $\geq B'$. Thus is round $r+1$, they all prevote $\geq B'$.
+ By similar reasoning to Lemma \ref{lem:possibly-final-implies-permanent-lock}, we finalise $B'$, the next round $r' > r$ that we have $s_{r'}=1$.
+ 
+If $h < 3f+1$ and $s_r=0$, then every $v \in S'$ locks only $B$. But then all such $v$ will prevote their best chain containing $B$ and so a block $\geq B''$. There are only at most $2f$ voters who might not do this, the Byantine voters and the honest voters outside of $|S|$ who prevote $\geq B$. Thus any honest voter who has seen prevotes from $n-f$ voters either sees $g_{3/5}(V_{r+1,v})=B$ or $g_{3/5}(V_{r+1,v}) \geq B'$. Since all honest precommits are either $B$ or $\geq B''$, evry honest voter locks either $B$ or $\geq B''$. Since in round $r+2$, all honest voters see that the best chain including $B$ also includes $B''$, this time they all prevote $\geq B''$.  By similar reasoning to Lemma \ref{lem:possibly-final-implies-permanent-lock}, we finalise $B''$, by the next round $r' > r+1$ that we have $s_{r'}=1$.
+
+Crucially note that $h$ depends only on $S$, which is determined when $4f+1$ voters call the common coin and before it is flipped. Thus $s_r$ is independent of $h$. If $h < 3f+1$ then $s_r=0$ with probability $1/2$ and if $h \geq 3f+1$ then $s_r=1$ with probability $1/2$. So with probability $1/2$, we have either both $h < 3f+1$ and $s_r=0$ or both $h \geq 3f+1$ and $s_r=1$. Thus with probability at least $1/2$, we finalise $B'$ or $B''$ before the next round after $r+1$ when $s_r=1$.
 \end{proof}
 
 
