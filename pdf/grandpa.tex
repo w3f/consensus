@@ -45,7 +45,7 @@ We present a finality gadget that works in a partially synchronous network model
 We need to incorporate into the definition of Byzantine agreement that we have access to a protocol that would achieve eventual consensus if we did not affect it. Consider a typical definition of a multi-values Byzantine agreement: 
 We have a set of participants $V$, the majority of whom obey the protocol, but a constant fraction may be Byzantine, meaning they behave arbitrarily, e.g. provide false or inconsistent information or randomly go offline when they ought to be online.
 
-\begin{definition} A protocol for multi-valued Byzantine agreement has a set of values $S$, a set of voters $V$, a constant fraction of which may be Byzantine.  Each voter $v \in V$ starts with an initial value $s_v \in S$ and, in the end, decides a final value $f_v \in S$ such that the following holds:
+\begin{definition} A protocol for {\em multi-valued Byzantine agreement} has a set of values $S$ and a set of voters $V$, a constant fraction of which may be Byzantine, for which each voter $v \in V$ starts with an initial value $s_v \in S$ and, in the end, decides a final value $f_v \in S$ such that the following holds:
 
 \begin{itemize}
 \item {\bf Agreement}: All honest voters decide the same value for $f_v$
@@ -57,7 +57,7 @@ We have a set of participants $V$, the majority of whom obey the protocol, but a
 
 We can change this definition to assume that instead of having an initial value, all voters have access to an external protocol, an oracle for values, that achieves eventual consensus in that it returns the same value to all voters when called after some time.
 
-\begin{definition} A protocol for multi-valued Byzantine finality gadget problem has a set of values $S$, a set of voters $V$, a constant fraction of which may be Byzantine. Each voter $v \in V$ has access to an oracle $A$ with the property that ??? in the end each voter decides a final value $f_v \in S$ such that the following holds:
+\begin{definition} A protocol for the {\em multi-valued Byzantine finality gadget problem} has a set of values $S$, a set of voters $V$, a constant fraction of which may be Byzantine, for which each voter $v \in V$ has access to an oracle $A$ with the property that ??? in the end each voter decides a final value $f_v \in S$ such that the following holds:
 
 \begin{itemize}
 \item {\bf Agreement:} All honest voters decide the same value for $f_v$
@@ -74,7 +74,7 @@ But for the case $|S|=2$, the two possible definitions of validity are equivalen
 
 Now how do we extend this to agreeing on a chain of blocks? We will need the block production mechanism to build on finalised blocks, so the best chain rule must include them. We assume a kind of conditional eventual consensus. If we keep building on our last finalised block $B$ and don't finalise any new blocks, then eventually we have consensus on a longer chain than just $B$, which the finality gadget can use to finalise another block. We also want a protocol that does not terminate, but instead keeps on finalising more blocks. 
 
-\begin{definition} A protocol for the blockchain Byzantine finality gadget problem has a set of voters $V$, a constant fraction of which may be Byzantine, each of whom has access to an oracle for the best chain given the last finalised block with the property that, as long as no new block is finalised, it achieves eventual consensus on some child of the last finalised block  such that the following holds:
+\begin{definition} A protocol for the {\em blockchain Byzantine finality gadget problem} has a set of voters $V$, a constant fraction of which may be Byzantine, for which each voter $v \in V$ has access to an oracle for the best chain given the last finalised block with the property that, as long as no new block is finalised, it achieves eventual consensus on some child of the last finalised block  such that the following holds:
 
 \begin{itemize}
 \item{\bf Safety:} All honest voters finalise the same block at each block number.
