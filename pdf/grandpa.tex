@@ -87,12 +87,15 @@ Now how do we extend this to agreeing on a chain of blocks? We will need the blo
 We also consider temporal versions of the last two properties:
 
 \begin{itemize}
-\item{\bf Fast termination:} If the last finalised block has number $n$ and, until another block is finalised, the best chain observed by all validators will include the same block with block number $n+1$, then a block with number $n+1$ will be finalised within time $T$.
-\item{\bf Recent validity:} If an honest voter finalises a block $B$ then that block was seen in the best chain observed by some honest voter containing some previously finalised ancestor of $B$ more recently than time $T$ ago.
+\item{\bf Fast termination:} {\em If the last finalised block has number $n$ and, until another block is finalised, the best chain observed by all validators will include the same block with block number $n+1$, then a block with number $n+1$ will be finalised within time $T$.}
+\item{\bf Recent validity:} {\em If an honest voter finalises a block $B$ then that block was seen in the best chain observed by some honest voter containing some previously finalised ancestor of $B$ more recently than time $T$ ago.}
 \end{itemize}
-These will typically only hold with high probability. In the asynchronous case, we would need to measure time in rounds of the protocol rather than seconds to make sense of these properties.
 
-Lastly we are interested in the property of {\bf accountable safety}. This is that, if there are more than $f+1$ validators and blocks on different chains are finalised, then we can identify at least $f+1$ Byzantine validators. This wil hopefully allow us to remove them from the validator set and punish them. 
+These will typically only hold with high probability. In the asynchronous case, we would need to measure time in rounds of the protocol rather than seconds to make sense of these properties.  We are also interested in being able to remove and punish Byzantine validators:
+
+\begin{itemize}
+	\item{\bf Accountable Safety:} {\em If there are more than $f+1$ validators and blocks on different chains are finalised, then we can identify at least $f+1$ Byzantine validators.}
+\end{itemize}
 
 \subsection{Our approach}
 
