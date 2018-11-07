@@ -62,13 +62,13 @@ We can change this definition to assume that instead of having an initial value,
 \begin{itemize}
 \item {\bf Agreement:} All honest voters decide the same value for $f_v$
 \item {\bf Termination:} All honest voters eventually decide a value
-\item {\bf Validity:} All honest voters decide a value that A returned to some honest voter sometime.
+\item {\bf Validity:} All honest voters decide a value that $A$ returned to some honest voter sometime.
 \end{itemize}
 
 \end{definition}
 
-Note that, in the case $|S| > 2$, this definition of validity is stronger than that of the obvious generalisation for Multi-valued Byzantine agreement, that all honest voters decide a value with which some honest voter started with.
-This is because that definition would be impossible if the fraction of Byzantine voters is bigger than $1/|S|$, as we cannot detect Byzantine voters who act like honest voters, except for lying about their initial value. So if fewer than $1/|S|$ voters act like they have some initial value, the protocol cannot know if any are honest. 
+In the case where $|S| > 2$, this definition of validity is stronger than the validity notion in multi-valued Byzantine agreement ported here verbatim because all honest voters decide a value with which some honest voter started. 
+This is because our earlier definition would be impossible if the fraction of Byzantine voters exceeds $1/|S|$, as we cannot detect Byzantine voters who act like honest voters, except for lying about their initial value. So if fewer than $1/|S|$ voters act like they have some initial value, the protocol cannot know if any are honest. 
 
 But for the case $|S|=2$, the two possible definitions of validity are equivalent. This means that we can reduce the binary version of the Byzantine finality gadget problem above to binary Byzantine agreement, by each voter just calling $A$ at the start to obtain their initial value, since if $A$ does not return the same value to every honest voter all the time, then it returns both values to honest voters some times. Thus there are many existing algorithms for the binary Byzantine finality gadget problem. However the interesting problem in this case is whether the celebrated impossibility result of \cite{flp} generalizes to this finality gadget problem, i.e., whether this oracle which is guaranteed to achieve eventual consensus makes it possible to have an asynchronous and deterministic protocol for agreement. A reduction is not immediately obvious. It turns out that the finality gadget version is indeed impossible see \ref{ssec:impossibility}.
 
