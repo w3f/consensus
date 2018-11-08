@@ -206,7 +206,7 @@ In round $r$ an honest validator $v$ does the following:
 \begin{enumerate}
 \item $v$ can start round $r > 1$ when round $r-1$ is completable and $v$ has cast votes in all previous rounds where they are a voter. Let $t_{r,v}$ be the time $v$ starts round $r$.
 
-\item At time $t_{r,v}$, if $v$ is the primary of this round and has not finalised $E_{r-1,v}$ then they broadcast $E_{r-1,v}$. If thy have finalised it, they can broadcast $E_{r-1,v}$ anyway (but don't need to).
+\item At time $t_{r,v}$, if $v$ is the primary of this round and has not finalised $E_{r-1,v}$ then they broadcast $E_{r-1,v}$. If thy have finalised it, they can broadcast $E_{r-1,v}$ anyway (but do not need to).
 
 \item If $v$ is a voter for the prevote of round $r$, $v$ waits until either it is at least time $t_{r,v}+2T$ or round $r$ is completable, then broadcasts a prevote. They prevote for the head of the best chain containing $E_{r-1,v}$ unless we received a block $B$ from the primary and $g(V_{r-1,v}) \geq B > E_{r-1,v}$, in which case they use the best chain containing $B$ instead.
 
