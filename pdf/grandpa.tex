@@ -17,6 +17,8 @@
 \newtheorem{corollary}[theorem]{Corollary}
 \newtheorem{proposition}[theorem]{Proposition}
 
+\def\GST{\mathrm{GST}}
+
 \begin{document}
 
 
@@ -133,7 +135,7 @@ On the other hand, while building on the longest chain in the absence of a final
 
 \section{Preliminaries} \label{sec:prelims}
 
-{\bf Network model}: We will mostly be using a partially synchronous gossip network model, such as that described in \cite{Tendermint} II A. Participants communicate via a gossip network, where they are connected to a subset of other participants, and forward all messages they receive to all their connected peers. We assume that the network graph is such that any Byzantine participants are not able to cut off an honest participant and so any message sent or received by an honest participant reaches all honest participants. The partial synchrony we will use is the model where messages are received within time $T$, but possibly only after some Global Synchronisation Time $GST$. Concretely, any message sent or received by some honest participant at time $t$ is received by all honest participants by time $GST+T$ at the latest.
+{\bf Network model}: We will mostly be using a partially synchronous gossip network model, such as that described in \cite{Tendermint} II A. Participants communicate via a gossip network, where they are connected to a subset of other participants, and forward all messages they receive to all their connected peers. We assume that the network graph is such that any Byzantine participants are not able to cut off an honest participant and so any message sent or received by an honest participant reaches all honest participants. The partial synchrony we will use is the model where messages are received within time $T$, but possibly only after some Global Synchronisation Time $\GST$. Concretely, any message sent or received by some honest participant at time $t$ is received by all honest participants by time $\GST+T$ at the latest.
 
 
 {\bf voters}: We will want to change the set of participants who actively agree sometimes. To model this, we have a large set of participants who follow messages. For each voting step, there is a set of $n$ voters. We will frequently need to assume that for each such step, at most  $f < n/3$ voters are Byzantine. We need $n-f$ of voters to agree on finality. Whether or not block producers ever vote, they will need to be participants who track the state of the protocol.
@@ -325,12 +327,12 @@ An easy induction completes the proof of the proposition.
 
 \subsubsection{Weakly synchronous liveness}
 
-Now we consider the weakly synchronous gossip network model. The idea that there is some global stabilisation time($\textrm{GST}$) such that any message received or sent by an honest participant at time $t$ is received by all honest participants at time $\max\{t,\textrm{GST}\}+T$.
+Now we consider the weakly synchronous gossip network model. The idea that there is some global stabilisation time($\GST$) such that any message received or sent by an honest participant at time $t$ is received by all honest participants at time $\max\{t,\GST\}+T$.
 
 Let $t_r$ be the first time any honest participant enters round $r$ i.e. the minimum over honest participants $v$ of $t_{r,v}$.
 
 \begin{lemma} \label{lem:timings}
-Assume the weakly synchronous gossip network model and that each vote has at most $f$ Byzantine voters. Then if $t_r \geq \textrm{GST}$, we have that
+Assume the weakly synchronous gossip network model and that each vote has at most $f$ Byzantine voters. Then if $t_r \geq \GST$, we have that
 \begin{itemize}
 \item[(i)] $t_r \leq t_{r,v} \leq t_r+T$ for any honest participant $v$,
 \item[(ii)] no honest voter prevotes before time $t_r+2T$,
@@ -353,7 +355,7 @@ By the network assumption an honest voter $v'$'s precommit will be received by a
 \end{proof}
 
 \begin{lemma} \label{lem:honest-prevote-timings}
-Suppose $t_r \geq GST$ and very vote has at most $f$ Byzantine voters. Let $H_r$ be the set of prevotes ever cast by honest voters in round $r$. Then
+Suppose $t_r \geq \GST$ and very vote has at most $f$ Byzantine voters. Let $H_r$ be the set of prevotes ever cast by honest voters in round $r$. Then
 \begin{itemize}
 \item[(a)] any honest voter precommits to a block $\geq  g(H_r)$,
 
@@ -375,7 +377,7 @@ For (b), combining (a) and Lemma \ref{lem:timings} (iii), we have that any hones
 \end{proof}
 
 \begin{lemma} \label{lem:primary-finalises}
- Suppose that $t_r \geq GST$, the primary $v$ of round $r$ is honest and no vote has more than $f$ Byzantine voters. Let $B=E_{r-1,v,t_{v,r}}$ be the block $v$ broadcasts if it is not final. Then every honest prevoter prevotes for the best chain including $B$ and all honest voter finalise $B$ by time $t_r+6T$.
+ Suppose that $t_r \geq \GST$, the primary $v$ of round $r$ is honest and no vote has more than $f$ Byzantine voters. Let $B=E_{r-1,v,t_{v,r}}$ be the block $v$ broadcasts if it is not final. Then every honest prevoter prevotes for the best chain including $B$ and all honest voter finalise $B$ by time $t_r+6T$.
  \end{lemma}
 
 \begin{proof} By Lemma \ref{lem:timings} and our network assumptions, no honest voter  prevotes before time $t_r+2T \geq t_{r,v}+2T$ and so at this time, they will have seen all prevotes and precommits seen by $v$ at $t_{r,v}$ and the block $B$ if $v$ broadcast it then. By Lemma \ref{lem:message-monotonicity-completed-estimate}, any honest voter $v'$ has $E_{r-1,v'} \leq B \leq g(V_{r-1,v}$ then.
@@ -388,7 +390,7 @@ Since all honest voters prevote $\geq B$, $g(H_r) \geq B$ and so by Lemma \ref{l
 
 
 \begin{lemma}
- Suppose that $t_r \geq GST+T$ and the primary of round $r$ is honest. 
+ Suppose that $t_r \geq \GST+T$ and the primary of round $r$ is honest. 
 Let $B$ be the latest block that is ever finalised in rounds  $<r$ (even if no honest participant finalises it until after $t_r$). If all honest voters for the prevote in round $r$ agree that the best chain containing $B$ include the same child $B'$ of $B$, then they all finalises some child of $B$ before $t_r+6T$.
 \end{lemma}
 
@@ -404,14 +406,14 @@ Let $B$ be the latest block that is ever finalised in rounds  $<r$ (even if no h
 \subsubsection{Recent Validity}
 
 \begin{lemma} \label{lem:honest-recent-validity}
-Suppose that $t_r \geq GST$, the primary of round $r$ is honest and all votes have at most $f$ Byzantine voters. Let $B$ be a block that no prevoter in round $r$ saw as being in the best chain of an ancestor of $B$ at the time they prevoted. Then either all honest validators finalise $B$ before time $t_r+6T$ or no honest validator ever has $g(V_{r,v}) \geq B$ or $E_{r,v} \geq B$.
+Suppose that $t_r \geq \GST$, the primary of round $r$ is honest and all votes have at most $f$ Byzantine voters. Let $B$ be a block that no prevoter in round $r$ saw as being in the best chain of an ancestor of $B$ at the time they prevoted. Then either all honest validators finalise $B$ before time $t_r+6T$ or no honest validator ever has $g(V_{r,v}) \geq B$ or $E_{r,v} \geq B$.
 \end{lemma}
 
 \begin{proof} Let $v'$ be the primary of round $r$ and let $B'=E_{r-1,v',t_{r,v'}}$. If $B' \geq B$, then by Lemma \ref{lem:primary-finalises}, all honest validators finalise $B$ by time $t_r+6T$. If $B' \not\geq B$, then by Lemma \ref{lem:primary-finalises}, no honest validator prevotes $\geq B$ and so no honest validator ever has $g(V_{r,v}) \geq B$.
 \end{proof}
 
 
-\begin{corollary} For $t - 6T > t' \geq GST$, suppose that an honest validator finalises $B$ at time $t$ but that no honest voter has seen $B$ as in the best chain containing some ancestor of $B$ in between times $t'$ and $t$, then at least $(t-t')/6T - 1$ rounds in a row had Byzantine primaries. \end{corollary}
+\begin{corollary} For $t - 6T > t' \geq \GST$, suppose that an honest validator finalises $B$ at time $t$ but that no honest voter has seen $B$ as in the best chain containing some ancestor of $B$ in between times $t'$ and $t$, then at least $(t-t')/6T - 1$ rounds in a row had Byzantine primaries. \end{corollary}
 
 
 
@@ -471,7 +473,7 @@ So we have two possible chain selection rules for block producers:
 
 \subsection{Why do we wait at the end of a round and sometimes before precommitting?}
 
-If the network  is badly behaved, then these steps may involve waiting an arbitrarily long time. When the network is well behaved (after the GST in our model), we should not be waiting. Indeed there is little point not waiting to receive 2/3 of voters' votes as we cannot finalise anything without them. But if the gossip network is not perfect, an some messages never arrive, then we may need to implement voters asking other voters for votes from previous rounds in a similar way to the challenge procedure, to avoid deadlock.
+If the network  is badly behaved, then these steps may involve waiting an arbitrarily long time. When the network is well behaved (after the $\GST$ in our model), we should not be waiting. Indeed there is little point not waiting to receive 2/3 of voters' votes as we cannot finalise anything without them. But if the gossip network is not perfect, an some messages never arrive, then we may need to implement voters asking other voters for votes from previous rounds in a similar way to the challenge procedure, to avoid deadlock.
 
 In exchange for this, we get the property that we do not need to pay attention to votes from before the previous round in order to vote correctly in this one. Without waiting, we could be in a situation where we might have finalised a block in some round r, but the network becomes unreliable for many rounds and gets few votes on time, in which case we' need to remember the votes from round r to finalise the block later. 
 
