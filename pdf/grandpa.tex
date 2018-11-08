@@ -75,7 +75,11 @@ But for the case $|S|=2$, the two possible definitions of validity are equivalen
 
 Now how do we extend this to agreeing on a chain of blocks? We will need the block production mechanism to build on finalised blocks, so the best chain rule must include them. We assume a kind of conditional eventual consensus. If we keep building on our last finalised block $B$ and don't finalise any new blocks, then eventually we have consensus on a longer chain than just $B$, which the finality gadget can use to finalise another block. We also want a protocol that does not terminate, but instead keeps on finalising more blocks. 
 
-\begin{definition} A protocol for the blockchain Byzantine finality gadget problem has a set of voters $V$, a constant fraction of which may be Byzantine, each of whom has access to an oracle for the best chain given the last finalised block with the property that, as long as no new block is finalised, it achieves eventual consensus on some child of the last finalised block  such that the following holds:
+We assume that there is a block production protocol $P$ that runs at the same time as the finality gadget protocol $G$. Actors who participant in both protocols may behave differently in $P$ depending on what happened in $G$. However in the reverse direction, the only way that an honest voter $v$'s behaviour in $G$ is affected by $P$ is through a voting rule, a function $A(v,s_v,B)$ that depends on $v$ and its state $s_v$ and takes a block $B$ and returns a block $B'$ at the head of a chain including $B$.
+
+We say that the system $F$,$G$ and $A$ achieves conditional eventual consensus, if $F$ has finalised a block $B$, then eventually, either $F$ will finalise some descendant of $B$ or else all the chains with head $A_{v,s_v}(B)$ for all voters $v$ at all future states $s_v$ will contain the same descendant $B'$ of $B$.
+
+\begin{definition} \label{def:finality-gadget} A protocol for the blockchain Byzantine finality gadget problem has a set of voters $V$, a constant fraction of which may be Byzantine, each of whom has access to an oracle for the best chain given the last finalised block with the property that, as long as no new block is finalised, it achieves eventual consensus on some child of the last finalised block such that the following holds:
 
 \begin{itemize}
 \item{\bf Safety:} All honest voters finalise the same block at each block number.
@@ -85,7 +89,8 @@ Now how do we extend this to agreeing on a chain of blocks? We will need the blo
 
 \end{definition}
 
-We also consider temporal versions of the last two properties:
+As a motivating example, we could take $F$ as being using proof of work to build on the longest chain including the last block $G$ finalised and take $A(v,s_v,B)$ as being the longest chain including $B$ that $v$ sees in state $s_v$. It is well-known \cite{bitcoinpapers} that longest chain with proof of work achieves eventual consensus under the right assumptions and similar arguments show that in this case we have conditional eventual consensus. As long as we do not change the chain we are building on by finalising another block, then we will eventually agree on some prefix longer than the last finalised block. Thus any finality gadget that satisfies Definition \ref{def:finality-gadget}, will work in this system so that all honest voters finalise an increasingly long common chain. Thanks to the abstraction above, we can switch $F$ for one of many possible alternative consensus algorithms and $G$ will still work.
+
 
 \begin{itemize}
 \item{\bf Fast termination:} If the last finalised block has number $n$ and, until another block is finalised, the best chain observed by all validators will include the same block with block number $n+1$, then a block with number $n+1$ will be finalised within time $T$.
