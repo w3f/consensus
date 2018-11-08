@@ -133,12 +133,12 @@ On the other hand, while building on the longest chain in the absence of a final
 
 \section{Preliminaries} \label{sec:prelims}
 
-{\bf Network model}: We will be mostly using a partially synchronous gossip network model, such as that described in \cite{Tendermint} II A. Participants communicate via a gossip network, where they are connected to a subset of other participants, and forward all messages they receive to all their connected peers. We assume that the network graph is such that any Byzantine participants are not able to cut off an honest participant and so any message sent or received by an honest participant reaches all honest participants. The partial synchrony we will use is the model where messages are received within time $T$, but possibly only after some Global Synchronisation Time $GST$. Concretely, any message sent or received by some honest participant at time $t$ is received by all honest participants by time $GST+T$ at the latest.
+{\bf Network model}: We will mostly be using a partially synchronous gossip network model, such as that described in \cite{Tendermint} II A. Participants communicate via a gossip network, where they are connected to a subset of other participants, and forward all messages they receive to all their connected peers. We assume that the network graph is such that any Byzantine participants are not able to cut off an honest participant and so any message sent or received by an honest participant reaches all honest participants. The partial synchrony we will use is the model where messages are received within time $T$, but possibly only after some Global Synchronisation Time $GST$. Concretely, any message sent or received by some honest participant at time $t$ is received by all honest participants by time $GST+T$ at the latest.
 
 
 {\bf voters}: We will want to change the set of participants who actively agree sometimes. To model this, we have a large set of participants who follow messages. For each voting step, there is a set of $n$ voters. We will frequently need to assume that for each such step, at most  $f < n/3$ voters are Byzantine. We need $n-f$ of voters to agree on finality. Whether or not block producers ever vote, they will need to be participants who track the state of the protocol.
 
-{\bf votes}: A vote is a block hash, together with some metadata such as round number and type of vote (prevote/precommit), all signed with a voter's private key.
+{\bf votes}: A vote is a block hash, together with some metadata such as round number and the type of vote, such as {\em prevote} or {\em precommit}, all signed with a voter's private key.
 
 {\bf Rounds}: each participant has their own idea of what the current round number is. Every prevote and precommit has an associated round number. Honest voters only vote once (for each type of vote) in each round and don't vote in earlier rounds after later ones.
 
