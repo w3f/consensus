@@ -103,7 +103,7 @@ To discover up with a solution to the blockchain Byzantine finality gadget probl
 
 For example, suppose we have a one block protocol that calls for a vote on blocks which requires a participant to observe a supermajority, say votes from  $2/3$ of voters, for some block, or else the participant observes that the vote is undecided. Now imagine running this vote in parallel for every block number and have any honest voter vote for blocks from a particular chain. Byzantine voters may vote more than once, but if we count a vote for a block as a vote for each ancestor of the block in the vote for the instance of the one block protocol with its number, then Byzantine voters must also vote for chains, though they can vote for multiple chains. If we do this, then we see that if a block has a supermajority in a vote, then so does all its ancestors in their votes. Thus the blocks with a supermajority form a chain. Furthermore, if only $1/3$ of voters equivocate then if a participant sees a subset of the votes for chains, then they must see a prefix of the chain of blocks for which all the votes have supermajorities. Intuitively, the protocol can agree on the prefix that $2/3$ of voters agree on using this.
 
-To ensure safety, each participant maintains an estimate $E_r$ of the last block that could have been finalised in a round $r$. This has the property that in  future rounds it overestimates the block that could have been finalised so that in round $r$, the chain with head $E_{r-1}$ contains all blocks that could have been finalised. Any honest voter only votes in round $r$ for chains containing their estimate $E_{r-1}$ and this guarantees that any block that could have been finalised in round $r-1$ will be finalised in round $r$.
+To ensure safety, each participant maintains an estimate $E_r$ of the last block that could have been finalised in a round $r$. This has the property that in future rounds it overestimates the block that could have been finalised so that in round $r$, the chain with head $E_{r-1}$ contains all blocks that could have been finalised. Any honest voter only votes in round $r$ for chains containing their estimate $E_{r-1}$ and this guarantees that any block that could have been finalised in round $r-1$ will be finalised in round $r$.
 
 \subsection{Related Work}
 
@@ -122,7 +122,7 @@ Casper...
 There are two main differences between Casper FFG and GRANDPA. One is that in GRANDPA, different voters can cast votes simultaneously for blocks at different heights.
 
 The other main difference is how the finality gadget affects the fork-choice rule of the underlying block production mechanism. In GRANDPA, by default we will assume that this is only affected by having to include any finalised blocks. 
-\cite{CasperFFG} does not specify a fork-choice rule, but it requires that we build on justified blocks for liveness. Later specifications of Casper use the GHOST rule on votes for fork-choice.
+Casper FFG \cite{CasperFFG} does not specify a fork-choice rule, but it requires that we build on justified blocks for liveness. Later specifications of Casper use the GHOST rule on votes for fork-choice.
 
 Only depending on finalised blocks gives a clearer separation between the block production mechanism and finality gadget. It may therefore be easier to adapt to other types of protocol that achieve eventual consensus—and there have been many diverse protocols that do this developed in the last few years. It also makes it far easier to prove liveness properties. If the finality gadget has not finalised anything and so does not interfere, then the underlying mechanism should reach eventual consensus, which should be enough for the finality gadget to finalise whatever we have consensus on.
 
@@ -175,10 +175,9 @@ Note that we can easily update $g(S)$ to $g(S \cup \{v\})$, by checking if any c
 
 3 tells us that even if validators see different subsets of the votes cast in a given voting round, this rule may give them different blocks but all such blocks are in the same chain under this assumption. 
 
-We say that it is possible for a set $S$ to have a supermajority for $B$ if $2f+1$ validators either vote for a block $\not \geq B$ or equivocate in $S$. Note that if $S$ is tolerant, it is possible for $S$ to have a supermajority for $B$ if and only if there is a tolerant $T \supseteq S$ that has a supermajority for $B$.
+We say that it is {\em possible} for a set $S$ to have a supermajority for $B$ if $2f+1$ validators either vote for a block $\not \geq B$ or equivocate in $S$. Note that if $S$ is tolerant, it is possible for $S$ to have a supermajority for $B$ if and only if there is a tolerant $T \supseteq S$ that has a supermajority for $B$.
 
-
-We say that it is impossible for any child of $B$ to have a supermajority in $S$ if $S$ has votes from at least $2f+1$ validators and it is impossible for $S$ to have a supermajority for each child of $B$ appearing on the chain of any vote in $S$. Again, provided $S$ is tolerant, this holds if and only if for any possible child of $B$, there is no tolerant $T \subseteq S$ that has a supermajority for that child.
+We say that it is {\em impossible} for any child of $B$ to have a supermajority in $S$ if $S$ has votes from at least $2f+1$ validators and it is impossible for $S$ to have a supermajority for each child of $B$ appearing on the chain of any vote in $S$. Again, provided $S$ is tolerant, this holds if and only if for any possible child of $B$, there is no tolerant $T \subseteq S$ that has a supermajority for that child.
 
 Note that it is possible for an intolerant $S$ to both have a supermajority for $S$ and for it to be impossible to have such a supermajority under these definitions, as we regard such sets as impossible anyway.
 
