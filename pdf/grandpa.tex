@@ -5,7 +5,7 @@
 \usepackage{amsthm}
 \usepackage{fullpage}
 
-\usepackage{hyperref}
+\usepackage[bookmarks=true, unicode=true, pdftitle={GRANDPA: a blockchain finality gadget}, pdfauthor={Alistair Stewart},pdfkeywords={Polkadot, blockchain finality gadget},pdfborder={0 0 0.5 [1 3]}]{hyperref}
 \usepackage{url}
 \usepackage[numbers]{natbib}
 
@@ -35,15 +35,15 @@ This is useful to prove what happened to light clients, who do not have the full
 Another popular consensus mechanism for blockchains is to get Byzantine agreement on each block.
 This gives provable finality immediately. However this is slow if we have a large set of participants in the Byzantine agreement.
 
-The approach that we will take is similar to the approach that Ethereum plans to take with Casper the Friendly Finality Gadget(Casper FFG)\cite{CasperFFG}, which combines these approaches
+The approach that we will take is similar to the approach that Ethereum plans to take with Casper the Friendly Finality Gadget (Casper FFG)\cite{CasperFFG}, which combines these approaches.
 We will use a block production mechanism and chain selection rule that give eventual consensus and then add a finality gadget, a protocol that finalises blocks that the participants already agree on, to get provable finality.
 
-We present a finality gadget that works in a partially synchronous network model, GRANDPA, as well as an asynchronous finality gadget, that can cope with $1/5$ Byzantine guys. We first seek to formalise the finality gadget problem.
+We present a finality gadget that works in a partially synchronous network model, GRANDPA, as well as an asynchronous finality gadget, that can cope with $1/5$ Byzantine nodes. We first seek to formalise the finality gadget problem.
 
 \subsection{Formalising the problem}
 
-We need to incorporate into the definition of Byzantine agreement that we have access to a protocol that would achieve eventual consensus if we did not affect it. Consider a typical definition of multi-values Byzantine agreement.
-We have a	set of participants $V$, most of which obey the protocol, but a constant fraction may be Byzantine i.e. behave arbitrarily
+We need to incorporate into the definition of Byzantine agreement that we have access to a protocol that would achieve eventual consensus if we did not affect it. Consider a typical definition of a multi-values Byzantine agreement.
+We have a	set of participants $V$, most of which obey the protocol, but a constant fraction may be Byzantine, i.e. behave arbitrarily, e.g. provide false or inconsistent information or randomly go offline when they ought to be online.
 
 \begin{definition} A protocol for multi-valued Byzantine agreement has a set of values $S$, a set of voters $V$, a constant fraction of which may be Byzantine, each of whom start with an initial value $s_v \in S$ for each $v \in V$ and in the end each voter decides a final value $f_v \in S$ such that the following holds:
 
@@ -68,10 +68,10 @@ We can change this definition to assume that instead of having an initial value,
 
 \end{definition}
 
-Note that, in the case $|S| > 2$, this definition of validity is stronger than that the obvious generalisation for Multi-valued Byzantine agreement, that all honest voters decide a value with which some honest voter started with.
-This is because that definition would be impossible if the fraction of Byzantine voters is bigger than $1/|S|$ as we cannot detect Byzantine voters who act like honest voters except for lying about their initial value so if fewer than $1/|S|$ voters act like they have some initial value, the protocol cannot know if any are honest. 
+Note that, in the case $|S| > 2$, this definition of validity is stronger than that of the obvious generalisation for Multi-valued Byzantine agreement, that all honest voters decide a value with which some honest voter started with.
+This is because that definition would be impossible if the fraction of Byzantine voters is bigger than $1/|S|$, as we cannot detect Byzantine voters who act like honest voters, except for lying about their initial value. So if fewer than $1/|S|$ voters act like they have some initial value, the protocol cannot know if any are honest. 
 
-But for the case $|S|=2$, the two possible definitions of validity are equivalent. This means that we can reduce the binary version of the Byzantine finality gadget problem above to binary Byzantine agreement by each voter just calling $A$ at the start to obtain their initial value since if $A$ does not return the same value to every honest voter all the time then it returns both values to honest voters some times. Thus there are many existing algorithms for the binary Byzantine finality gadget problem. However the interesting problem in this case is whether the celebrated impossibility result of \cite{flp} generalizes to this finality gadget problem i.e. whether this oracle which is guaranteed to achieve eventual consensus makes it possible to have an asynchronous and deterministic protocol for agreement. A reduction is not immediately obvious. It turns out that the finality gadget version is indeed impossible see \ref{ssec:impossibility}.
+But for the case $|S|=2$, the two possible definitions of validity are equivalent. This means that we can reduce the binary version of the Byzantine finality gadget problem above to binary Byzantine agreement, by each voter just calling $A$ at the start to obtain their initial value, since if $A$ does not return the same value to every honest voter all the time, then it returns both values to honest voters some times. Thus there are many existing algorithms for the binary Byzantine finality gadget problem. However the interesting problem in this case is whether the celebrated impossibility result of \cite{flp} generalizes to this finality gadget problem, i.e., whether this oracle which is guaranteed to achieve eventual consensus makes it possible to have an asynchronous and deterministic protocol for agreement. A reduction is not immediately obvious. It turns out that the finality gadget version is indeed impossible see \ref{ssec:impossibility}.
 
 Now how do we extend this to agreeing on a chain of blocks? We will need the block production mechanism to build on finalised blocks, so the best chain rule must include them. We assume a kind of conditional eventual consensus. If we keep building on our last finalised block $B$ and don't finalise any new blocks, then eventually we have consensus on a longer chain than just $B$, which the finality gadget can use to finalise another block. We also want a protocol that does not terminate, but instead keeps on finalising more blocks. 
 
@@ -88,10 +88,10 @@ Now how do we extend this to agreeing on a chain of blocks? We will need the blo
 We also consider temporal versions of the last two properties:
 
 \begin{itemize}
-\item{\bf Fast termination:} If the last finalised block has number $n$ and, until another block is finalised, the best chain observed by all validators will incluse the same block with block number $n+1$, then a block with number $n+1$ will be finalised within time $T$.
+\item{\bf Fast termination:} If the last finalised block has number $n$ and, until another block is finalised, the best chain observed by all validators will include the same block with block number $n+1$, then a block with number $n+1$ will be finalised within time $T$.
 \item{\bf Recent validity:} If an honest voter finalises a block $B$ then that block was seen in the best chain observed by some honest voter containing some previously finalised ancestor of $B$ more recently than time $T$ ago.
 \end{itemize}
-These will typically only hold woth high probability. In the asynchronous case, we would need to measure time in rounds of the protocol rather than seconds to make sinse of these properties.
+These will typically only hold with high probability. In the asynchronous case, we would need to measure time in rounds of the protocol rather than seconds to make sense of these properties.
 
 Lastly we are interested in the property of {\bf accountable safety}. This is that, if there are more than $f+1$ validators and blocks on different chains are finalised, then we can identify at least $f+1$ Byzantine validators. This wil hopefully allow us to remove them from the validator set and punish them. 
 
@@ -99,7 +99,7 @@ Lastly we are interested in the property of {\bf accountable safety}. This is th
 
 To come up with a solution to the blockchain Byzantine finality gadget problem, we will typically look at various Byzantine agreement protocols and use those to find protocols for the  multi-valued Byzantine finality gadget problem. Protocols for that with appropriate properties can used to find protocols for the blockchain Byzantine finality gadget problem by considering running them in parallel at every block number. If the one block protocol has the right properties then they will agree on blocks consistently so if we finalise a block then we also finalise its ancestors and we can come up with a succinct protocol.
 
-For example, suppose we have a one block protocol that calls for a vote on blocks which requires a participant to observe a supermajority, say votes from  $2/3$ of voters, for some block (or else the participant observes that the vote is undecided). Now imagine running this vote in parallel for every block number and have any honest voter vote for blocks from a particular chain. Byzantine voters may vote more than once, but if we count a vote for a block as a vote for each ancestor of the block in the vote for the instance of the one block protocol with its number, then Byzantine voters must also vote for chains, though they can vote for multiple chains. If we do this, then we see that if a block has a supermajority in a vote, then so does all its ancestors in their votes. Thus the blocks with a supermajority form a chain. Furthermore, if only $1/3$ of voters equivocate then from if a participant sees a subset of the votes for chains, then they must see a prefix of the chain of blocks that all the votes have supermajorities for. Intuitively, the protocol can agree on the prefix that $2/3$ of voters agree on using this.
+For example, suppose we have a one block protocol that calls for a vote on blocks which requires a participant to observe a supermajority, say votes from  $2/3$ of voters, for some block (or else the participant observes that the vote is undecided). Now imagine running this vote in parallel for every block number and have any honest voter vote for blocks from a particular chain. Byzantine voters may vote more than once, but if we count a vote for a block as a vote for each ancestor of the block in the vote for the instance of the one block protocol with its number, then Byzantine voters must also vote for chains, though they can vote for multiple chains. If we do this, then we see that if a block has a supermajority in a vote, then so does all its ancestors in their votes. Thus the blocks with a supermajority form a chain. Furthermore, if only $1/3$ of voters equivocate then if a participant sees a subset of the votes for chains, then they must see a prefix of the chain of blocks that all the votes have supermajorities for. Intuitively, the protocol can agree on the prefix that $2/3$ of voters agree on using this.
 
 To ensure safety, each participant maintains an estimate $E_r$ of the last block that could have been finalised in a round $r$. This has the property that in  future rounds it overestimates the block that could have been finalised so that in round $r$, the chain with head $E_{r-1}$ contains all blocks that could have been finalised. Any honest voter only votes in round $r$ for chains containing their estimate $E_{r-1}$ and this guarantees that any block that could have been finalised in round $r-1$ will be finalised in round $r$.
 
@@ -109,7 +109,7 @@ To ensure safety, each participant maintains an estimate $E_r$ of the last block
 
 The concept of finality gadget was introduced in Casper the friendly finality gadget and this remains the finality gadget which is most similar to ours. So it makes sense to compare these. However first, we should mention the other protocols that are also called Casper.
 
-The first Casper was Casper TFG. Casper CBC\cite{CasperCBC} gives a recent and clearly specified version of this protocol. It's fork choice rule uses the GHOST selection rule on votes. In Casper TFG, votes are blocks, but they are counted by owner like votes, which different from how GHOST would be used with proof of work. It also has a flexible way of subjectively finalising blocks based on graphs of votes. 
+The first Casper was Casper TFG. Casper CBC\cite{CasperCBC} gives a recent and clearly specified version of this protocol. It's fork choice rule uses the GHOST selection rule on votes. In Casper TFG, votes are blocks, but they are counted by participants (proposers and validators) like votes, which differs from how GHOST would be used with proof of work. It also has a flexible way of subjectively finalising blocks based on graphs of votes. 
 
 In Casper FFG\cite{CasperFFG}, validators vote on links between checkpoints, which occur at block numbers that are multiples of, say, 50. If there are 2/3 votes for one block at consecutive checkpoints, then we can finalise a chain of blocks up to the first checkpoint.
 
@@ -122,7 +122,7 @@ There are two main differences between Casper FFG and GRANDPA. One is that in GR
 The other main difference is how the finality gadget affects the fork-choice rule of the underlying block production mechanism. In GRANDPA, by default we will assume that this is only affected by having to include any finalised blocks. 
 \cite{CasperFFG} does not specify a fork-choice rule, but it requires that we build on justified blocks for liveness. Later specifications of Casper use the GHOST rule on votes for fork-choice.
 
-Only depending on finalised blocks gives a clearer separation between the block prduction mechanism and finality gadget. It may therefore be easier to adapt to other types of protocol that achieve eventual consensus - and there have been many diverse protocols that do this developed in the last few years. It also makes it far easier to prove liveness properties. If the finality gadget has not finalised anything and so does not interfere, then the underlying mechanism should reach eventual consensus, which should be enough for the finality gadget to finalise whatever we have consensus on.
+Only depending on finalised blocks gives a clearer separation between the block production mechanism and finality gadget. It may therefore be easier to adapt to other types of protocol that achieve eventual consensus—and there have been many diverse protocols that do this developed in the last few years. It also makes it far easier to prove liveness properties. If the finality gadget has not finalised anything and so does not interfere, then the underlying mechanism should reach eventual consensus, which should be enough for the finality gadget to finalise whatever we have consensus on.
 
 On the other hand, while building on the longest chain in the absence of a finality gadget to maximize block rewards may be rational if everyone else does, this is not always the case for building on the longest chain including the last finalised block. This is because it may be likely that a different chain is going to be finalised, in which case the rational thing to do might be to build on that. The GHOST on votes fork choice rule of ? and ? may be more rational. It is not clear that it is, nor is it clear how to prove liveness for such a rule. Further research may be needed to show that there is a fork choice rule which is rational and leads to liveness for the finality gadget. 
 
@@ -131,7 +131,7 @@ On the other hand, while building on the longest chain in the absence of a final
 
 \section{Preliminaries} \label{sec:prelims}
 
-{\bf Network model:} We will be mostly using a partially synchronous gossip network model, such as that described in \cite{Tendermint} II A. Participants communicate via a gossip network, where they are connected to a subset of other participants, and forward all messages they receive to all their connected peers. We assume that the network graph is such that any Byzantine participants are not able to cut of an honest participant and so any message sent or received by an honest participant reaches all honest participants. The partial synchrony we will use is the model where messages are received within time $T$, but possibly only after some Global Synchronisation Time{GST). Concretely, any message sent or received by some honest participant at time $t$ is received by all honest participants by time $\max{t,GST}+T$ at the latest.
+{\bf Network model}: We will be mostly using a partially synchronous gossip network model, such as that described in \cite{Tendermint} II A. Participants communicate via a gossip network, where they are connected to a subset of other participants, and forward all messages they receive to all their connected peers. We assume that the network graph is such that any Byzantine participants are not able to cut off an honest participant and so any message sent or received by an honest participant reaches all honest participants. The partial synchrony we will use is the model where messages are received within time $T$, but possibly only after some Global Synchronisation Time $GST$. Concretely, any message sent or received by some honest participant at time $t$ is received by all honest participants by time $GST+T$ at the latest.
 
 
 {\bf voters}: We will want to change the set of participants who actively agree sometimes. To model this, we have a large set of participants who follow messages. For each voting step, there is a set of $n$ voters. We will frequently need to assume that for each such step, at most  $f < n/3$ voters are Byzantine. We need $n-f$ of voters to agree on finality. Whether or not block producers ever vote, they will need to be participants who track the state of the protocol.
@@ -148,7 +148,7 @@ Participants remember which block they see as currently being the latest finalis
 For block $B$, we write $\mathrm{chain}(B)$ for the chain whose head is $B$. The block number, $n(B)$ of a block $B$ is the length of $\mathrm{chain}(B)$.
 
 For blocks $B'$, $B$, $B$ is later than $B'$ if it has a higher block number.
-We write $B > B'$ or that $B$ is descendant of $B'$ for $B$, $B'$ appearing in the same blockchain with $B'$ later i.e. $B \in \mathrm{chain}(B')$ with $n(B') > n(B)$ and $B < B'$ or $B$ is an ancestor of $B'$ for $B' \in \mathrm{chain}(B)$ with $n(B) > n(B')$. $B \geq B'$ and $B \leq B'$ are similar except allowing $B = B$. We write $B \sim B'$ or $B$ and $B'$ are on the same chain if $B<B'$,$B=B'$ or $B> B'$ and $B \nsim B'$ or $B$ and $B'$ are not on the same chain if there is no such chain.
+We write $B > B'$ or that $B$ is descendant of $B'$ for $B$, $B'$ appearing in the same blockchain with $B'$ later i.e. $B \in \mathrm{chain}(B')$ with $n(B') > n(B)$ and $B < B'$ or $B$ is an ancestor of $B'$ for $B' \in \mathrm{chain}(B)$ with $n(B) > n(B')$. $B \geq B'$ and $B \leq B'$ are similar except allowing $B = B$. We write $B \sim B'$ or $B$ and $B'$ are on the same chain if $B<B'$, $B=B'$ or $B> B'$; and $B \nsim B'$ or $B$ and $B'$ are not on the same chain if there is no such chain.
 
 Blocks are ordered as a tree with the genesis block as root. So any two blocks have a common ancestor but two blocks not on the same chain do not have a common descendant.
 
