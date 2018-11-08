@@ -195,9 +195,9 @@ Note that it is possible for an intolerant $S$ to both have a supermajority for 
 
 We let $V_{r,v}$ and $C_{r,v}$ be the sets of prevotes and precommits respectively received by $v$ from round $r$ at the current time.
 
-We define $E_{r,v}$, $v$'s estimate of what might have been finalised in round $r$, to be the last block in the chain with head $g(V_{r,v})$ that it is possible for $C_{r,r}$ to have a supermajority for. If either $E_{r,v} < g(V_{r,v})$ or it is impossible for $C_{r,v}$ to have a supermajority for any children of $g(V_{r,v})$,, then we say that ($v$ sees that) round $r$ is completable. $E_{0,v}$ is the genesis block (if we start at $r=1$).
+We define $E_{r,v}$ to be $v$'s estimate of what might have been finalised in round $r$ given by the last block in the chain with head $g(V_{r,v})$ for which it is possible for $C_{r,r}$ to have a supermajority. If either $E_{r,v} < g(V_{r,v})$ or it is impossible for $C_{r,v}$ to have a supermajority for any children of $g(V_{r,v})$,, then we say that {\em $v$ sees that round $r$ is completable}. $E_{0,v}$ is the genesis block, assuming we start at $r=1$.
 
-We have a time bound $T$, that we hope is enough to send messages and gossip them to everyone. 
+We have a time bound $T$ that we hope suffices to send messages and gossip them to everyone. 
 
 In round $r$ an honest validator $v$ does the following:
 
