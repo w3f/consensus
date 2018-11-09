@@ -283,10 +283,9 @@ If we receive a valid commit message for $B$ for round $r$, then it contains eno
 
 \subsection{ Accountable Safety}
 
-The first thing we want to show is asynchronous safety, assuming we have at most $f$ Byzantine voters:
+The first thing we want to show is asynchronous safety, assuming we have at most $f$ Byzantine voters. This follows from the property that if $v$ sees round $r$ as completable then any block $B$ with $E_{r,v} \not\leq B$ has that it is impossible for one of $C_{r,v}$ or $V_{r,v}$ to have a supermajority for $B$ and so $B$ was not finalised in round $r$. This ensures that all honest prevotes and precommits in round $r+1$ are for chains that include any blocks that could have been finalised in round $r$. With an induction, this is what ensures that we cannot finalise blocks on different chains. To show accountable safety, we need to turn this proof around to show the contrapositive, when we finalise different blocks , then there are $f+1$ Byzantine voters. If we make this proof constructive, then it gives us a challenge procedure, that can assign blame to such voters.
 
-
-\begin{theorem} If the protocol finalises any two blocks $B,B'$ for which valid commit messages were sent, but which do not lie on the same chain, then there are at least $f+1$ Byzantine voters who all voted in a particular vote. Furthermore, there is a synchronous procedure to find some such set $X$ of $f+1$ Byzantine voters.
+\begin{theorem} \label{thm:accountable} If the protocol finalises any two blocks $B,B'$ for which valid commit messages were sent, but which do not lie on the same chain, then there are at least $f+1$ Byzantine voters who all voted in a particular vote. Furthermore, there is a synchronous procedure to find some such set $X$ of $f+1$ Byzantine voters.
 \end{theorem}
 
 The challenge procedure works as follows: If $B$ and $B'$ are committed in the same round, then the union of their precommits must contain at least $f$ equivocations, so we are done.  Otherwise, we may assume by symmetry that $B$ was committed in round $r$ and $B'$ in round $r' > r$.  There are at least $n-f$ voters who precomitted $\geq B'$ in round $r$ in their commit messages, so we ask them why they precomitted.
@@ -335,7 +334,7 @@ By Lemma \ref{lem:impossible} (i), this means $C_{r-1,v}$ did not have a superma
 Thus we have that, at the time of th vote, for one of $V_{r-1,v}$, $C_{r-1,v}$, it was impossible to have a supermajority for $B$. The current sets $V_{r-1,v}$ and $C_{r-1,v}$ are supersets of those at the time of the vote, and so by Lemma \ref{lem:impossible} (ii), it is still impossible. Thus $v$ can respond validly.
 
 
-This is enough to show Theorem 1. Not that if $v$ sees a commit message for a block $B$ in round $r$ and has that $E_{r',v} \not\geq B$, for some completable round $r' \geq r$, then they should also be able to start a challenge procedure that successfully identifies at least $f+1$ Byzantine voters in some round. Thus we have that:
+This is enough to show Theorem \ref{thm:accountable} . Not that if $v$ sees a commit message for a block $B$ in round $r$ and has that $E_{r',v} \not\geq B$, for some completable round $r' \geq r$, then they should also be able to start a challenge procedure that successfully identifies at least $f+1$ Byzantine voters in some round. Thus we have that:
 
 \begin{lemma} \label{lem:overestimate-final}
 If there at most $f$ Byzantine voters in any vote, $B$ was finalised in round $r$ and an honest participant $v$ sees that round $r' \geq r$ is completable, then $E_{r',v} \geq B$.
