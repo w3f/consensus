@@ -244,32 +244,35 @@ If we receive a valid commit message for $B$ for round $r$, then it contains eno
 
 \subsection{ Accountable Safety}
 
-The first thing we want to show is asynchronous safety if we have at most $f$ Byzantine validators:
+The first thing we want to show is asynchronous safety, assuming we have at most $f$ Byzantine validators.
 
-\begin{theorem} If the protocol finalises any two blocks $B,B'$ that have valid commit messages sent are on the same chain, then there are at least $f+1$ Byzantine voters who all voted in a particular vote. Furthermore, there is a synchronous procedure to find such a set.
+\begin{theorem} If the protocol finalises any two blocks $B,B'$ for which valid commit messages were sent, but which do not lie on the same chain, then there are at least $f+1$ Byzantine voters who all voted in a particular vote. Furthermore, there is a synchronous procedure to find some such of $f+1$ Byzantine voters.
 \end{theorem}
 
-The challenge procedure works as follows: If $B$ and $B'$ are committed in the same round, then the union of their precommits must contain at least $f$ equivocations, so we are done. Otherwise $B$ was committed in round $r$ and $B'$ in round $r' > r$ say. Then we ask the at least $n-f$ validators who precomitted $\geq B'$ in round $r$ in the commit message, why they precomitted.
+The challenge procedure works as follows: If $B$ and $B'$ are committed in the same round, then the union of their precommits must contain at least $f$ equivocations, so we are done.  Otherwise, we may assume by symmetry that $B$ was committed in round $r$ and $B'$ in round $r' > r$.  There are at least $n-f$ validators who precomitted $\geq B'$ in round $r$ in their commit messages, so we ask them why they precomitted.
 
 We ask queries of the following form: 
-
-- Why was $E_{r''-1} \not\geq B$  when you prevoted for or precomitted to $B'' \not\geq B$ in round $r'' > r$?
-
-Which any honest validator should be able to respond to as is shown in Lemma \ref{lem:honest-answer} below. 
+\begin{itemize}
+\item Why was $E_{r''-1} \not\geq B$  when you prevoted for or precomitted to $B'' \not\geq B$ in round $r'' > r$?
+\end{itemize}
+	
+Any honest validator should be able to respond to this, as is shown in Lemma \ref{lem:honest-answer} below. 
 
 The response is of the following form:
+\begin{itemize}
+\item A either a set $S$ of prevotes for round $r''-1$, or else a set $S$ of precommits for round $r''-1$, in either case such that it is impossible for $S$ to have a supermajority for $B$.
+\end{itemize}
 
-- A either a set $S$ of prevotes for round $r''-1$ or a set $S$ of precommits for round $r''-1$  or  such that it is impossible for $S$ to have a supermajority for $B$.
+If no validator responds, then we have $n-f$ Byzantine validators. If any do, then if $r'' > r+1$, we can ask the same query for at least $n-f$ validators in round $r''-1$.
 
-If no validator responds, then we  have $n-f$ Byzantine validators. If any do, then if $r'' > r+1$,  we can ask the same query for $n-f$ validators in round $r''-1$.
-
-If any responded and $r''=r+1$, then we have either a set $S$ of prevotes or precommits in round $r$ that it is impossible for $S$ to have a supermajority for $B$ in round $r$.
+If any responded and $r''=r+1$, then we have either a set $S$ of prevotes or precommits in round $r$ that show it is impossible for $S$ to have a supermajority for $B$ in round $r$.
 
 If $S$ is a set of precommits, then if we take the union of $S$ and the set of precommits in the commit message for $B$, then the resulting set of precommits for round $r$ has a supermajority for $B$ and it is impossible for it to have a supermajority for $B$. This is possible if the set is not tolerant and so there must be at least $f+1$ voters who equivocate an so are Byzantine.
 
 If we get a set $S$ of prevotes for round $r$ that does not have a supermajority for $B$, then we need to ask a query of the form
-
-- Which prevotes for round $r$ have you seen?
+\begin{itemize}
+\item Which prevotes for round $r$ have you seen?
+\end{itemize}
 
 to all the voters of precommit in the commit message for $B$  who voted for blocks $B'' \geq B$. There must be $n-f$ such validators and a valid response to this query is a set $T$ of prevotes for round $r$ with a supermajority for $B''$ and so a supermajority for $B$.
 
