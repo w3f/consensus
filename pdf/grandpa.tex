@@ -343,10 +343,10 @@ By Lemma \ref{lem:impossible} (i), this means $C_{r-1,v}$ did not have a superma
 Thus we have that, at the time of the vote, for one of $V_{r-1,v}$, $C_{r-1,v}$, it was impossible to have a supermajority for $B$. The current sets $V_{r-1,v}$ and $C_{r-1,v}$ are supersets of those at the time of the vote, and so by Lemma \ref{lem:impossible} (ii), it is still impossible. Thus $v$ can respond validly.
 
 
-This is enough to show Theorem \ref{thm:accountable} . Not that if $v$ sees a commit message for a block $B$ in round $r$ and has that $E_{r',v} \not\geq B$, for some completable round $r' \geq r$, then they should also be able to start a challenge procedure that successfully identifies at least $f+1$ Byzantine voters in some round. Thus we have that:
+This is enough to show Theorem \ref{thm:accountable}.  Note that if $v$ sees a commit message for a block $B$ in round $r$ and has that $E_{r',v} \not\geq B$, for some completable round $r' \geq r$, then they should also be able to start a challenge procedure that successfully identifies at least $f+1$ Byzantine voters in some round. Thus we have that:
 
 \begin{lemma} \label{lem:overestimate-final}
-If there at most $f$ Byzantine voters in any vote, $B$ was finalised in round $r$ and an honest participant $v$ sees that round $r' \geq r$ is completable, then $E_{r',v} \geq B$.
+If there at most $f$ Byzantine voters in any vote, $B$ was finalised in round $r$, and an honest participant $v$ sees that round $r' \geq r$ is completable, then $E_{r',v} \geq B$.
 \end{lemma}
 
 \subsection{Liveness }
