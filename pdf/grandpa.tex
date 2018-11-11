@@ -361,8 +361,9 @@ Let $v,v'$ be (possibly identical) honest participants, $t,t'$ be times with $t 
 Then if $V_{r,v,t} \subseteq V_{r,v',t'}$ and $C_{r,v,t} \subseteq C_{r,v',t'}$, all these sets are tolerant, and $v$ sees that $r$ is completable at time $t$, then $E_{r,v,t} \leq E_{r,v',t'}$ and $v'$ sees that $r$ is completable at time $t'$.
 \end{lemma}
 
-\begin{proof} Since $v$ sees that $r$ is completable at time $t$, $V_{r,v,t}$, $C_{r,v,t}$ each contain votes from $n-f$ voters and so the same holds for $V_{r,v',t'}$ and $C_{r,v',t'}$. 
-By Lemma \ref{lem:ghost-monotonicity}, $g(V_{r,v',t'}) \geq g(V_{r,v,t})$.
+\begin{proof} 
+Since $v$ sees that $r$ is completable at time $t$, both $V_{r,v,t}$ and $C_{r,v,t}$ contain votes from $n-f$ voters and so the same holds for $V_{r,v',t'}$ and $C_{r,v',t'}$. 
+By Lemma \ref{lem:ghost-monotonicity} (ii), $g(V_{r,v',t'}) \geq g(V_{r,v,t})$.
 Using Lemma \ref{lem:impossible}, since it is impossible for $C_{r,v,t}$ to have a supermajority for any children of $g(V_{r,v,t}$, it is impossible for $C_{r,v',t'})$ as well and so $E_{r,v',t'} \leq g(V_{r,v,t})$.
 But now $E_{r,v,t}$,$E_{r,v',t'}$ are the last blocks on $\textrm{chain}(g(V_{r,v,t}))$ that it is possible for $C_{r,v,t},C_{r,v',t'}$ respectively to have a supermajority for.
 Thus by Lemma \ref{lem:impossible} (ii), $E_{r,v',t'} \leq E_{r,v,t}$.
