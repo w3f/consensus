@@ -357,7 +357,7 @@ Let's define $V_{r,v,t}$ be the set $V_{r,v}$ at time $t$ and similarly for $C_{
 
 
 \begin{lemma} \label{lem:message-monotonicity-completed-estimate}
-Let $v,v'$ be (possibly identical) honest participants, $t,t'$ be times and $r$ be a round.
+Let $v,v'$ be (possibly identical) honest participants, $t,t'$ be times with $t \leq t'$, and $r$ be a round.
 Then if $V_{r,v,t} \subseteq V_{r,v',r'}$ and $C_{r,v,t} \subseteq C_{r,v',r'}$, all these sets are tolerant, and $v$ sees that $r$ is completable at time $t$, then $E_{r,v,t} \leq E_{r,v',t'}$ and $v'$ sees that $r$ is completable at time $t'$.
 \end{lemma}
 
