@@ -242,7 +242,7 @@ Note that it is possible for an intolerant $S$ to both have a supermajority for 
 We let $V_{r,v}$ and $C_{r,v}$ be the sets of prevotes and precommits respectively received by $v$ from round $r$ at the current time.
 
 We define $E_{r,v}$ to be $v$'s estimate of what might have been finalised in round $r$ given by the last block in the chain with head $g(V_{r,v})$ for which it is possible for $C_{r,r}$ to have a supermajority.
-If either $E_{r,v} < g(V_{r,v})$ or it is impossible for $C_{r,v}$ to have a supermajority for any children of $g(V_{r,v})$,, then we say that {\em $v$ sees that round $r$ is completable}. $E_{0,v}$ is the genesis block, assuming we start at $r=1$.
+If either $E_{r,v} < g(V_{r,v})$ or it is impossible for $C_{r,v}$ to have a supermajority for any children of $g(V_{r,v})$, then we say that {\em $v$ sees that round $r$ is completable}. $E_{0,v}$ is the genesis block, assuming we start at $r=1$.
 
 We have a time bound $T$ that we hope suffices to send messages and gossip them to everyone. 
 
@@ -323,15 +323,24 @@ So we either discover $f+1$ equivocations in a vote or else $n-f > f+1$ voters f
 \begin{lemma} \label{lem:honest-answer}
 An honest voter can answer the first type of query.
 \end{lemma}
-We first need to show that for any prevote or precommit in round $r$ cast by an honest voter $v$ for a block $B''$, at the time of the vote we had $B'' \geq E_{r-1,v}$.
-Prevotes should be for the head of a chain containing either $E_{r-1,v}$ or $g(V_{r,v})$ Since $g(V_{r,v}) \geq E_{r-1},v$, in either case we have $B'' \geq E_{r-1,v}$. Precommits should be for $g(V_{r,v})$ but $v$ waits until $g(V_{r,v}) \geq E_{r-1,v}$ before precommiting so again this holds.
-Thus if $B'' \not\geq B$, then we had $E_{r-1,v} \not\geq B$.
-Next we need to show that if we had $E_{r-1,v} \not\geq B$ at the time of the vote then we can respond to the query validly. 
-If $B$ wasn't on the same chain with $g(V_{r-1,v})$, then by Lemma \ref{lem:impossible} (iii), it was impossible for $V_{r-1,v}$ to have a supermajority for $B$. If it was on the same chain as $g(V_{r,-1v})$, then it was on the same chain as $E_{r-1,v}$ as well.
-Since $E_{r-1,v} \not\geq B$, in this case we must have $B > E_{r-1,v}$. However, possibly using that round $r-1$ is completable, it was impossible for $C_{r-1,v}$ to have a supermajority for any child of $E_{r-1,v}$ on the same chain with $g(V_{v,r})$ and in particular for the child of $E_{r-1,v}$ on $\textrm{chain}(B)$.
-By Lemma \ref{lem:impossible} (i), this means $C_{r-1,v}$ did not have a supermajority for $B$.
+We first show that, if a prevote or precommit in round $r$ is cast by an honest voter $v$ for a block $B''$, then at the time of the vote we had $B'' \geq E_{r-1,v}$.
+Prevotes should be for the head of a chain containing either $E_{r-1,v}$ or $g(V_{r,v})$ by step 2 or 3.  Since $g(V_{r,v}) \geq E_{r-1,v}$, in either case we have $B'' \geq E_{r-1,v}$. Precommits should be for $g(V_{r,v})$ but $v$ waits until $g(V_{r,v}) \geq E_{r-1,v}$, by step 4, before precommiting, so again this holds.
+It follows that, if $B'' \not\geq B$, then we had $E_{r-1,v} \not\geq B$.
 
-Thus we have that, at the time of th vote, for one of $V_{r-1,v}$, $C_{r-1,v}$, it was impossible to have a supermajority for $B$. The current sets $V_{r-1,v}$ and $C_{r-1,v}$ are supersets of those at the time of the vote, and so by Lemma \ref{lem:impossible} (ii), it is still impossible. Thus $v$ can respond validly.
+We next show that if we had $E_{r-1,v} \not\geq B$ at the time of the vote then we can respond to the query validly, by demonstrating the impossiblity of a supermajority for $B$. 
+If $B$ was not on the same chain with $g(V_{r-1,v})$, then by Lemma \ref{lem:impossible} (iii), it was impossible for $V_{r-1,v}$ to have a supermajority for $B$, as desired. 
+If $B$ was on the same chain as $g(V_{r-1,v})$, then it was on the same chain as $E_{r-1,v}$ as well.  In this case, we must have $B > E_{r-1,v}$ since $E_{r-1,v} \not\geq B$.
+% ??????  
+% ... Need $E_{r-1,v} \geq g(V_{r-1,v})$ somehow?? ...
+% ??????
+% As $v$ started the round, we know $v$ sees $r-1$ as completable, so 
+%  either $E_{r-1,v} < g(V_{r-1,v})$ or it is impossible for $C_{r-1,v}$ to have a supermajority for any children of $g(V_{r-1,v})$, 
+% ??????
+ However, possibly using that round $r-1$ is completable, it was impossible for $C_{r-1,v}$ to have a supermajority for any child of $E_{r-1,v}$ on the same chain with $g(V_{v,r})$ and in particular for the child of $E_{r-1,v}$ on $\textrm{chain}(B)$.
+% ??????
+By Lemma \ref{lem:impossible} (i), this means $C_{r-1,v}$ did not have a supermajority for $B$, again as desired.
+
+Thus we have that, at the time of the vote, for one of $V_{r-1,v}$, $C_{r-1,v}$, it was impossible to have a supermajority for $B$. The current sets $V_{r-1,v}$ and $C_{r-1,v}$ are supersets of those at the time of the vote, and so by Lemma \ref{lem:impossible} (ii), it is still impossible. Thus $v$ can respond validly.
 
 
 This is enough to show Theorem \ref{thm:accountable} . Not that if $v$ sees a commit message for a block $B$ in round $r$ and has that $E_{r',v} \not\geq B$, for some completable round $r' \geq r$, then they should also be able to start a challenge procedure that successfully identifies at least $f+1$ Byzantine voters in some round. Thus we have that:
