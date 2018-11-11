@@ -345,9 +345,9 @@ Thus we have that, at the time of the vote, for one of $V_{r-1,v}$, $C_{r-1,v}$,
 
 This is enough to show Theorem \ref{thm:accountable}.  Note that if $v$ sees a commit message for a block $B$ in round $r$ and has that $E_{r',v} \not\geq B$, for some completable round $r' \geq r$, then they should also be able to start a challenge procedure that successfully identifies at least $f+1$ Byzantine voters in some round. Thus we have that:
 
-\begin{lemma} \label{lem:overestimate-final}
+\begin{corollary} \label{cor:overestimate-final}
 If there at most $f$ Byzantine voters in any vote, $B$ was finalised in round $r$, and an honest participant $v$ sees that round $r' \geq r$ is completable, then $E_{r',v} \geq B$.
-\end{lemma}
+\end{corollary}
 
 \subsection{Liveness }
 
@@ -391,7 +391,7 @@ Thus if all honest voters reach the precommit vote of round $r-1$, all honest vo
 
 Now we consider the second case, reaching the precommit. 
 Note that any honest prevoter in round $r$ votes for a block $B_v \geq E_{r-1,v,t_v}$ where $t_v$ is the time they vote. Now consider any honest voter for the precommit $v'$. By some time $t'$, they have received all the messages received by each honest voter $v$ at time $t_v$ and $v'$'s prevote. 
-Then by Lemma \ref{lem:overestimate-final}, $B_v \geq E_{r-1,v,t_v} \geq E_{r-1,v',t'}$. Since $V_{r,v',t'}$ contains these $B_v$, $g(V_{r,v',t'}) \geq  E_{r-1,v',t'}$. Thus if all honest voters prevote in round $r$, eventually all honest voters precommit in round $r$.
+Then by Corollary \ref{cor:overestimate-final}, $B_v \geq E_{r-1,v,t_v} \geq E_{r-1,v',t'}$. Since $V_{r,v',t'}$ contains these $B_v$, $g(V_{r,v',t'}) \geq  E_{r-1,v',t'}$. Thus if all honest voters prevote in round $r$, eventually all honest voters precommit in round $r$.
 
 An easy induction completes the proof of the proposition.
 \end{proof}
@@ -415,7 +415,7 @@ Assume the weakly synchronous gossip network model and that each vote has at mos
 
 \begin{proof} Let $v'$ be one of the first honest participants to enter round $r$ i.e. with $t_{r,v'}=t_r$. 
 By our network assumption, all messages received by $v'$ before they ended are received by all honest participants before time $t_r+T$.
-In particular at time $t_r$, $v'$ sees that all previous rounds are completable and so by Lemma \ref{lem:overestimate-final}, so does every other honest participant by time $t_r+T$.
+In particular at time $t_r$, $v'$ sees that all previous rounds are completable and so by Corollary \ref{cor:overestimate-final}, so does every other honest participant by time $t_r+T$.
 Also since for $r' < r$, at some time $s_{r'} \leq t_r$ $g(V_{r',v',s_r'}) \geq E_{r',v',s_r'}$, again by Lemma 4, for all honest $v$, $g(V_{r',v,t_r+T}) \geq E_{r',v,t_r+T}$. Looking at the conditions for voting, this means that any honest voter does not need to wait before voting in any round $r' \leq r$. 
 Thus they cast any remaining votes and enter round $r$ by time $t_r + T$. This shows (i).
 
@@ -461,7 +461,7 @@ For (b), combining (a) and Lemma \ref{lem:timings} (iii), we have that any hones
 
 \begin{proof} By Lemma \ref{lem:timings} and our network assumptions, no honest voter  prevotes before time $t_r+2T \geq t_{r,v}+2T$ and so at this time, they will have seen all prevotes and precommits seen by $v$ at $t_{r,v}$ and the block $B$ if $v$ broadcast it then. By Lemma \ref{lem:message-monotonicity-completed-estimate}, any honest voter $v'$ has $E_{r-1,v'} \leq B \leq g(V_{r-1,v}$ then.
 
-So if the primary broadcast $B$, then $v'$ prevotes for the best chain including $B$. If the primary did not broadcast $B$, then they finalise it. By Lemma \ref{lem:overestimate-final}, it must be that $E_{r-1,v'} \geq B$ and so $E_{r-1,v'}=B$ and so in this case $v'$ also prevotes for th best chain including $B$.
+So if the primary broadcast $B$, then $v'$ prevotes for the best chain including $B$. If the primary did not broadcast $B$, then they finalise it. By Corollary \ref{cor:overestimate-final}, it must be that $E_{r-1,v'} \geq B$ and so $E_{r-1,v'}=B$ and so in this case $v'$ also prevotes for th best chain including $B$.
 
 Since all honest voters prevote $\geq B$, $g(H_r) \geq B$ and so by Lemma \ref{lem:honest-prevote-timings}, all honest participants finalise $B$ by time $t_r+6T$
 \end{proof}
@@ -473,7 +473,7 @@ Since all honest voters prevote $\geq B$, $g(H_r) \geq B$ and so by Lemma \ref{l
 Let $B$ be the latest block that is ever finalised in rounds  $<r$ (even if no honest participant finalises it until after $t_r$). If all honest voters for the prevote in round $r$ agree that the best chain containing $B$ include the same child $B'$ of $B$, then they all finalises some child of $B$ before $t_r+6T$.
 \end{lemma}
 
-\begin{proof} By Lemma \ref{lem:overestimate-final}, any honest participant sees that $E_{r-1} \geq B$ during round $r$. Let $v$ be the primary of round $r$ and $B''=E_{r-1,v,t_{r,v}}$. If $B'' > B$, then by Lemma \ref{lem:primary-finalises}, all honest participants finalise $B''$ by time $t_r+6T$ which means they finalised a child of $B$. If $B''=B$, then by Lemma \ref{lem:honest-prevote-timings}, all honest voters prevote for th best chain including $B$.
+\begin{proof} By Corollary \ref{cor:overestimate-final}, any honest participant sees that $E_{r-1} \geq B$ during round $r$. Let $v$ be the primary of round $r$ and $B''=E_{r-1,v,t_{r,v}}$. If $B'' > B$, then by Lemma \ref{lem:primary-finalises}, all honest participants finalise $B''$ by time $t_r+6T$ which means they finalised a child of $B$. If $B''=B$, then by Lemma \ref{lem:honest-prevote-timings}, all honest voters prevote for th best chain including $B$.
 By assumption these chains include $B'$ and so $g(H_r) \geq B$. By Lemma \ref{lem:honest-prevote-timings}, this means that $B'$ is finalised by time $t_r+6T$.
 \end{proof}
 
