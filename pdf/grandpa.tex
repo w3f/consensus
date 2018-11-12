@@ -367,9 +367,9 @@ Since $v$ sees that $r$ is completable at time $t$,
 either $E_{r,v} < g(V_{r,v})$ requiring $(n+f+1)/2 > 2f + 1$ votes, or else it is impossible for $C_{r,v}$ to have a supermajority for any children of $g(V_{r,v})$, requiring $2f + 1$ votes.
 In either case, both $V_{r,v,t}$ and $C_{r,v,t}$ contain votes from $2f + 1$ voters and so the same holds for $V_{r,v',t'}$ and $C_{r,v',t'}$. 
 By Lemma \ref{lem:ghost-monotonicity} (ii), $g(V_{r,v',t'}) \geq g(V_{r,v,t})$.
-As it is impossible for $C_{r,v,t}$ to have a supermajority for any children of $g(V_{r,v,t}$, it follows from Lemma \ref{lem:impossible} (i \& ii) that it is impossible for $C_{r,v',t'})$ as well, and so $E_{r,v',t'} \leq g(V_{r,v,t})$.
-But now $E_{r,v,t}$ and $E_{r,v',t'}$ are the last blocks on $\textrm{chain}(g(V_{r,v,t}))$ for which it is possible for $C_{r,v,t}$ and $C_{r,v',t'}$ respectively to have a supermajority.
-Thus by Lemma \ref{lem:impossible} (ii), $E_{r,v',t'} \leq E_{r,v,t}$.
+As it is impossible for $C_{r,v,t}$ to have a supermajority for any children of $g(V_{r,v,t}$, it follows from Lemma \ref{lem:impossible} (i \& ii) that it is impossible for $C_{r,v',t'})$ as well, and so both $E_{r,v',t'} \leq g(V_{r,v,t})$ and $v'$ sees $r$ is completable at time $t'$.
+But now $E_{r,v,t}$ and $E_{r,v',t'}$ are the last blocks on $\textrm{chain}(g(V_{r,v,t}))$ for which it is possible for $C_{r,v,t}$ and $C_{r,v',t'}$ respectively to have a supermajority, 
+As it is possible for $C_{r,v',t'}$ to have a supermajority for $E_{r,v',t'}$, then it is possible for $C_{r,v,t}$ to have a supermajority for $E_{r,v',t'}$ as well, by Lemma \ref{lem:impossible} (ii) and tolerance assumptions, so $E_{r,v',t'} \leq E_{r,v,t}$.
 \end{proof}
  
 \subsubsection{Deadlock Freeness}
