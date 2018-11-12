@@ -192,7 +192,7 @@ Participants remember which block they see as currently being the latest finalis
 
 For block $B$, we write $\mathrm{chain}(B)$ for the chain whose head is $B$. The block number, $n(B)$ of a block $B$ is the length of $\mathrm{chain}(B)$.
 
-For blocks $B'$, $B$, $B$ is later than $B'$ if it has a higher block number.
+For blocks $B'$ and $B$, we say $B$ is later than $B'$ if it has a higher block number.
 We write $B > B'$ or that $B$ is descendant of $B'$ for $B$, $B'$ appearing in the same blockchain with $B'$ later i.e. $B \in \mathrm{chain}(B')$ with $n(B') > n(B)$ and $B < B'$ or $B$ is an ancestor of $B'$ for $B' \in \mathrm{chain}(B)$ with $n(B) > n(B')$.
 $B \geq B'$ and $B \leq B'$ are similar except allowing $B = B$.
 We write $B \sim B'$ or $B$ and $B'$ are on the same chain if $B<B'$, $B=B'$ or $B> B'$; and $B \nsim B'$ or $B$ and $B'$ are not on the same chain if there is no such chain.
