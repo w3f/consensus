@@ -386,7 +386,7 @@ To reach the prevote of round $r$, a participant may be held up at the condition
 For the first case, the prevote, let $S$ be the set of all prevotes from round $r-1$ that any honest voter saw before they precommitted in round $r-1$.
 By Lemma \ref{lem:ghost-monotonicity}, when voter $v'$ precommitted, they do it for block $g(V_{r-1,v'}) \leq g(S)$.
 Let $T$ be the set of precommits in round $r$ cast by honest voters.
-Then or any block $B \not\leq g(S)$, $T$ does not contain any votes that are $\geq B$ and so it is impossible for $T$ to have a supermajority for $B$.
+Then for any block $B \not\leq g(S)$, $T$ does not contain any votes that are $\geq B$ and so it is impossible for $T$ to have a supermajority for $B$.
 In particular, it is impossible for $T$ to have a supermajority for any child of $g(S)$. 
 
 Now consider a voter $v$. By our network assumption, there is a time $t$ by which they have seen the votes in $S$ and $T$. Consider any $t' \geq t$.
