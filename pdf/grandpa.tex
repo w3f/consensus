@@ -193,7 +193,7 @@ Participants remember which block they see as currently being the latest finalis
 For block $B$, we write $\mathrm{chain}(B)$ for the chain whose head is $B$. The block number, $n(B)$ of a block $B$ is the length of $\mathrm{chain}(B)$.
 
 For blocks $B'$ and $B$, we say $B$ is later than $B'$ if it has a higher block number.
-We write $B > B'$ or that $B$ is descendant of $B'$ for $B$, $B'$ appearing in the same blockchain with $B'$ later i.e. $B \in \mathrm{chain}(B')$ with $n(B') > n(B)$ and $B < B'$ or $B$ is an ancestor of $B'$ for $B' \in \mathrm{chain}(B)$ with $n(B) > n(B')$.
+We write $B > B'$ or that $B$ is descendant of $B'$ for $B$, $B'$ appearing in the same blockchain with $B'$ later i.e. $B' \in \mathrm{chain}(B)$ with $n(B) > n(B')$ and $B < B'$ or $B$ is an ancestor of $B'$ for $B \in \mathrm{chain}(B')$ with $n(B') > n(B)$.
 $B \geq B'$ and $B \leq B'$ are similar except allowing $B = B$.
 We write $B \sim B'$ or $B$ and $B'$ are on the same chain if $B<B'$, $B=B'$ or $B> B'$; and $B \nsim B'$ or $B$ and $B'$ are not on the same chain if there is no such chain.
 
@@ -221,7 +221,7 @@ Note that we can easily update $g(S)$ to $g(S \cup \{v\})$, by checking if any c
 
 3 tells us that even if participants see different subsets of the votes cast in a given voting round, this rule may give them different blocks but all such blocks are in the same chain under this assumption. 
 
-We say that it is {\em possible} for a set $S$ to have a supermajority for $B$ if $2f+1$ voters either vote for a block $\not \geq B$ or equivocate in $S$.
+We say that it is {\em impossible} for a set $S$ to have a supermajority for $B$ if $2f+1$ voters either vote for a block $\not \geq B$ or equivocate in $S$. Otherwise it is {\em possible} for $S$ to have a supermajority for $B$.
 Note that if $S$ is tolerant, it is possible for $S$ to have a supermajority for $B$ if and only if there is a tolerant $T \supseteq S$ that has a supermajority for $B$.
 
 We say that it is {\em impossible} for any child of $B$ to have a supermajority in $S$ if $S$ has votes from at least $2f+1$ voters and it is impossible for $S$ to have a supermajority for each child of $B$ appearing on the chain of any vote in $S$.
@@ -263,8 +263,9 @@ They prevote for the head of the best chain containing $E_{r-1,v}$ unless we rec
 \item[(i)] it is at least time $t_{r,v}+4T$, 
 \item[(ii)] round $r$ is completable or
 \item[(iii)] it is impossible for $V_{r,v}$ to have a supermajority for any child of $g(V_{r,v})$,
-and then broadcasts a precommit for $g(V_{r,v})$ {\em( (iii) is optional, we can get away with just (i) and (ii))}.
 \end{itemize}
+and then broadcasts a precommit for $g(V_{r,v})$ {\em( (iii) is optional, we can get away with just (i) and (ii))}.
+
 \end{enumerate}
 
 }}
@@ -301,9 +302,9 @@ The response is of the following form:
 \item A either a set $S$ of prevotes for round $r''-1$, or else a set $S$ of precommits for round $r''-1$, in either case such that it is impossible for $S$ to have a supermajority for $B$.
 \end{itemize}
 
-We consider any non-responsive voter to be Byzantine and add them to the set $X$.  In particular, if no validator responds, then we have $n-f$ Byzantine voters. If any do, then if $r'' > r+1$, we can ask the same query for at least $n-(f - |X|)$ validators in round $r''-1$, .
+We consider any non-responsive voter to be Byzantine and add them to the set $X$.  In particular, if no voter responds, then we have $n-f$ Byzantine voters. If any do, then if $r'' > r+1$, we can ask the same query for at least $n-(f - |X|)$ validators in round $r''-1$, .
 
-If any validators respond when $r''=r+1$, then we have either a set $S$ of prevotes or precommits in round $r$ that show it is impossible for $S$ to have a supermajority for $B$ in round $r$.
+If any voters respond when $r''=r+1$, then we have either a set $S$ of prevotes or precommits in round $r$ that show it is impossible for $S$ to have a supermajority for $B$ in round $r$.
 
 If $S$ is a set of precommits, then if we take the union of $S$ and the set of precommits in the commit message for $B$, then the resulting set of precommits for round $r$ has a supermajority for $B$ and it is impossible for it to have a supermajority for $B$. This is possible if the set is not tolerant and so there must be at least $f+1$ voters who equivocate an so are Byzantine.
 
