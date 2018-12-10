@@ -22,7 +22,7 @@
 \begin{document}
 
 
-\title{Polkadot Finality Gadget v9000}
+\title{Byzantine Finality Gadgets}
 \date{\today}
 \maketitle
 
@@ -40,7 +40,11 @@ This gives provable finality immediately. However this is slow if we have a larg
 The approach that we will take is similar to the approach that Ethereum plans to take with Casper the Friendly Finality Gadget (Casper FFG)\cite{CasperFFG}, which combines these approaches.
 We will use a block production mechanism and chain selection rule that give eventual consensus and then add a finality gadget, a protocol that finalises blocks that the participants already agree on, to get provable finality.
 
-We present a finality gadget that works in a partially synchronous network model, GRANDPA, as well as an asynchronous finality gadget, that can cope with $1/5$ Byzantine nodes. We first seek to formalise the finality gadget problem.
+We present a finality gadget that works in a partially synchronous network model, GRANDPA, as well as an asynchronous finality gadget, that can cope with $1/5$ Byzantine nodes. 
+
+Recent research on consensus has come up with many different block production mechanisms that give eventual consensus. We want formal guarantees to hold for finality gadgets that can easily be applied to many possible block production mechanisms. Thus we want to make the least assumptions about the block production mechanism as possible.
+
+An important goal of this work is to formalise the finality gadget problem. We want formal guarantees for safety and liveness for finality gadget.
 
 \subsection{Formalising the problem}
 
@@ -81,7 +85,9 @@ Thus there are many existing algorithms for the binary Byzantine finality gadget
 However the interesting problem in this case is whether the celebrated impossibility result of \cite{flp} generalizes to this finality gadget problem, i.e., whether this oracle which is guaranteed to achieve eventual consensus makes it possible to have an asynchronous and deterministic protocol for agreement.
 A reduction is not immediately obvious. It turns out that the finality gadget version is indeed impossible, as we shall see in \ref{ssec:impossibility}.
 
-Now how do we extend this to agreeing on a chain of blocks? We will need the block production mechanism to build on finalised blocks, so the best chain rule must include them.
+Now how do we extend this to agreeing on a chain of blocks? One difficulty in formalising the problem is that the block production mechanism cannot be entirely separate from the finality gadget. In order to finalise new blocks, we must first build on the chain we have already finalised. So at a minimum, the block production mechanism needs to recognise which blocks the finality gadget has finalised. We will also allow the block production mechanism to interact with the state of the finality gadget in other ways.
+
+We want the finality gadget to work with as most general block production mechanisms as possible. Thus we need a condition that combines the property of eventual consensus and this requirement to build on the last finalised block, but is otherwise not too restrictive.
 We assume a kind of conditional eventual consensus.
 If we keep building on our last finalised block $B$ and don't finalise any new blocks, then eventually we have consensus on a longer chain than just $B$, which the finality gadget can use to finalise another block.
 We also want a protocol that does not terminate, but instead keeps on finalising more blocks. 
@@ -111,16 +117,22 @@ Thus any finality gadget that satisfies Definition \ref{def:finality-gadget}, wi
 Thanks to the abstraction above, we can switch $F$ for one of many possible alternative consensus algorithms and $G$ will still work.
 
 
+To analyse the performance of our finality gadget, we will need versions of the last two properties that appropriately depend on time: 
+
 \begin{itemize}
-\item{\bf Fast termination:} {\em If the last finalised block has number $n$ and, until another block is finalised, the best chain observed by all  s will include the same block with block number $n+1$, then a block with number $n+1$ will be finalised within time $T$.}
+\item{\bf Fast termination:} {\em If the last finalised block has number $n$ and, until another block is finalised, the best chain observed by all participants will include the same block with block number $n+1$, then a block with number $n+1$ will be finalised within time $T$.}
 \item{\bf Recent validity:} {\em If an honest voter finalises a block $B$ then that block was seen in the best chain observed by some honest voter containing some previously finalised ancestor of $B$ more recently than time $T$ ago.}
 \end{itemize}
 
-These will typically only hold with high probability. In the asynchronous case, we would need to measure time in rounds of the protocol rather than seconds to make sense of these properties.  We are also interested in being able to remove and punish Byzantine voters:
+Intuitively, fast termination implies that we finalise blocks fast as long as the block production mechanism achieves consensus fast whereas recent validity bounds the cost of starting to agree on something the block production mechanism's consensus later decides is not the best. In this case, we may waste time building on a chain that is never finalised so it is important to bound how long we do that.
+
+These properties will typically only hold with high probability. In the asynchronous case, we would need to measure time in rounds of the protocol rather than seconds to make sense of these properties.  We are also interested in being able to remove and punish Byzantine voters, for which we will need:
 
 \begin{itemize}
 	\item{\bf Accountable Safety:} {\em If there are more than $f+1$ voters and blocks on different chains are finalised, then we can identify at least $f+1$ Byzantine voters.}
 \end{itemize}
+
+\subsection{Our results}
 
 \subsection{Our approach}
 
@@ -151,7 +163,7 @@ Epochless Casper,
 
 Casper...
 
-There are two main differences between Casper FFG and GRANDPA. One is that in GRANDPA, different voters can cast votes simultaneously for blocks at different heights.
+There are two main differences between Casper FFG and GRANDPA. One is that in GRANDPA, different voters can cast votes simultaneously for blocks at different heights. This is achieved by borrowing the concept of GHOST on votes from Casper TFG and applying it in a more traditional Byzantine agreement protocol.
 
 The other main difference is how the finality gadget affects the fork-choice rule of the underlying block production mechanism. In GRANDPA, by default we will assume that this is only affected by having to include any finalised blocks. 
 Casper FFG \cite{CasperFFG} does not specify a fork-choice rule, but it requires that we build on justified blocks for liveness. Later specifications of Casper use the GHOST rule on votes for fork-choice.
