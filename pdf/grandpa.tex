@@ -64,7 +64,12 @@ We have a set of participants $V$, the majority of whom obey the protocol, but a
 
 We can change this definition to assume that instead of having an initial value, all voters have access to an external protocol, an oracle for values, that achieves eventual consensus in that it returns the same value to all voters when called after some time.
 
-\begin{definition} A protocol for the {\em multi-valued Byzantine finality gadget problem} has a set of values $S$, a set of voters $V$, a constant fraction of which may be Byzantine, for which each voter $v \in V$ has access to an oracle $A$ with the property that ??? in the end each voter decides a final value $f_v \in S$ such that the following holds:
+\begin{definition}
+We say an oracle $A$ in a protocol is {\em eventually consistent} if it returns the same value to all participants after some unspecified time.
+\end{definition}
+
+
+\begin{definition} A protocol for the {\em multi-valued Byzantine finality gadget problem} has a set of values $S$, a set of voters $V$, a constant fraction of which may be Byzantine, for which each voter $v \in V$ has access to an eventually consistent oracle $A$ and, in the end, each voter decides a final value $f_v \in S$ such that the following holds:
 
 \begin{itemize}
 \item {\bf Agreement:} All honest voters decide the same value for $f_v$
@@ -83,11 +88,11 @@ But for the case $|S|=2$, the two possible definitions of validity are equivalen
 This means that we can reduce the binary version of the Byzantine finality gadget problem above to binary Byzantine agreement, by each voter just calling $A$ at the start to obtain their initial value, since if $A$ does not return the same value to every honest voter all the time, then it returns both values to honest voters some times.
 Thus there are many existing algorithms for the binary Byzantine finality gadget problem.
 However the interesting problem in this case is whether the celebrated impossibility result of \cite{flp} generalizes to this finality gadget problem, i.e., whether this oracle which is guaranteed to achieve eventual consensus makes it possible to have an asynchronous and deterministic protocol for agreement.
-A reduction is not immediately obvious. It turns out that the finality gadget version is indeed impossible, as we shall see in \ref{ssec:impossibility}.
+A reduction is not immediately obvious, but it turns out that the finality gadget version is indeed impossible, as we shall see in \ref{ssec:impossibility}.
 
 Now how do we extend this to agreeing on a chain of blocks? One difficulty in formalising the problem is that the block production mechanism cannot be entirely separate from the finality gadget. In order to finalise new blocks, we must first build on the chain we have already finalised. So at a minimum, the block production mechanism needs to recognise which blocks the finality gadget has finalised. We will also allow the block production mechanism to interact with the state of the finality gadget in other ways.
 
-We want the finality gadget to work with as most general block production mechanisms as possible. Thus we need a condition that combines the property of eventual consensus and this requirement to build on the last finalised block, but is otherwise not too restrictive.
+We want the finality gadget to work with the most general block production mechanisms as possible. Thus we need a condition that combines the property of eventual consensus and this requirement to build on the last finalised block, but is otherwise not too restrictive.
 We assume a kind of conditional eventual consensus.
 If we keep building on our last finalised block $B$ and don't finalise any new blocks, then eventually we have consensus on a longer chain than just $B$, which the finality gadget can use to finalise another block.
 We also want a protocol that does not terminate, but instead keeps on finalising more blocks. 
@@ -95,7 +100,7 @@ We also want a protocol that does not terminate, but instead keeps on finalising
 We assume that there is a block production protocol $P$ that runs at the same time as the finality gadget protocol $G$. Actors who participant in both protocols may behave differently in $P$ depending on what happened in $G$.
 However in the reverse direction, the only way that an honest voter $v$'s behaviour in $G$ is affected by $P$ is through a voting rule, a function $A(v,s_v,B)$ that depends on $v$ and its state $s_v$ and takes a block $B$ and returns a block $B'$ at the head of a chain including $B$.
 
-We say that the system $F$,$G$ and $A$ achieves conditional eventual consensus, if $F$ has finalised a block $B$, then eventually, either $F$ will finalise some descendant of $B$ or else all the chains with head $A_{v,s_v}(B)$ for all voters $v$ at all future states $s_v$ will contain the same descendant $B'$ of $B$.
+We say that the system $G$,$P$ and $A$ achieves conditional eventual consensus, if $G$ has finalised a block $B$, then eventually, either $G$ will finalise some descendant of $B$ or else all the chains with head $A_{v,s_v}(B)$ for all voters $v$ at all future states $s_v$ will contain the same descendant $B'$ of $B$.
 
 \begin{definition} \label{def:finality-gadget} 
 Let $F$ be a protocol  with a set of voters $V$, a constant fraction of which may be Byzantine.
