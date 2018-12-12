@@ -258,6 +258,11 @@ Note that it is possible for an intolerant $S$ to both have a supermajority for 
 
 \section{The GRANDPA protocol}
 
+In this section, we give the protocol for GRANDPA, our finality gadget in the partially synchronous setting.
+
+
+In addition to a set of voters for each of the two votes in a round, we assume that each round has a participant designated as primary and all particpants agree on the voter sets and primary. We will typically either choose the primary pseudorandomly from or rotate through the voter set.
+
 We let $V_{r,v}$ and $C_{r,v}$ be the sets of prevotes and precommits respectively received by $v$ from round $r$ at the current time.
 
 We define $E_{r,v}$ to be $v$'s estimate of what might have been finalised in round $r$ given by the last block in the chain with head $g(V_{r,v})$ for which it is possible for $C_{r,r}$ to have a supermajority.
@@ -321,7 +326,7 @@ The response is of the following form:
 \item A either a set $S$ of prevotes for round $r''-1$, or else a set $S$ of precommits for round $r''-1$, in either case such that it is impossible for $S$ to have a supermajority for $B$.
 \end{itemize}
 
-We consider any non-responsive voter to be Byzantine and add them to the set $X$.  In particular, if no voter responds, then we have $n-f$ Byzantine voters. If any do, then if $r'' > r+1$, we can ask the same query for at least $n-(f - |X|)$ validators in round $r''-1$, .
+Any honest voter should respond.  In particular, if no voter responds, then we consider all $n-f$ voters how should have responded but didn't as Byzantine and we return this set of voters. If any do respond, then if $r'' > r+1$, we can ask the same query for at least $n-f$ validators in round $r''-1$. (Note that if any do respond, we will not punish non-responders.)
 
 If any voters respond when $r''=r+1$, then we have either a set $S$ of prevotes or precommits in round $r$ that show it is impossible for $S$ to have a supermajority for $B$ in round $r$.
 
