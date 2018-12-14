@@ -558,6 +558,16 @@ The protocol for selecting voters should require recent messages on chain signed
 
 We should consider having to manually approve finality agreed upon by this new set to alleviate the security concerns above. But this still gives a way to canonically agree on a new set, in the event of WW3 or bad initialisation of a new chain.
 
+If we do not want to put commit messades on chain, then we can alternatively do the following. Every block producer puts the highest block number that they see as finalised in their block.
+
+Then any participant sees that if there is an $n$ such that
+\begin{itemize}
+\item[(i)] their best chain is at least length $n+100$
+\item[(ii)] the indicators the last finalised block height of blocks $n-100$ to $n$ in their best chain have median at most $n-1050$ and
+\item[(iii]) $n$ is the minimum that satisifies (i) and (ii)
+\end{itemize}
+then they switch to the best validator set given by block $n$. If the same block at height $n$ is on everyone's best chain, which can be shown to occur with high probability given (i) for many block production mechanisms, then everyone will eventually agree that we should switch to the validator set given by that block. If any $100$ consectutive blocks of the best chain are produced by honest and synchronised block producers then this will only happen if GRANDPA fails to finalise any block in the time it took to produce $1000$ blocks.
+
 \subsection{Alternatives to the last block hash}
 
 The danger with voting for the last blockhash in the best chain is that maybe no one else will have seen and processed the next block. It would also be nice to make the most of BLS multisig/aggregation, which allows a single signature for many messages/signers than can be checked in time proportional to the number of different messages signed. 
