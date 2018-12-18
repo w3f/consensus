@@ -5,7 +5,7 @@ We believe Polkadot accounts should primarily use Schnorr signatures with both p
 
 ### Preliminaries
 
-There are two normal curve choices for accounts on a blockchain system, either secp256k1 or the Ed25519 curve, so we confine our discussion to them.  If you wanted slightly more speed, you might choose FourQ, but it sounds excessive for blockchains, and implementations are rare.  
+There are two normal curve choices for accounts on a blockchain system, either secp256k1 or the Ed25519 curve, so we confine our discussion to them.  If you wanted slightly more speed, you might choose FourQ, but it sounds excessive for blockchains, and implementations are rare.  Also, you might choose Zcash's JubJub if you wanted fast signature verification in zkSNARKs, but that's not on our roadmap for Polkadot, and Jubjub also lacks many implementations.
 
 We shall only consider Schnorr signatures because they satisfy the [Bitcoin Schnoor wishlist](https://github.com/sipa/bips/blob/bip-schnorr/bip-schnorr.mediawiki) and work fine with extremely secure curves, like secp256k1 or the Ed25519 curve.  You could do fancier tricks, including like aggregation, with a pairing based curve like BLS12-381 and the BLS signature scheme.  These curves are slower for single verifications, and worse accounts should last decades while pairing friendly curves should be expected become less secure as number theory advances.  
 
@@ -15,7 +15,7 @@ We need some minimal support for secp256k1 keys because token sale accounts are 
 
 ### Is secp256k1 risky?
 
-There are two theoretical reasons for preferring an Edwards curve over secp256k1:  First, secp256k1 has a [small CM field discriminant](https://safecurves.cr.yp.to/disc.html), which might yield better attacks in the distant future.  Second, secp256k1 has fairly rigid paramater choices but [not the absolute best](https://safecurves.cr.yp.to/rigid.html).  I do not believe either to be serious cause for concern.  Among more practical curve weaknesses, secp256k1 does have [twist security](https://safecurves.cr.yp.to/twist.html) which eliminates many attack classes.  
+There are two theoretical reasons for preferring an twisted Edwards curve over secp256k1:  First, secp256k1 has a [small CM field discriminant](https://safecurves.cr.yp.to/disc.html), which might yield better attacks in the distant future.  Second, secp256k1 has fairly rigid paramater choices but [not the absolute best](https://safecurves.cr.yp.to/rigid.html).  I do not believe either to be serious cause for concern.  Among more practical curve weaknesses, secp256k1 does have [twist security](https://safecurves.cr.yp.to/twist.html) which eliminates many attack classes.  
 
 I foresee only one substancial reason for avoiding secp256k1:  All short Weierstrass curves like secp256k1 have [incomplete addition formulas](https://safecurves.cr.yp.to/complete.html), meaning certain curve points cannot be added to other curve points.  As a result, addition code must check for failures, but these checks make writing constant time code harder.  We could examine any secp256k1 library we use in Polkadot to ensure it both does these checks and has constant-time code.  We cannot however ensure that all implementations used by third party wallet software does so.
 
@@ -43,6 +43,6 @@ In fact, the [dalek ecosystem](https://github.com/dalek-cryptography) has an rem
  https://medium.com/interstellar/bulletproofs-pre-release-fcb1feb36d4b
  https://medium.com/interstellar/programmable-constraint-systems-for-bulletproofs-365b9feb92f7
 
-All these crates use Ristretto points so using Ristretto for account public keys ourselves gives us the most advanced tools for building protocols not based on pairings, meaning that use our account keys.
+All these crates use Ristretto points so using Ristretto for account public keys ourselves gives us the most advanced tools for building protocols not based on pairings, meaning that use our account keys.  In principle, these tools might be abstracted for twisted Edwards curves like FourQ and Zcash's Jubjub, but yu might loose some batching operations in abstracting them for short Weierstrass curves like secp256k1. 
 
 
