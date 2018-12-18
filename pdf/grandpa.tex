@@ -258,6 +258,11 @@ Note that it is possible for an intolerant $S$ to both have a supermajority for 
 
 \section{The GRANDPA protocol}
 
+In this section, we give the protocol for GRANDPA, our finality gadget in the partially synchronous setting.
+
+
+In addition to a set of voters for each of the two votes in a round, we assume that each round has a participant designated as primary and all particpants agree on the voter sets and primary. We will typically either choose the primary pseudorandomly from or rotate through the voter set.
+
 We let $V_{r,v}$ and $C_{r,v}$ be the sets of prevotes and precommits respectively received by $v$ from round $r$ at the current time.
 
 We define $E_{r,v}$ to be $v$'s estimate of what might have been finalised in round $r$ given by the last block in the chain with head $g(V_{r,v})$ for which it is possible for $C_{r,r}$ to have a supermajority.
@@ -308,9 +313,9 @@ The first thing we want to show is asynchronous safety, assuming we have at most
 \begin{theorem} \label{thm:accountable} If the protocol finalises any two blocks $B,B'$ for which valid commit messages were sent, but which do not lie on the same chain, then there are at least $f+1$ Byzantine voters who all voted in a particular vote. Furthermore, there is a synchronous procedure to find some such set $X$ of $f+1$ Byzantine voters.
 \end{theorem}
 
-The challenge procedure works as follows: If $B$ and $B'$ are committed in the same round, then the union of their precommits must contain at least $f$ equivocations, so we are done.  Otherwise, we may assume by symmetry that $B$ was committed in round $r$ and $B'$ in round $r' > r$.  There are at least $n-f$ voters who precomitted $\geq B'$ in round $r$ in their commit messages, so we ask them why they precomitted.
+The challenge procedure works as follows: If $B$ and $B'$ are committed in the same round, then the union of their precommits must contain at least $f$ equivocations, so we are done.  Otherwise, we may assume by symmetry that $B$ was committed in round $r$ and $B'$ in round $r' > r$.  There are at least $n-f$ voters who precomitted $\geq B'$ or equivocated in round $r$ in their commit messages, so we ask those who precommitted $\geq B'$ why they did so.
 
-We ask queries of the following form: 
+Starting with $r''='$, we ask queries of the following form: 
 \begin{itemize}
 \item Why was $E_{r''-1} \not\geq B$  when you prevoted for or precomitted to $B'' \not\geq B$ in round $r'' > r$?
 \end{itemize}
@@ -321,9 +326,9 @@ The response is of the following form:
 \item A either a set $S$ of prevotes for round $r''-1$, or else a set $S$ of precommits for round $r''-1$, in either case such that it is impossible for $S$ to have a supermajority for $B$.
 \end{itemize}
 
-We consider any non-responsive voter to be Byzantine and add them to the set $X$.  In particular, if no voter responds, then we have $n-f$ Byzantine voters. If any do, then if $r'' > r+1$, we can ask the same query for at least $n-(f - |X|)$ validators in round $r''-1$, .
+Any honest voter should respond.  In particular, if no voter responds, then we consider all  voters how should have responded but didn't as Byzantine and we return this set of voters, along with any equivocators, which will be at least $n-f$ voters total. If any do respond, then if $r'' > r+1$, we can ask the same query for at least $n-f$ validators in round $r''-1$. (Note that if any do respond, we will not punish non-responders.)
 
-If any voters respond when $r''=r+1$, then we have either a set $S$ of prevotes or precommits in round $r$ that show it is impossible for $S$ to have a supermajority for $B$ in round $r$.
+If we ask such queries for a vote in all rounds between $r''=r'$ and $r''=r+1$ and get valid responses, since some voter responds when $r''=r+1$, then we have either a set $S$ of prevotes or precommits in round $r$ that show it is impossible for $S$ to have a supermajority for $B$ in round $r$.
 
 If $S$ is a set of precommits, then if we take the union of $S$ and the set of precommits in the commit message for $B$, then the resulting set of precommits for round $r$ has a supermajority for $B$ and it is impossible for it to have a supermajority for $B$. This is possible if the set is not tolerant and so there must be at least $f+1$ voters who equivocate an so are Byzantine.
 
@@ -337,14 +342,14 @@ If we get a set $S$ of prevotes for round $r$ that does not have a supermajority
 
 If any give a valid response, by a similar argument to the above, $S \cup T$ will have $f+1$ equivocations.
 
-So we either discover $f+1$ equivocations in a vote or else $n-f > f+1$ voters fail to validly respond like a honest voter could do to a query.
+So we either discover $f+1$ equivocations in a vote or else $n-f > f+1$ voters either equivocate or fail to validly respond like a honest voter could do to a query.
 
 
 \begin{lemma} \label{lem:honest-answer}
 An honest voter can answer the first type of query.
 \end{lemma}
 We first show that, if a prevote or precommit in round $r$ is cast by an honest voter $v$ for a block $B''$, then at the time of the vote we had $B'' \geq E_{r-1,v}$.
-Prevotes should be for the head of a chain containing either $E_{r-1,v}$ or $g(V_{r,v})$ by step 2 or 3.  Since $g(V_{r,v}) \geq E_{r-1,v}$, in either case we have $B'' \geq E_{r-1,v}$. Precommits should be for $g(V_{r,v})$ but $v$ waits until $g(V_{r,v}) \geq E_{r-1,v}$, by step 4, before precommiting, so again this holds.
+Prevotes should be for the head of a chain containing either $E_{r-1,v}$ or some $B''' > E_{r-1,v}$ by step 2 or 3.  In either case we have $B'' \geq E_{r-1,v}$. Precommits should be for $g(V_{r,v})$ but $v$ waits until $g(V_{r,v}) \geq E_{r-1,v}$, by step 4, before precommiting, so again this holds.
 It follows that, if $B'' \not\geq B$, then we had $E_{r-1,v} \not\geq B$.
 
 We next show that if we had $E_{r-1,v} \not\geq B$ at the time of the vote then we can respond to the query validly, by demonstrating the impossiblity of a supermajority for $B$. 
@@ -388,7 +393,7 @@ Since $v$ sees that $r$ is completable at time $t$,
 either $E_{r,v} < g(V_{r,v})$ requiring $(n+f+1)/2 > 2f + 1$ votes, or else it is impossible for $C_{r,v}$ to have a supermajority for any children of $g(V_{r,v})$, requiring $2f + 1$ votes.
 In either case, both $V_{r,v,t}$ and $C_{r,v,t}$ contain votes from $2f + 1$ voters and so the same holds for $V_{r,v',t'}$ and $C_{r,v',t'}$. 
 By Lemma \ref{lem:ghost-monotonicity} (ii), $g(V_{r,v',t'}) \geq g(V_{r,v,t})$.
-As it is impossible for $C_{r,v,t}$ to have a supermajority for any children of $g(V_{r,v,t})$, it follows from Lemma \ref{lem:impossible} (i \& ii) that it is impossible for $C_{r,v',t'})$ as well, and so both $E_{r,v',t'} \leq g(V_{r,v,t})$ and $v'$ sees $r$ is completable at time $t'$.
+As it is impossible for $C_{r,v,t}$ to have a supermajority for any children of $g(V_{r,v,t})$, it follows from Lemma \ref{lem:impossible} (i \& ii) that it is impossible for $C_{r,v',t'}$ as well, and so both $E_{r,v',t'} \leq g(V_{r,v,t})$ and $v'$ sees $r$ is completable at time $t'$.
 But now $E_{r,v,t}$ and $E_{r,v',t'}$ are the last blocks on $\textrm{chain}(g(V_{r,v,t}))$ for which it is possible for $C_{r,v,t}$ and $C_{r,v',t'}$ respectively to have a supermajority, 
 As it is possible for $C_{r,v',t'}$ to have a supermajority for $E_{r,v',t'}$, then it is possible for $C_{r,v,t}$ to have a supermajority for $E_{r,v',t'}$ as well, by Lemma \ref{lem:impossible} (ii) and tolerance assumptions, so $E_{r,v',t'} \leq E_{r,v,t}$.
 \end{proof}
@@ -486,7 +491,7 @@ For (b), combining (a) and Lemma \ref{lem:timings} (iii), we have that any hones
 
 \begin{proof} By Lemma \ref{lem:timings} and our network assumptions, no honest voter  prevotes before time $t_r+2T \geq t_{r,v}+2T$ and so at this time, they will have seen all prevotes and precommits seen by $v$ at $t_{r,v}$ and the block $B$ if $v$ broadcast it then. By Lemma \ref{lem:message-monotonicity-completed-estimate}, any honest voter $v'$ has $E_{r-1,v'} \leq B \leq g(V_{r-1,v}$ then.
 
-So if the primary broadcast $B$, then $v'$ prevotes for the best chain including $B$. If the primary did not broadcast $B$, then they finalise it. By Corollary \ref{cor:overestimate-final}, it must be that $E_{r-1,v'} \geq B$ and so $E_{r-1,v'}=B$ and so in this case $v'$ also prevotes for th best chain including $B$.
+So if the primary broadcast $B$, then $v'$ prevotes for the best chain including $B$. If the primary did not broadcast $B$, then they finalise it. By Corollary \ref{cor:overestimate-final}, it must be that $E_{r-1,v'} \geq B$ and so $E_{r-1,v'}=B$ and so in this case $v'$ also prevotes for the best chain including $B$.
 
 Since all honest voters prevote $\geq B$, $g(H_r) \geq B$ and so by Lemma \ref{lem:honest-prevote-timings}, all honest participants finalise $B$ by time $t_r+6T$
 \end{proof}
@@ -512,11 +517,11 @@ By assumption these chains include $B'$ and so $g(H_r) \geq B$. By Lemma \ref{le
 
 \begin{lemma} \label{lem:honest-recent-validity}
 Suppose that $t_r \geq \GST$, the primary of round $r$ is honest and all votes have at most $f$ Byzantine voters.
-Let $B$ be a block that no prevoter in round $r$ saw as being in the best chain of an ancestor of $B$ at the time they prevoted.
+Let $B$ be a block that less than $f+1$ honest prevoters in round $r$ saw as being in the best chain of an ancestor of $B$ at the time they prevoted.
 Then either all honest participants finalise $B$ before time $t_r+6T$ or no honest participant ever has $g(V_{r,v}) \geq B$ or $E_{r,v} \geq B$.
 \end{lemma}
 
-\begin{proof} Let $v'$ be the primary of round $r$ and let $B'=E_{r-1,v',t_{r,v'}}$. If $B' \geq B$, then by Lemma \ref{lem:primary-finalises}, all honest participants finalise $B$ by time $t_r+6T$. If $B' \not\geq B$, then by Lemma \ref{lem:primary-finalises}, no honest voter prevotes $\geq B$ and so no honest participant ever has $g(V_{r,v}) \geq B$.
+\begin{proof} Let $v'$ be the primary of round $r$ and let $B'=E_{r-1,v',t_{r,v'}}$. If $B' \geq B$, then by Lemma \ref{lem:primary-finalises}, all honest participants finalise $B$ by time $t_r+6T$. If $B' \not\geq B$, then by Lemma \ref{lem:primary-finalises}, at most $f$ honest voters prevotes $\geq B$. In this case, less than $2f+1 \leq (n+f+1)/2$ prevoters vote $\geq B$ or equivocate and so no honest participant ever has $g(V_{r,v}) \geq B$.
 \end{proof}
 
 
@@ -552,6 +557,16 @@ Then if a participant sees that their best chain has not had such a message for 
 The protocol for selecting voters should require recent messages on chain signed by those voters so that this is likely to give a set of voters very few of whom are offline.
 
 We should consider having to manually approve finality agreed upon by this new set to alleviate the security concerns above. But this still gives a way to canonically agree on a new set, in the event of WW3 or bad initialisation of a new chain.
+
+If we do not want to put commit messades on chain, then we can alternatively do the following. Every block producer puts the highest block number that they see as finalised in their block.
+
+Then any participant sees that if there is an $n$ such that
+\begin{itemize}
+\item[(i)] their best chain is at least length $n+100$
+\item[(ii)] the indicators the last finalised block height of blocks $n-100$ to $n$ in their best chain have median at most $n-1050$ and
+\item[(iii]) $n$ is the minimum that satisifies (i) and (ii)
+\end{itemize}
+then they switch to the best validator set given by block $n$. If the same block at height $n$ is on everyone's best chain, which can be shown to occur with high probability given (i) for many block production mechanisms, then everyone will eventually agree that we should switch to the validator set given by that block. If any $100$ consectutive blocks of the best chain are produced by honest and synchronised block producers then this will only happen if GRANDPA fails to finalise any block in the time it took to produce $1000$ blocks.
 
 \subsection{Alternatives to the last block hash}
 
@@ -668,7 +683,7 @@ Here $g_{t}(S)$ is the $t$-GHOST function defined as follows. We construct a cha
 The idea behind the proof of asynchronous liveness is that for a particular block $B'$, some value of the common coin, either all the honest voters who received $4/5$ of precommits before the common coin was decided lock to $B'$ or none do.
 If we had a fixed threshold for locking, an adversarial choice of the number of precommits for $B'$ or its descendants could lead to some voters locking to it and some not (and indeed there would be runs that do this indefinitely as this is how the impossibility result works for this type of algorithm.)
 
-Firstly we note that much of the machinery of ? and ? carries over to the $1/5$ byzantine case.
+Firstly we note that much of the machinery of section $\ref{sec:prelims}$ carries over to the $1/5$ byzantine case.
 
 \begin{lemma} \label{lem:ghost-monotonicity-general}
 Let $T$ be a set of votes such that at most $f$ voters have multiple votes in $T$. Let $t \geq (n+f)/2n$ Then
