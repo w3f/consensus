@@ -1,5 +1,9 @@
 
-## Accounts
+# Account keys on Polkadot
+
+We believe Polkadot accounts should primarily use Schnorr signatures with both public keys and the `R` point in the signature encoded using the [Ristretto](https://ristretto.group) point compression for the Ed25519 curve.  We should collaborate with the [dalek ecosystem](https://github.com/dalek-cryptography) for which Ristretto was developed, but provide a simpler signature crate, for which [schnorr-dalek](https://github.com/w3f/schnorr-dalek) provides a first step.
+
+### Preliminaries
 
 There are two normal curve choices for accounts on a blockchain system, either secp256k1 or the Ed25519 curve, so we confine our discussion to them.  If you wanted slightly more speed, you might choose FourQ, but it sounds excessive for blockchains, and implementations are rare.  
 
@@ -7,13 +11,13 @@ We shall only consider Schnorr signatures because they satisfy the [Bitcoin Schn
 
 ### How much secp256k1 support?
 
-We need some minimal support for secp256k1 keys because token sale accounts are tied to secp256k1 keys on Ethereum, so some "account" type must necessarily use secp256k1 keys.  At the same time, we should not encourage using the same private keys on Ethereum and PolkaDot.  We might pressure users into switching key types in numerous ways, like secp256k1 accounts need not support balance increases, or might not support anything but replacing themselves with an ed25519 key.  There are conceivable reasons for fuller secp256k1 support though, like wanting ethereum smart contracts to verify some signatures on PolkaDot.  We might support secp256k1 accounts with limited functionality, but consider expanding that functionality if such use cases arise. 
+We need some minimal support for secp256k1 keys because token sale accounts are tied to secp256k1 keys on Ethereum, so some "account" type must necessarily use secp256k1 keys.  At the same time, we should not encourage using the same private keys on Ethereum and Polkadot.  We might pressure users into switching key types in numerous ways, like secp256k1 accounts need not support balance increases, or might not support anything but replacing themselves with an ed25519 key.  There are conceivable reasons for fuller secp256k1 support though, like wanting ethereum smart contracts to verify some signatures on Polkadot.  We might support secp256k1 accounts with limited functionality, but consider expanding that functionality if such use cases arise. 
 
 ### Is secp256k1 risky?
 
 There are two theoretical reasons for preferring an Edwards curve over secp256k1:  First, secp256k1 has a [small CM field discriminant](https://safecurves.cr.yp.to/disc.html), which might yield better attacks in the distant future.  Second, secp256k1 has fairly rigid paramater choices but [not the absolute best](https://safecurves.cr.yp.to/rigid.html).  I do not believe either to be serious cause for concern.  Among more practical curve weaknesses, secp256k1 does have [twist security](https://safecurves.cr.yp.to/twist.html) which eliminates many attack classes.  
 
-I foresee only one substancial reason for avoiding secp256k1:  All short Weierstrass curves like secp256k1 have [incomplete addition formulas](https://safecurves.cr.yp.to/complete.html), meaning certain curve points cannot be added to other curve points.  As a result, addition code must check for failures, but these checks make writing constant time code harder.  We could examine any secp256k1 library we use in PolkaDot to ensure it both does these checks and has constant-time code.  We cannot however ensure that all implementations used by third party wallet software does so.
+I foresee only one substancial reason for avoiding secp256k1:  All short Weierstrass curves like secp256k1 have [incomplete addition formulas](https://safecurves.cr.yp.to/complete.html), meaning certain curve points cannot be added to other curve points.  As a result, addition code must check for failures, but these checks make writing constant time code harder.  We could examine any secp256k1 library we use in Polkadot to ensure it both does these checks and has constant-time code.  We cannot however ensure that all implementations used by third party wallet software does so.
 
 I believe incomplete addition formulas looks relatively harmless when used for simple Schnorr signatures, although forgery attacks might exist.  I'd worry more however if we began using secp256k1 for less well explored protocols, like multi-signaturtes and key derivation.   We ware about such use cases however, especially those listed in the [Bitcoin Schnoor wishlist](https://github.com/sipa/bips/blob/bip-schnorr/bip-schnorr.mediawiki).  
 
