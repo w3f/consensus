@@ -83,5 +83,7 @@ First, there is no effort made to hide secio node keys because "IPFS has no inte
 
 Second, there is cipher suit agility in secio, at minimum in their use of multihash, but maybe even in the key exchange.  We've seen numerous attacks on TLS <= 1.2 due to cipher suit agility, especially the downgrade attacks.  I therefore strongly recommend using TLS 1.3 if cipher suit agility is required.  There is no place in a key exchange for poorly controlled constructs like multihash.
 
+Third, there are [no ACKs in secio](https://github.com/libp2p/go-libp2p-secio/issues/12) which might yield interesting attacks when depending upon the underlying insecure transport's own ACKs.  ([related](https://github.com/OpenBazaar/openbazaar-go/issues/483))
+
 As QUIC uses UDP only, we could add TCP based transport that uses TLS 1.3, perhaps by extending libp2p's existing transport with support for TLS 1.3, or perhaps adding a more flexible TLS 1.3 layer.  We might prefer a flexible TLS 1.3 layer over conventional TLS integration into libp2p extending transports because our authentication privacy demands might work differently from TLS's server oriented model.  We could identify some reasonable [Noise](https://noiseprotocol.org/noise.html) variant, if avoiding the complexity of TLS sounds like a priority.  
 
