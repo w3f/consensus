@@ -4,6 +4,8 @@ https://forum.web3.foundation/t/transport-layer-authentication-libp2ps-secio/69
 
 ## Transport layer authentication - libp2p's SECIO
 
+We must authenticate connections as the transport layer from session keys, which could happen in several ways, like signing a hash provided by the transport layer.  A priori, we could simplify everything if the session key simply included the static key used in authentication component of the transport layer's key exchange, which might help avoid some security mistakes elsewhere too.  
+
 There are numerous transports for libp2p, but only QUIC was actually designed to be secure.  Instead, one routes traffic through [libp2p's secio protocol](https://github.com/libp2p/specs/pull/106).  We trust QUIC's cryptographic layer which is TLS 1.3, but secio itself is a home brew job with no serious security analysis, which usually [goes](https://github.com/tendermint/tendermint/issues/3010) [poorly](https://github.com/tendermint/kms/issues/111).  
 
 There has been minimal discussion of secio's security but [Dominic Tarr](https://github.com/auditdrivencrypto/secure-channel/blob/master/prior-art.md#ipfss-secure-channel) raised some concerns in the [original pull request](https://github.com/ipfs/go-ipfs/pull/34).  I'll reraise several concerns from that discussion: 
@@ -12,7 +14,7 @@ First, there is no effort made to hide secio node keys because "IPFS has no inte
 
 Second, there is cipher suit agility in secio, at minimum in their use of multihash, but maybe even in the underlying key exchange itself.  We've seen numerous attacks on TLS <= 1.2 due to cipher suit agility, especially the downgrade attacks.  I therefore strongly recommend using TLS 1.3 *if* cipher suit agility is required.  We could likely version the entire protocol though, thus avoiding any cipher suit agility.  In any case, constructs like multihash should be considered hazardous in even basic key exchanges, but certainly in more advanced protocols involving signatures or associated data.
 
-Third, there are [no ACKs in secio](https://github.com/libp2p/go-libp2p-secio/issues/12) which might yield interesting attacks when depending upon the underlying insecure transport's own ACKs.  ([related](https://github.com/OpenBazaar/openbazaar-go/issues/483))
+Third, there are [no ACKs in secio](https://github.com/libp2p/go-libp2p-secio/issues/12) which might yield attacks when a higher level protocol actually depends upon the underlying insecure transport's own ACKs.  I suppose UDP transport support already requires higher level protocol handle any required ACKs themselves anyways.  ([related](https://github.com/OpenBazaar/openbazaar-go/issues/483)).
 
 As QUIC uses UDP only, we could add TCP based transport that uses TLS 1.3, perhaps by extending libp2p's existing transport with support for TLS 1.3, or perhaps adding a more flexible TLS 1.3 layer.  We might prefer a flexible TLS 1.3 layer over conventional TLS integration into libp2p extending transports because our authentication privacy demands might work differently from TLS's server oriented model.  
 
