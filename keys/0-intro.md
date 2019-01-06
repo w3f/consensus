@@ -4,7 +4,7 @@ In this post, we shall first give a high level view of the various signing keys 
 
 We have roughly four cryptographic layers in Polkadot:
 
- - *Account keys* are owned by users and tied to one actual dot denominated account on Polkadot.  Accounts could be staked/bonded, unstaked/unbonded, or unstaking/unbonding, but only an unstaked/unbonded account key can transfer dots from one account to another. 
+ - *Account keys* are owned by users and tied to one actual dot denominated account on Polkadot.  Accounts could be staked/bonded, unstaked/unbonded, or unstaking/unbonding, but only an unstaked/unbonded account key can transfer dots from one account to another.
  - *Nominator keys* provide a certificate chain between staked/bonded account keys and the session keys used by nodes in block production or validating.  As nominator keys cannot transfer dots, they insulate account keys, which may remain air gapped, from nodes actually running on the internet.
  - *Session keys* are actually several keys kept together that provide the various signing functions required by validators, including a couple types of verifiable random function (VRF) keys.
  - *Transport layer signing keys* are used by libp2p to authenticate connections between nodes.  We shall either certify these with the session key or perhaps include them directly in the session key.
@@ -14,12 +14,14 @@ We have roughly four cryptographic layers in Polkadot:
 
 We believe Polkadot accounts should primarily use Schnorr signatures with both public keys and the `R` point in the signature encoded using the [Ristretto](https://ristretto.group) point compression for the Ed25519 curve.  We should collaborate with the [dalek ecosystem](https://github.com/dalek-cryptography) for which Ristretto was developed, but provide a simpler signature crate, for which [schnorr-dalek](https://github.com/w3f/schnorr-dalek) provides a first step.
 
-I'll write a second longer post outlining the reasons for this choice, while providing only a high level summary here:
+I'll write a another comment outlining the reasons for this choice, while providing only a high level summary here:
+
 
 Account keys must support the diverse functionality desired of account keys on other systems like Ethereum and Bitcoin.  As such, our account keys shall use Schnorr signatures because these support fast batch verification and hierarchical deterministic key derivation ala [BIP32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#Child_key_derivation_CKD_functions). All features from the [Bitcoin Schnoor wishlist](https://github.com/sipa/bips/blob/bip-schnorr/bip-schnorr.mediawiki) provides a case for Schnorr signatures matter too, like
 
  - interactive threshold and multi-signaturtes, as well as
  - adaptor, and perhaps even blind, signatures for swaps and payment channels. 
+
 
 We make conservative curve choices here because account keys must live for decades.  In particular, we avoid pairing-based cryptography and BLS signatures for accounts, at the cost of true aggregation of the signatures in a block when verifying blocks, and less interactive threshold and multi-signaturtes. [1]. 
 
@@ -75,7 +77,7 @@ A session public key record has a prefix consisting of the above three keys, alo
 
 ## Transport layer - libp2p
 
-There are numerous transports for libp2p, but only QUIC was designed to be secure.  Instead, one routes traffic through libp2p's secio protocol.  We trust QUIC's cryptographic layer which is TLS 1.3, but secio itself is a home brew jobs by Protocol Labs with no serious security analysis, which usually [goes](https://github.com/tendermint/tendermint/issues/3010) [poorly](https://github.com/tendermint/kms/issues/111).  
+There are numerous transports for libp2p, but only QUIC was designed to be secure.  Instead, one routes traffic through [libp2p's secio protocol](https://github.com/libp2p/specs/pull/106).  We trust QUIC's cryptographic layer which is TLS 1.3, but secio itself is a home brew jobs by Protocol Labs with no serious security analysis, which usually [goes](https://github.com/tendermint/tendermint/issues/3010) [poorly](https://github.com/tendermint/kms/issues/111).  
 
 There was some minimal discussion of secio's security but [Dominic Tarr](https://github.com/auditdrivencrypto/secure-channel/blob/master/prior-art.md#ipfss-secure-channel) raised some concerns in the [original pull request](https://github.com/ipfs/go-ipfs/pull/34).  I'll raise several concerns from that discussion:  
 
