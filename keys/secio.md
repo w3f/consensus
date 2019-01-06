@@ -18,9 +18,11 @@ Third, there are [no ACKs in secio](https://github.com/libp2p/go-libp2p-secio/is
 
 As QUIC uses UDP only, we could add TCP based transport that uses TLS 1.3, perhaps by extending libp2p's existing transport with support for TLS 1.3, or perhaps adding a more flexible TLS 1.3 layer.  We might prefer a flexible TLS 1.3 layer over conventional TLS integration into libp2p extending transports because our authentication privacy demands might work differently from TLS's server oriented model.  
 
-We could identify some reasonable [Noise](https://noiseprotocol.org/noise.html) variant, if avoiding the complexity of TLS sounds like a priority.  I believe Noise XX fits the blockchain context well, due to Alice and Bob roles being easily reversible, improved modularity, and more asynchronous key certification from on-chain data.  At the extreme, we could imagine identifing particular handshakes for particular interactions though, like GRANDPA using KK and fishermen using NK.
+We could identify some reasonable [Noise](https://noiseprotocol.org/noise.html) [variant](https://github.com/mcginty/snow), *if* avoiding the complexity of TLS sounds like a priority and ACKs are always handled by higher layers.  I believe Noise XX fits the blockchain context well, due to Alice and Bob roles being easily reversible, improved modularity, and more asynchronous key certification from on-chain data.  At the extreme, we could imagine identifying particular handshakes for particular interactions though, like GRANDPA using KK and fishermen using NK.  
 
 In short, we should make a new years resolution to replace secio, with our two simplest routes being either TLS 1.3 or Noise XX. 
+
+---
 
 Aside from these authentication repairs, there are two additional directions for possible future work:
 
