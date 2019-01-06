@@ -18,5 +18,11 @@ As QUIC uses UDP only, we could add TCP based transport that uses TLS 1.3, perha
 
 We could identify some reasonable [Noise](https://noiseprotocol.org/noise.html) variant, if avoiding the complexity of TLS sounds like a priority.  I believe Noise XX fits the blockchain context well, due to Alice and Bob roles being easily reversible, improved modularity, and more asynchronous key certification from on-chain data.  At the extreme, we could imagine identifing particular handshakes for particular interactions though, like GRANDPA using KK and fishermen using NK.
 
-In short, our two simplest routes consist of replacing secio with either TLS 1.3 or Noise XX.
+In short, our two simplest routes consist of replacing secio with either TLS 1.3 or Noise XX. 
+
+Aside from these basic repairs, there are two additional directions for possible future work:
+
+ - *Post-quantum key exchange.*  We'd likely employ LWE scheme here.  Right now, CSIDH remains young and slow, but the small key size and long-term keys claims indicate that   [CSIDH](https://www.esat.kuleuven.be/cosic/csidh-post-quantum-key-exchange-using-isogeny-based-group-actions/) might integrate better with Noise and blockchains.  I'd skip the [existing specification](https://github.com/noiseprotocol/noise_wiki/wiki/Post-Quantum-Noise-with-New-Hope) for integrating Noise with New Hope Simple.  Adam Langely has good arguments for [selecting the NTRU variant NRSS+SXY for Google's CECPQ2 experiment](https://www.imperialviolet.org/2018/12/12/cecpq2.html).  I  the module-LWE [Kyber](https://pq-crystals.org/kyber/)
+ - *Forward-security.*  There is some multi-hop message forwarding in libp2p, but it provides only another addressing technique, not a true connection abstraction layer like say GNUNet's CADET layer.  CADET actually employs the Axolotl forward secure ratchet.  I'm always a fan of forward security but the benefits might prove minimal in our context.
+ 
 
