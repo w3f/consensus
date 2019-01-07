@@ -1,10 +1,10 @@
 
 
-## Account keys
+## Account signatures and keys
 
 We believe Polkadot accounts should primarily use Schnorr signatures with both public keys and the `R` point in the signature encoded using the [Ristretto](https://ristretto.group) point compression for the Ed25519 curve.  We should collaborate with the [dalek ecosystem](https://github.com/dalek-cryptography) for which Ristretto was developed, but provide a simpler signature crate, for which [schnorr-dalek](https://github.com/w3f/schnorr-dalek) provides a first step.
 
-I'll write a another comment outlining the reasons for this choice, while providing only a high level summary here:
+I'll write a another comment giving more details behind this choice, but the high level summary goes:
 
 
 Account keys must support the diverse functionality desired of account keys on other systems like Ethereum and Bitcoin.  As such, our account keys shall use Schnorr signatures because these support fast batch verification and hierarchical deterministic key derivation ala [BIP32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#Child_key_derivation_CKD_functions). All features from the [Bitcoin Schnoor wishlist](https://github.com/sipa/bips/blob/bip-schnorr/bip-schnorr.mediawiki) provides a case for Schnorr signatures matter too, like
@@ -30,8 +30,8 @@ In Edwards curve of with cofactor 4, [Mike Hamburg's Decaf point compression](ht
 
 In the author's words, "Rather than bit-twiddling, point mangling, or otherwise kludged-in ad-hoc fixes, Ristretto is a thin layer that provides protocol implementors with the correct abstraction: a prime-order group."
 
+---
 
-[1] Aggregation can dramatically reduce signed message size when applying numerous signatures, but if performance is the only goal then batch verification techniques similar results, and exist for mny signature schemes, including Schnorr.  There are clear advantages to reducing interactiveness in threshold and multi-signaturtes, but parachains can always provide these on Polkadot.  Importantly, there are numerous weaknesses in all known curves that support pairings, but the single most damning weakness is the pairing itself.  
-$$ e : G_1 \times G_2 \to G_T $$
-In essence, we use elliptic curves in the first palce because they insulate us somewhat from mathematicians ever advancing understanding of number theory.  Yet, any known pairing maps into a group $G_T$ that re-exposes us, so attacks based on index-calculus, etc. improve more quickly.  As a real world example, there were weaknesses found in BN curve of the sort used by ZCash during development, so after launch they needed to develop and migrate to a [new curve](https://z.cash/blog/new-snark-curve/).  We expect this to happen again for roughly the same reasons that RSA key sizes increase slowly over time.
+[1] Aggregation can dramatically reduce signed message size when applying numerous signatures, but if performance is the only goal then batch verification techniques similar results, and exist for mny signature schemes, including Schnorr.  There are clear advantages to reducing interactiveness in threshold and multi-signaturtes, but parachains can always provide these on Polkadot.  Importantly, there are numerous weaknesses in all known curves that support pairings, but the single most damning weakness is the pairing $e : G_1 \times G_2 \to G_T$ itself.    In essence, we use elliptic curves in the first palce because they insulate us somewhat from mathematicians ever advancing understanding of number theory.  Yet, any known pairing maps into a group $G_T$ that re-exposes us, so attacks based on index-calculus, etc. improve more quickly.  As a real world example, there were weaknesses found in BN curve of the sort used by ZCash during development, so after launch they needed to develop and migrate to a [new curve](https://z.cash/blog/new-snark-curve/).  We expect this to happen again for roughly the same reasons that RSA key sizes increase slowly over time.
+
 
