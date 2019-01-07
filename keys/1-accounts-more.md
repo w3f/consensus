@@ -1,12 +1,12 @@
 
-# Account keys on Polkadot
+# Account signatures and keys in Polkadot
 
 We believe Polkadot accounts should primarily use Schnorr signatures with both public keys and the `R` point in the signature encoded using the [Ristretto](https://ristretto.group) point compression for the Ed25519 curve.  We should collaborate with the [dalek ecosystem](https://github.com/dalek-cryptography) for which Ristretto was developed, but provide a simpler signature crate, for which [schnorr-dalek](https://github.com/w3f/schnorr-dalek) provides a first step.
 
 
 ## Schnorr signatures 
 
-We choose Schnorr signatures because they satisfy the [Bitcoin Schnoor wishlist](https://github.com/sipa/bips/blob/bip-schnorr/bip-schnorr.mediawiki) and work fine with extremely secure curves, like secp256k1 or the Ed25519 curve.  You could do fancier tricks, including like aggregation, with a pairing based curve like BLS12-381 and the BLS signature scheme.  These curves are slower for single verifications, and worse accounts should last decades while pairing friendly curves should be expected become less secure as number theory advances.  
+We prefer Schnorr signatures because they satisfy the [Bitcoin Schnoor wishlist](https://github.com/sipa/bips/blob/bip-schnorr/bip-schnorr.mediawiki) and work fine with extremely secure curves, like secp256k1 or the Ed25519 curve.  You could do fancier tricks, including like aggregation, with a pairing based curve like BLS12-381 and the BLS signature scheme.  These curves are slower for single verifications, and worse accounts should last decades while pairing friendly curves should be expected become less secure as number theory advances.  
 
 There is one sacrifice we make by choosing Schnorr signatures over ECDSA signatures for account keys:  Both require 64 bytes, but only [ECDSA signatures communicate their public key](https://crypto.stackexchange.com/questions/18105/how-does-recovering-the-public-key-from-an-ecdsa-signature-work).  There are obsolete Schnorr variants that [support recovering the public key from a signature](https://crypto.stackexchange.com/questions/60825/schnorr-pubkey-recovery), but 
 they break important functionality like [hierarchical deterministic key derivation](https://www.deadalnix.me/2017/02/17/schnorr-signatures-for-not-so-dummies/).  In consequence, Schnorr signatures often take an extra 32 bytes for the public key.
