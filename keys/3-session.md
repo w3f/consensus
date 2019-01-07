@@ -20,3 +20,4 @@ We include the recent block hash in the certificate, so that if the chain were t
 We still lack any wonderful aggregation strategy for block production VRFs, so they may default to Ristretto Schnorr VRFs.  In this case, the Ristretto Schnorr session key component living longer also help minimize attacks on our random beacon. 
 
 
+We should consider [slothful reduction](https://eprint.iacr.org/2017/437) as discussed in https://github.com/zkcrypto/pairing/issues/98 since GRANDPA uses the small curve key form.
