@@ -106,7 +106,7 @@ We assume a kind of conditional eventual consensus.
 If we keep building on our last finalised block $B$ and don't finalise any new blocks, then eventually we have consensus on a longer chain than just $B$, which the finality gadget can use to finalise another block.
 We also want a protocol that does not terminate, but instead keeps on finalising more blocks. 
 
-We assume that there is a block production protocol $P$ that runs at the same time as the finality gadget protocol $G$. Actors who participant in both protocols may behave differently in $P$ depending on what happened in $G$.
+We assume that there is a block production protocol $P$ that runs at the same time as the finality gadget protocol $G$. Actors who are participants in both protocols may behave differently in $P$ depending on what happened in $G$.
 However in the reverse direction, the only way that an honest voter $v$'s behaviour in $G$ is affected by $P$ is through a voting rule, a function $A(v,s_v,B)$ that depends on $v$ and its state $s_v$ and takes a block $B$ and returns a block $B'$ at the head of a chain including $B$.
 
 We say that the system $G$,$P$ and $A$ achieves conditional eventual consensus, if $G$ has finalised a block $B$, then eventually, either $G$ will finalise some descendant of $B$ or else all the chains with head $A_{v,s_v}(B)$ for all voters $v$ at all future states $s_v$ will contain the same descendant $B'$ of $B$.
