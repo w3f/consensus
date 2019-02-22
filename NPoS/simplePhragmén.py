@@ -54,9 +54,9 @@ def setup_lists(vote_list):
                 edge.candidate = candidate_array[candidate_dict[valiid]]
             else:
                 candidate_dict[valiid] = num_candidates
-                newcandidate = candidate(valiid, num_candidates)
-                candidate_array.append(newcandidate)
-                edge.candidate = newcandidate
+                new_candidate = candidate(valiid, num_candidates)
+                candidate_array.append(new_candidate)
+                edge.candidate = new_candidate
                 num_candidates += 1
     return nomlist, candidate_array
 
@@ -127,8 +127,8 @@ def approval_voting(votelist, numtoelect):
 
     candidates.sort(key=lambda x: x.approval_stake, reverse=True)
 
-    electedcandidates = candidates[0:numtoelect]
-    return nomlist, electedcandidates
+    elected_candidates = candidates[0:numtoelect]
+    return nomlist, elected_candidates
 
 
 def print_result(nomlist, electedcandidates):
@@ -148,15 +148,15 @@ def equalise(nom, tolerance):
     # Assumes that all elected validators have backed_stake set correctly
     # returns the max difference in stakes between sup
     
-    electededges = [edge for edge in nom.edges if edge.candidate.elected]
-    if len(electededges) == 0:
+    elected_edges = [edge for edge in nom.edges if edge.candidate.elected]
+    if len(elected_edges) == 0:
         return 0.0
-    stakeused = sum([edge.backing_stake for edge in electededges])
-    backedstakes = [edge.candidate.backed_stake for edge in electededges]
-    backingbackedstakes = [edge.candidate.backed_stake for edge in electededges if edge.backing_stake > 0.0]
-    if len(backingbackedstakes) > 0:
-        difference = max(backingbackedstakes)-min(backedstakes)
-        difference += nom.budget-stakeused
+    stake_used = sum([edge.backing_stake for edge in elected_edges])
+    backed_stakes = [edge.candidate.backed_stake for edge in elected_edges]
+    backing_backed_stakes = [edge.candidate.backed_stake for edge in elected_edges if edge.backing_stake > 0.0]
+    if len(backing_backed_stakes) > 0:
+        difference = max(backing_backed_stakes)-min(backed_stakes)
+        difference += nom.budget-stake_used
         if difference < tolerance:
             return difference
     else:
@@ -167,22 +167,22 @@ def equalise(nom, tolerance):
         edge.candidate.backed_stake -= edge.backing_stake
         edge.backing_stake = 0
 
-    electededges.sort(key=lambda x: x.candidate.backed_stake)
-    cumulativebackedstake = 0
-    lastcandidateindex = len(electededges)-1
+    elected_edges.sort(key=lambda x: x.candidate.backed_stake)
+    cumulative_backed_stake = 0
+    last_candidate_index = len(elected_edges)-1
 
-    for i in range(len(electededges)):
-        backedstake = electededges[i].candidate.backed_stake
-        if backedstake * i - cumulativebackedstake > nom.budget:
-            lastcandidateindex = i-1
+    for i in range(len(elected_edges)):
+        backed_stake = elected_edges[i].candidate.backed_stake
+        if backed_stake * i - cumulative_backed_stake > nom.budget:
+            last_candidate_index = i-1
             break
-        cumulativebackedstake += backedstake
+        cumulative_backed_stake += backed_stake
 
-    laststake = electededges[lastcandidateindex].candidate.backed_stake
-    waystosplit = lastcandidateindex+1
-    excess = nom.budget + cumulativebackedstake - laststake*waystosplit
-    for edge in electededges[0:waystosplit]:
-        edge.backing_stake = excess / waystosplit + laststake - edge.candidate.backed_stake
+    last_stake = elected_edges[last_candidate_index].candidate.backed_stake
+    ways_to_split = last_candidate_index+1
+    excess = nom.budget + cumulative_backed_stake - last_stake*ways_to_split
+    for edge in elected_edges[0:ways_to_split]:
+        edge.backing_stake = excess / ways_to_split + last_stake - edge.candidate.backed_stake
         edge.candidate.backed_stake += edge.backing_stake
     return difference
 
@@ -192,18 +192,18 @@ def equalise_all(nomlist, maxiterations, tolerance):
         for j in range(len(nomlist)):
             nom = random.choice(nomlist)
             equalise(nom, tolerance/10)
-        maxdifference = 0
+        max_difference = 0
         for nom in nomlist:
             difference = equalise(nom, tolerance/10)
-            maxdifference = max(difference, maxdifference)
-        if maxdifference < tolerance:
+            max_difference = max(difference, max_difference)
+        if max_difference < tolerance:
             return
 
 
 def seq_phragmén_with_postprocessing(votelist, numtoelect):
-    nomlist, electedcandidates = seq_phragmén(votelist, numtoelect)
+    nomlist, elected_candidates = seq_phragmén(votelist, numtoelect)
     equalise_all(nomlist, 2, 0.1)
-    return nomlist, electedcandidates    
+    return nomlist, elected_candidates
 
 
 def example1():
@@ -212,40 +212,40 @@ def example1():
         ("B", 20.0, ["X", "Z"]),
         ("C", 30.0, ["Y", "Z"])]
     print("Votes ", votelist)
-    nomlist, electedcandidates = seq_phragmén(votelist, 2)
+    nomlist, elected_candidates = seq_phragmén(votelist, 2)
     print("Sequential Phragmén gives")
-    print_result(nomlist, electedcandidates)
-    nomlist, electedcandidates = approval_voting(votelist, 2)
+    print_result(nomlist, elected_candidates)
+    nomlist, elected_candidates = approval_voting(votelist, 2)
     print()
     print("Approval voting gives")
-    print_result(nomlist, electedcandidates)
-    nomlist, electedcandidates = seq_phragmén_with_postprocessing(votelist, 2)
+    print_result(nomlist, elected_candidates)
+    nomlist, elected_candidates = seq_phragmén_with_postprocessing(votelist, 2)
     print("Sequential Phragmén with post processing gives")
-    print_result(nomlist, electedcandidates)
+    print_result(nomlist, elected_candidates)
 
 
 class electiontests(unittest.TestCase):
     def testexample1_phragmén(self):
-        votelist = [
+        vote_list = [
             ("A", 10.0, ["X", "Y"]),
             ("B", 20.0, ["X", "Z"]),
             ("C", 30.0, ["Y", "Z"])]
-        nomlist, electedcandidates = seq_phragmén(votelist, 2)
-        self.assertEqual(electedcandidates[0].valiid, "Z")
-        self.assertAlmostEqual(electedcandidates[0].score, 0.02)
-        self.assertEqual(electedcandidates[1].valiid, "Y")
-        self.assertAlmostEqual(electedcandidates[1].score, 0.04)
+        nomlist, elected_candidates = seq_phragmén(vote_list, 2)
+        self.assertEqual(elected_candidates[0].valiid, "Z")
+        self.assertAlmostEqual(elected_candidates[0].score, 0.02)
+        self.assertEqual(elected_candidates[1].valiid, "Y")
+        self.assertAlmostEqual(elected_candidates[1].score, 0.04)
 
     def test_example1_approval(self):
-        votelist = [
+        vote_list = [
             ("A", 10.0, ["X", "Y"]),
             ("B", 20.0, ["X", "Z"]),
             ("C", 30.0, ["Y", "Z"])]
-        nomlist, electedcandidates = approval_voting(votelist, 2)
-        self.assertEqual(electedcandidates[0].valiid, "Z")
-        self.assertAlmostEqual(electedcandidates[0].approval_stake, 50.0)
-        self.assertEqual(electedcandidates[1].valiid, "Y")
-        self.assertAlmostEqual(electedcandidates[1].approval_stake, 40.0)
+        nomlist, elected_candidates = approval_voting(vote_list, 2)
+        self.assertEqual(elected_candidates[0].valiid, "Z")
+        self.assertAlmostEqual(elected_candidates[0].approval_stake, 50.0)
+        self.assertEqual(elected_candidates[1].valiid, "Y")
+        self.assertAlmostEqual(elected_candidates[1].approval_stake, 40.0)
 
 
 if __name__ == "__main__":
