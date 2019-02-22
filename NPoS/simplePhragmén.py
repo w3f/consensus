@@ -29,7 +29,7 @@ class candidate:
         self.score = 0
 
 
-def setuplists(votelist):
+def setup_lists(votelist):
     '''
     Instead of Python's dict here, you can use anything with O(log n)
     addition and lookup.We can also use a hashmap like dict, by generating
@@ -58,8 +58,8 @@ def setuplists(votelist):
     return(nomlist, candidatearray)
 
 
-def seqPhragmén(votelist, numtoelect):
-    nomlist, candidates = setuplists(votelist)
+def seq_phragmén(votelist, numtoelect):
+    nomlist, candidates = setup_lists(votelist)
     # Compute the total possible stake for each candidate
     for nom in nomlist:
         for edge in nom.edges:
@@ -74,7 +74,7 @@ def seqPhragmén(votelist, numtoelect):
             for edge in nom.edges:
                 if not edge.candidate.elected:
                     edge.candidate.score += nom.budget * nom.load / edge.candidate.approvalstake
-        
+
         bestcandidate = 0
         bestscore = math.inf
 
@@ -104,8 +104,8 @@ def seqPhragmén(votelist, numtoelect):
     return nomlist, electedcandidates
 
 
-def approvalvoting(votelist, numtoelect):
-    nomlist, candidates = setuplists(votelist)
+def approval_voting(votelist, numtoelect):
+    nomlist, candidates = setup_lists(votelist)
 
     # Compute the total possible stake for each candidate
     for nom in nomlist:
@@ -120,7 +120,7 @@ def approvalvoting(votelist, numtoelect):
     return nomlist, electedcandidates
 
 
-def printresult(nomlist, electedcandidates):
+def print_result(nomlist, electedcandidates):
     for candidate in electedcandidates:
         print(candidate.valiid, " is elected with stake ", candidate.backedstake, "and score ", candidate.score)
     
@@ -151,7 +151,7 @@ def equalise(nom, tolerance):
     else:
         difference = nom.budget
 
-    #remove all backing
+    # remove all backing
     for edge in nom.edges:
         edge.candidate.backedstake -= edge.backingstake
         edge.backingstake = 0
@@ -176,7 +176,7 @@ def equalise(nom, tolerance):
     return difference
 
 
-def equaliseall(nomlist, maxiterations, tolerance):
+def equalise_all(nomlist, maxiterations, tolerance):
     for i in range(maxiterations):
         for j in range(len(nomlist)):
             nom = random.choice(nomlist)
@@ -189,9 +189,9 @@ def equaliseall(nomlist, maxiterations, tolerance):
             return
 
 
-def seqPhragménwithpostprocessing(votelist, numtoelect):
-    nomlist, electedcandidates = seqPhragmén(votelist, numtoelect)
-    equaliseall(nomlist, 2, 0.1)
+def seq_phragmén_with_postprocessing(votelist, numtoelect):
+    nomlist, electedcandidates = seq_phragmén(votelist, numtoelect)
+    equalise_all(nomlist, 2, 0.1)
     return nomlist, electedcandidates    
 
 
@@ -201,36 +201,36 @@ def example1():
         ("B", 20.0, ["X", "Z"]),
         ("C", 30.0, ["Y", "Z"])]
     print("Votes ", votelist)
-    nomlist, electedcandidates = seqPhragmén(votelist, 2)
+    nomlist, electedcandidates = seq_phragmén(votelist, 2)
     print("Sequential Phragmén gives")
-    printresult(nomlist, electedcandidates)
-    nomlist, electedcandidates = approvalvoting(votelist, 2)
+    print_result(nomlist, electedcandidates)
+    nomlist, electedcandidates = approval_voting(votelist, 2)
     print()
     print("Approval voting gives")
-    printresult(nomlist, electedcandidates)
-    nomlist, electedcandidates = seqPhragménwithpostprocessing(votelist,2)
+    print_result(nomlist, electedcandidates)
+    nomlist, electedcandidates = seq_phragmén_with_postprocessing(votelist, 2)
     print("Sequential Phragmén with post processing gives")
-    printresult(nomlist, electedcandidates)
+    print_result(nomlist, electedcandidates)
 
 
 class electiontests(unittest.TestCase):
-    def testexample1Phragmén(self):
+    def testexample1_phragmén(self):
         votelist = [
             ("A", 10.0, ["X", "Y"]),
             ("B", 20.0, ["X", "Z"]),
             ("C", 30.0, ["Y", "Z"])]
-        nomlist, electedcandidates = seqPhragmén(votelist, 2)
+        nomlist, electedcandidates = seq_phragmén(votelist, 2)
         self.assertEqual(electedcandidates[0].valiid, "Z")
         self.assertAlmostEqual(electedcandidates[0].score, 0.02)
         self.assertEqual(electedcandidates[1].valiid, "Y")
         self.assertAlmostEqual(electedcandidates[1].score, 0.04)
 
-    def testexample1approval(self):
+    def test_example1_approval(self):
         votelist = [
             ("A", 10.0, ["X", "Y"]),
             ("B", 20.0, ["X", "Z"]),
             ("C", 30.0, ["Y", "Z"])]
-        nomlist, electedcandidates = approvalvoting(votelist, 2)
+        nomlist, electedcandidates = approval_voting(votelist, 2)
         self.assertEqual(electedcandidates[0].valiid, "Z")
         self.assertAlmostEqual(electedcandidates[0].approvalstake, 50.0)
         self.assertEqual(electedcandidates[1].valiid, "Y")
@@ -242,32 +242,3 @@ if __name__ == "__main__":
         unittest.main()
     else:
         example1()
-
-
-    
-    
-            
-
-    
-
-
-    
-            
-
-    
-        
-        
-        
-            
-            
-
-                
-        
-
-
-            
-    
-    
-    
-    
-    
