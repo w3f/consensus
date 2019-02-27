@@ -335,7 +335,7 @@ The response is of the following form:
 \item A either a set $S$ of prevotes for round $r''-1$, or else a set $S$ of precommits for round $r''-1$, in either case such that it is impossible for $S$ to have a supermajority for $B$.
 \end{itemize}
 
-Any honest voter should respond.  In particular, if no voter responds, then we consider all  voters how should have responded but didn't as Byzantine and we return this set of voters, along with any equivocators, which will be at least $n-f$ voters total. If any do respond, then if $r'' > r+1$, we can ask the same query for at least $n-f$ validators in round $r''-1$. (Note that if any do respond, we will not punish non-responders.)
+Any honest voter should respond.  In particular, if no voter responds, then we consider all  voters how should have responded but didn't as Byzantine and we return this set of voters, along with any equivocators, which will be at least $n-f$ voters total. If any do respond, then if $r'' > r+1$, we can ask the same query for at least $n-f$ validators in round $r''-1$. We note however that if any voters do respond then we will not punish non-responders.
 
 If we ask such queries for a vote in all rounds between $r''=r'$ and $r''=r+1$ and get valid responses, since some voter responds when $r''=r+1$, then we have either a set $S$ of prevotes or precommits in round $r$ that show it is impossible for $S$ to have a supermajority for $B$ in round $r$.
 
