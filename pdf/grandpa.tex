@@ -113,7 +113,7 @@ We say that the system $G$,$P$ and $A$ achieves conditional eventual consensus, 
 
 \begin{definition} \label{def:finality-gadget} 
 Let $F$ be a protocol  with a set of voters $V$, a constant fraction of which may be Byzantine.
-We say that $F$ solves {\em blockchain Byzantine finality gadget problem} if for every block production protocol $P$ a voting rule $A$ such that the system $F,G,A$ achieves conditional eventual consensus, then we have th following
+We say that $F$ solves {\em blockchain Byzantine finality gadget problem} if for every block production protocol $P$ a voting rule $A$ such that the system $F,G,A$ achieves conditional eventual consensus, then we have the following
 
 A protocol for the blockchain Byzantine finality gadget problem has , each of whom has access to an oracle $A$ for the best chain given the last finalised block with the property that, as long as no new block is finalised, it achieves eventual consensus on some child of the last finalised block such that the following holds:
 
@@ -229,7 +229,7 @@ A vote $v$ for a block $B$ by a validator $V$ is a message signed by $V$ contain
 
 
 
-A validator euivocates in a set of votes $S$ if they have more than one vote in $S$. We call a set $S$ of votes tolerant if the number of voters who equivocate in $S$ is at most $f$. We say that $S$ has supermajority for a block $B$ if the set of voters who either have a vote for blocks $\geq B$ or equivocate in $S$ has size at least $(n+f+1)/2$. (The reason to count equivocations like this is to retain monotonicity , that if $S \subset T$ then if $S$ has a supermajority for $B$ so does $T$, while being able to ignore yet more equivocating votes from an equivocating validator).
+A validator equivocates in a set of votes $S$ if they have more than one vote in $S$. We call a set $S$ of votes tolerant if the number of voters who equivocate in $S$ is at most $f$. We say that $S$ has supermajority for a block $B$ if the set of voters who either have a vote for blocks $\geq B$ or equivocate in $S$ has size at least $(n+f+1)/2$. (The reason to count equivocations like this is to retain monotonicity , that if $S \subset T$ then if $S$ has a supermajority for $B$ so does $T$, while being able to ignore yet more equivocating votes from an equivocating validator).
 
 The $2/3$-GHOST function $g(S)$ takes a set $S$ of votes and returns the block $B$ with highest block number such that $S$ has a supermajority for $B$.
 If there is no such block, then it returns `nil`. (if $f \neq \lfloor (n-1)/3 \rfloor$, then this is a misnomer and we may change the name accordingly.)
@@ -270,7 +270,7 @@ Note that it is possible for an intolerant $S$ to both have a supermajority for 
 In this section, we give the protocol for GRANDPA, our finality gadget in the partially synchronous setting.
 
 
-In addition to a set of voters for each of the two votes in a round, we assume that each round has a participant designated as primary and all particpants agree on the voter sets and primary. We will typically either choose the primary pseudorandomly from or rotate through the voter set.
+In addition to a set of voters for each of the two votes in a round, we assume that each round has a participant designated as primary and all participants agree on the voter sets and primary. We will typically either choose the primary pseudorandomly from or rotate through the voter set.
 
 We let $V_{r,v}$ and $C_{r,v}$ be the sets of prevotes and precommits respectively received by $v$ from round $r$ at the current time.
 
@@ -322,11 +322,11 @@ The first thing we want to show is asynchronous safety, assuming we have at most
 \begin{theorem} \label{thm:accountable} If the protocol finalises any two blocks $B,B'$ for which valid commit messages were sent, but which do not lie on the same chain, then there are at least $f+1$ Byzantine voters who all voted in a particular vote. Furthermore, there is a synchronous procedure to find some such set $X$ of $f+1$ Byzantine voters.
 \end{theorem}
 
-The challenge procedure works as follows: If $B$ and $B'$ are committed in the same round, then the union of their precommits must contain at least $f$ equivocations, so we are done.  Otherwise, we may assume by symmetry that $B$ was committed in round $r$ and $B'$ in round $r' > r$.  There are at least $n-f$ voters who precomitted $\geq B'$ or equivocated in round $r$ in their commit messages, so we ask those who precommitted $\geq B'$ why they did so.
+The challenge procedure works as follows: If $B$ and $B'$ are committed in the same round, then the union of their precommits must contain at least $f$ equivocations, so we are done.  Otherwise, we may assume by symmetry that $B$ was committed in round $r$ and $B'$ in round $r' > r$.  There are at least $n-f$ voters who precommitted $\geq B'$ or equivocated in round $r$ in their commit messages, so we ask those who precommitted $\geq B'$ why they did so.
 
 Starting with $r''='$, we ask queries of the following form: 
 \begin{itemize}
-\item Why was $E_{r''-1} \not\geq B$  when you prevoted for or precomitted to $B'' \not\geq B$ in round $r'' > r$?
+\item Why was $E_{r''-1} \not\geq B$  when you prevoted for or precommitted to $B'' \not\geq B$ in round $r'' > r$?
 \end{itemize}
 \noindent Any honest voter should be able to respond to this, as is shown in Lemma \ref{lem:honest-answer} below. 
 
@@ -358,10 +358,10 @@ So we either discover $f+1$ equivocations in a vote or else $n-f > f+1$ voters e
 An honest voter can answer the first type of query.
 \end{lemma}
 We first show that, if a prevote or precommit in round $r$ is cast by an honest voter $v$ for a block $B''$, then at the time of the vote we had $B'' \geq E_{r-1,v}$.
-Prevotes should be for the head of a chain containing either $E_{r-1,v}$ or some $B''' > E_{r-1,v}$ by step 2 or 3.  In either case we have $B'' \geq E_{r-1,v}$. Precommits should be for $g(V_{r,v})$ but $v$ waits until $g(V_{r,v}) \geq E_{r-1,v}$, by step 4, before precommiting, so again this holds.
+Prevotes should be for the head of a chain containing either $E_{r-1,v}$ or some $B''' > E_{r-1,v}$ by step 2 or 3.  In either case we have $B'' \geq E_{r-1,v}$. Precommits should be for $g(V_{r,v})$ but $v$ waits until $g(V_{r,v}) \geq E_{r-1,v}$, by step 4, before precommitting, so again this holds.
 It follows that, if $B'' \not\geq B$, then we had $E_{r-1,v} \not\geq B$.
 
-We next show that if we had $E_{r-1,v} \not\geq B$ at the time of the vote then we can respond to the query validly, by demonstrating the impossiblity of a supermajority for $B$. 
+We next show that if we had $E_{r-1,v} \not\geq B$ at the time of the vote then we can respond to the query validly, by demonstrating the impossibility of a supermajority for $B$. 
 If $B$ was not on the same chain with $g(V_{r-1,v})$, then by Lemma \ref{lem:impossible} (iii), it was impossible for $V_{r-1,v}$ to have a supermajority for $B$, as desired. 
 If $B$ was on the same chain as $g(V_{r-1,v})$, then it was on the same chain as $E_{r-1,v}$ as well.  In this case, we must have $B > E_{r-1,v}$ since $E_{r-1,v} \not\geq B$.
 % ??????  
@@ -512,7 +512,7 @@ Since all honest voters prevote $\geq B$, $g(H_r) \geq B$ and so by Lemma \ref{l
 Let $B$ be the latest block that is ever finalised in rounds  $<r$ (even if no honest participant finalises it until after $t_r$). If all honest voters for the prevote in round $r$ agree that the best chain containing $B$ include the same child $B'$ of $B$, then they all finalises some child of $B$ before $t_r+6T$.
 \end{lemma}
 
-\begin{proof} By Corollary \ref{cor:overestimate-final}, any honest participant sees that $E_{r-1} \geq B$ during round $r$. Let $v$ be the primary of round $r$ and $B''=E_{r-1,v,t_{r,v}}$. If $B'' > B$, then by Lemma \ref{lem:primary-finalises}, all honest participants finalise $B''$ by time $t_r+6T$ which means they finalised a child of $B$. If $B''=B$, then by Lemma \ref{lem:honest-prevote-timings}, all honest voters prevote for th best chain including $B$.
+\begin{proof} By Corollary \ref{cor:overestimate-final}, any honest participant sees that $E_{r-1} \geq B$ during round $r$. Let $v$ be the primary of round $r$ and $B''=E_{r-1,v,t_{r,v}}$. If $B'' > B$, then by Lemma \ref{lem:primary-finalises}, all honest participants finalise $B''$ by time $t_r+6T$ which means they finalised a child of $B$. If $B''=B$, then by Lemma \ref{lem:honest-prevote-timings}, all honest voters prevote for the best chain including $B$.
 By assumption these chains include $B'$ and so $g(H_r) \geq B$. By Lemma \ref{lem:honest-prevote-timings}, this means that $B'$ is finalised by time $t_r+6T$.
 \end{proof}
 
@@ -567,7 +567,7 @@ The protocol for selecting voters should require recent messages on chain signed
 
 We should consider having to manually approve finality agreed upon by this new set to alleviate the security concerns above. But this still gives a way to canonically agree on a new set, in the event of WW3 or bad initialisation of a new chain.
 
-If we do not want to put commit messades on chain, then we can alternatively do the following. Every block producer puts the highest block number that they see as finalised in their block.
+If we do not want to put commit messages on chain, then we can alternatively do the following. Every block producer puts the highest block number that they see as finalised in their block.
 
 Then any participant sees that if there is an $n$ such that
 \begin{itemize}
