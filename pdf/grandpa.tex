@@ -109,13 +109,11 @@ We also want a protocol that does not terminate, but instead keeps on finalising
 We assume that there is a block production protocol $P$ that runs at the same time as the finality gadget protocol $G$. Actors who are participants in both protocols may behave differently in $P$ depending on what happened in $G$.
 However in the reverse direction, the only way that an honest voter $v$'s behaviour in $G$ is affected by $P$ is through a voting rule, a function $A(v,s_v,B)$ that depends on $v$ and its state $s_v$ and takes a block $B$ and returns a block $B'$ at the head of a chain including $B$.
 
-We say that the system $G$,$P$ and $A$ achieves conditional eventual consensus, if $G$ has finalised a block $B$, then eventually, either $G$ will finalise some descendant of $B$ or else all the chains with head $A_{v,s_v}(B)$ for all voters $v$ at all future states $s_v$ will contain the same descendant $B'$ of $B$.
+We say that the system $G$,$P$ and $A$ achieves conditional eventual consensus, if $G$ has finalised a block $B$, then eventually, either $G$ will finalise some descendant of $B$ or else all the chains with head $A(v,s_v,B)$ for all voters $v$ at all future states $s_v$ will contain the same descendant $B'$ of $B$.
 
 \begin{definition} \label{def:finality-gadget} 
 Let $F$ be a protocol  with a set of voters $V$, a constant fraction of which may be Byzantine.
-We say that $F$ solves {\em blockchain Byzantine finality gadget problem} if for every block production protocol $P$ a voting rule $A$ such that the system $F,G,A$ achieves conditional eventual consensus, then we have the following
-
-A protocol for the blockchain Byzantine finality gadget problem has , each of whom has access to an oracle $A$ for the best chain given the last finalised block with the property that, as long as no new block is finalised, it achieves eventual consensus on some child of the last finalised block such that the following holds:
+We say that $F$ solves {\em blockchain Byzantine finality gadget problem} if for every block production protocol $P$ and a voting rule $A$ such that the system $F,G,A$ achieves conditional eventual consensus on some child of the last finalised block, the following holds:
 
 \begin{itemize}
 \item{\bf Safety:} All honest voters finalise the same block at each block number.
@@ -151,7 +149,7 @@ These properties will typically only hold with high probability. In the asynchro
 \subsection{Our approach}
 
 To discover up with a solution to the blockchain Byzantine finality gadget problem, we will typically look at various Byzantine agreement protocols and use those to find protocols for the multi-valued Byzantine finality gadget problem. 
-Agreement protocols with appropriate properties can used to find protocols for the blockchain Byzantine finality gadget problem by considering running them in parallel at every block number.
+Agreement protocols with appropriate properties can be used to find protocols for the blockchain Byzantine finality gadget problem by considering running them in parallel at every block number.
 If the one block protocol has the right properties then they will agree on blocks consistently, so if we finalise a block then we also finalise its ancestors and we can come up with a succinct protocol.
 
 For example, suppose we have a one block protocol that calls for a vote on blocks which requires a participant to observe a supermajority, say votes from  $2/3$ of voters, for some block, or else the participant observes that the vote is undecided. Now imagine running this vote in parallel for every block number and have any honest voter vote for blocks from a particular chain.
@@ -182,7 +180,7 @@ There are two main differences between Casper FFG and GRANDPA. One is that in GR
 The other main difference is how the finality gadget affects the fork-choice rule of the underlying block production mechanism. In GRANDPA, by default we will assume that this is only affected by having to include any finalised blocks. 
 Casper FFG \cite{CasperFFG} does not specify a fork-choice rule, but it requires that we build on justified blocks for liveness. Later specifications of Casper use the GHOST rule on votes for fork-choice.
 
-Only depending on finalised blocks gives a clearer separation between the block production mechanism and finality gadget. It may therefore be easier to adapt to other types of protocol that achieve eventual consensus—and there have been many diverse protocols that do this developed in the last few years.
+Only depending on finalised blocks gives a clearer separation between the block production mechanism and finality gadget. It may therefore be easier to adapt to other types of protocol that achieve eventual consensus and there have been many diverse protocols that do this developed in the last few years.
 It also makes it far easier to prove liveness properties.
 If the finality gadget has not finalised anything and so does not interfere, then the underlying mechanism should reach eventual consensus, which should be enough for the finality gadget to finalise whatever we have consensus on.
 
