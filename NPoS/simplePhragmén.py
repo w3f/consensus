@@ -82,9 +82,12 @@ def seqPhragmén(votelist,numtoelect):
         candidate.backedstake=0
 
     for nom in nomlist:
-        for edge in nom.edges:
-             edge.backingstake = nom.budget * edge.load/nom.load
-             edge.candidate.backedstake += edge.backingstake
+            for edge in nom.edges:
+                if nom.load > 0.0:
+                    edge.backingstake = nom.budget * edge.load/nom.load
+                    edge.candidate.backedstake += edge.backingstake
+                else:
+                    edge.backingstake = 0
     return (nomlist,electedcandidates)
 
 def approvalvoting(votelist,numtoelect):
@@ -169,6 +172,27 @@ def seqPhragménwithpostprocessing(votelist,numtoelect):
 
 def example1():
     votelist=[("A",10.0,["X","Y"]),("B",20.0,["X","Z"]),("C",30.0,["Y","Z"])]
+    print("Votes ",votelist)
+    nomlist, electedcandidates = seqPhragmén(votelist,2)
+    print("Sequential Phragmén gives")
+    printresult(nomlist, electedcandidates)
+    nomlist, electedcandidates = approvalvoting(votelist,2)
+    print()
+    print("Approval voting gives")
+    printresult(nomlist, electedcandidates)
+    nomlist, electedcandidates = seqPhragménwithpostprocessing(votelist,2)
+    print("Sequential Phragmén with post processing gives")
+    printresult(nomlist, electedcandidates)
+
+def example2():
+    votelist = [
+		("10", 1000, ["10"]),
+		("20", 1000, ["20"]),
+		("30", 1000, ["30"]),
+		("40", 1000, ["40"]),
+		('2', 500, ['10', '20', '30']),
+		('4', 500, ['10', '20', '40'])
+	]
     print("Votes ",votelist)
     nomlist, electedcandidates = seqPhragmén(votelist,2)
     print("Sequential Phragmén gives")
