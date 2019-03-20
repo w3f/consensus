@@ -44,6 +44,8 @@ class assignment:
                 for edge in voter.edges:
                     self.canapproval[edge.canindex] += voter.budget
             self.canscore = [0.0 for x in range(numcandidates)]
+            self.canscorenumerator = [0.0 for x in range(numcandidates)]
+            self.canscoredenominator = [0.0 for x in range(numcandidates)]
         else:
             self.edgelist = copyassignment.edgelist
             self.voterload=copyassignment.voterload.copy()
@@ -54,6 +56,8 @@ class assignment:
             self.electedcandidates=copyassignment.electedcandidates.copy()
             self.canapproval=copyassignment.canapproval.copy()
             self.canscore=copyassignment.canscores.copy()
+            self.canscorenumerator = copyassignment.canscorenumerator.copy()
+            self.canscoredenominator = copyassignment.canscoredenominator.copy()
     def setload(self, edge,load):
         oldload=self.edgeload[edge.index]
         self.edgeload[edge.index]=load
@@ -142,8 +146,72 @@ def seqPhragmén(votelist,numtoelect):
     a.loadstoweights()
     return a
 
+def calculateScores(a,cutoff):
+    for canindex in range(len(a.candidates)):
+        if not a.canelected[canindex]:
+            a.canscorenumerator[canindex]=0
+            a.canscoredenominator[canindex]=1
+    for nom in a.voterlist:
+        numeratorcontrib=nom.budget
+        denominatorcontrib=0
+        for edge in nom.edges:
+            if a.canelected[edge.canindex]:
+                if a.cansupport[edge.canindex] > cutoff:
+                    denominatorcontrib += a.edgeweight[edge.index]/a.cansupport[edge.canindex]
+                else:
+                    numeratorcontrib -= a.edgeweight[edge.index]
+        for edge in nom.edges:
+            if not a.canelected[edge.canindex]:
+                a.canscorenumerator[edge.canindex] +=numeratorcontrib
+                a.canscoredenominator[edge.canindex] +=denominatorcontrib
+    for canindex in range(len(a.candidates)):
+        if not a.canelected[canindex]:
+           a.canscore[canindex] = a.canscorenumerator[canindex]/a.canscoredenominator[canindex]
+    #for canindex in range(len(a.candidates)):
+        #if not a.canelected[canindex]:
+            #print(a.candidates[canindex].canid," has score ", a.canscore[canindex]," with cutoff ",cutoff)
+            #print("Approval stake: ", a.canapproval[canindex]," support: ",a.cansupport[canindex]," denominator: ",a.canscoredenominator[canindex], " numerator: ",a.canscorenumerator[canindex])
+                                                                                                                                                       
+                  
+def calculateMaxScore(a):
+    supportList=[a.cansupport[i] for i in range(len(a.candidates))]
+    supportList.append(0.0)
+    supportList.sort()
+    lowerindex=0
+    upperindex=len(a.candidates)+1
+    currentindex=0
+    while(True):
+        cutoff=supportList[currentindex]
+        calculateScores(a,cutoff)
+        scores=[(can, a.canscore[can.index]) for can in a.candidates if not a.canelected[can.index]]
+        bestcandidate,score=max(scores,key=lambda x: x[1])
+        if score > cutoff:
+            # In this case both score and cutoff are lower bounds to the max score
+            lowerindex=len([s for s in supportList if s <= score]) - 1
+            if currentindex == upperindex-1 or currentindex==lowerindex:
+                return bestcandidate,score
+        elif score < cutoff:
+            # In this case, cutoff is an upper bounf for the max score
+            upperindex=currentindex
+        else:
+            # If they are magically equal, this is the score
+            return bestcandidate,score
+        currentindex=(lowerindex + upperindex) // 2
 
-        
+def insertWithScore(a,candidate,cutoff):
+    oldcansupport=a.cansupport.copy()
+    a.elect(candidate)
+    for nom in a.voterlist:
+        for newedge in nom.edges:
+            if newedge.canindex== candidate.index:
+                usedbudget = sum([a.edgeweight[edge.index] for edge in nom.edges])
+                a.setweight(newedge, nom.budget-usedbudget)
+                for edge in nom.edges:
+                    if edge.canindex != candidate.index and a.edgeweight[edge.index] > 0.0:
+                        if oldcansupport[edge.canindex] > cutoff:
+                            fractiontotake = cutoff / oldcansupport[edge.canindex]
+                            a.setweight(newedge, a.edgeweight[newedge.index] + a.edgeweight[edge.index]* fractiontotake)
+                            a.setweight(edge, a.edgeweight[edge.index] * (1-fractiontotake))
 
 def approvalvoting(votelist,numtoelect):
     nomlist,candidates=setuplists(votelist)
@@ -229,6 +297,18 @@ def seqPhragménwithpostprocessing(votelist,numtoelect, passes=2):
     equaliseall(a,passes,0.1)
     return a
 
+
+def factor3point15(votelist, numtoelect,tolerance=0.1):
+    nomlist,candidates=setuplists(votelist)
+    #creating an assignment now also computes the total possible stake for each candidate
+    a=assignment(nomlist,candidates)
+    
+    for round in range(numtoelect):
+        bestcandidate,score=calculateMaxScore(a)
+        insertWithScore(a,bestcandidate, score)
+        equaliseall(a,1000000,tolerance)
+    return a
+
 def maybecandidate(a,newcandidate,shouldremoveworst, testonly, tolerance):
     assert(a.canelected[candidate.index]==False)
     currentvalue=min([a.cansupport[candidate.index] for candidate in a.electedcandidates])
@@ -264,34 +344,33 @@ class electiontests(unittest.TestCase):
 def dotests():
     unittest.main()
 
-def example1():
-    votelist=[("A",10.0,["X","Y"]),("B",20.0,["X","Z"]),("C",30.0,["Y","Z"])]
-    print("Votes ",votelist)
-    a = seqPhragmén(votelist,2)
+def doall(votelist, numtoelect, listvoters=True):
+    if listvoters:
+        print("Votes ",votelist)
+    a = seqPhragmén(votelist,numtoelect)
     print("Sequential Phragmén gives")
-    printresult(a)
-    a = approvalvoting(votelist,2)
+    printresult(a,listvoters)
+    a = approvalvoting(votelist,numtoelect)
     print()
     print("Approval voting gives")
-    printresult(a)
-    a = seqPhragménwithpostprocessing(votelist,2)
+    printresult(a,listvoters)
+    a = seqPhragménwithpostprocessing(votelist,numtoelect)
     print("Sequential Phragmén with post processing gives")
-    printresult(a)
+    printresult(a,listvoters)
+    a = factor3point15(votelist,numtoelect)
+    print("The factor 3.15 thing gives")
+    printresult(a,listvoters)
+    
+
+def example1():
+    votelist=[("A",10.0,["X","Y"]),("B",20.0,["X","Z"]),("C",30.0,["Y","Z"])]
+    doall(votelist,2)
+    
 
 def example2():
     # Approval voting does not do so well for this kind of thing.
     votelist=[("A",30.0,["T", "U","V","W"]),("B",20.0,["X"]),("C",20.0,["Y"]),("D",20.0,["Z"])]
-    print("Votes ",votelist)
-    a = seqPhragmén(votelist,4)
-    print("Sequential Phragmén gives")
-    printresult(a)
-    a = approvalvoting(votelist,4)
-    print()
-    print("Approval voting gives")
-    printresult(a)
-    a = seqPhragménwithpostprocessing(votelist,4)
-    print("Sequential Phragmén with post processing gives")
-    printresult(a)
+    doall(votelist,4)
 
 def example3():
     #Proportional representation test.
@@ -301,32 +380,14 @@ def example3():
     redvoters = [("RedV"+str(i),20.0,redparty) for i in range(30)]
     bluevoters = [("BlueV"+str(i),20.0,blueparty) for i in range(20)]
     votelist= redvoters+bluevoters
-    #print("Votes ",votelist)
-    a = seqPhragmén(votelist,20)
-    print("Sequential Phragmén gives")
-    printresult(a, listvoters=False)
-    a = approvalvoting(votelist,20)
-    print()
-    print("Approval voting gives")
-    printresult(a, listvoters=False)
-    a = seqPhragménwithpostprocessing(votelist,20)
-    print("Sequential Phragmén with post processing gives")
-    printresult(a, listvoters=False)
+    doall(votelist, 20, False)
+   
 
 def example4():
     #Now we want an example where seq Phragmén is not so good.
     votelist=[("A",30.0,["V","W"]),("B",20.0,["V","Y"]),("C",20.0,["W","Z"]),("D",20.0,["Z"])]
     print("Votes ",votelist)
-    a = seqPhragmén(votelist,4)
-    print("Sequential Phragmén gives")
-    printresult(a)
-    a = approvalvoting(votelist,4)
-    print()
-    print("Approval voting gives")
-    printresult(a)
-    a = seqPhragménwithpostprocessing(votelist,4)
-    print("Sequential Phragmén with post processing gives")
-    printresult(a)
+    doall(votelist,4)
 
 def example5():
     votelist = [
@@ -338,18 +399,9 @@ def example5():
 		('4', 500, ['10', '20', '40'])
 	]
     print("Votes ",votelist)
-    a = seqPhragmén(votelist,2)
-    print("Sequential Phragmén gives")
-    printresult(a)
-    a = approvalvoting(votelist,4)
-    print()
-    print("Approval voting gives")
-    printresult(a)
-    a = seqPhragménwithpostprocessing(votelist,4)
-    print("Sequential Phragmén with post processing gives")
-    printresult(a)
-
-def exampleLine(passes=2):
+    doall(votelist,4)
+    
+def exampleLine():
     votelist = [
 		("a", 2000, ["A"]),
 		("b", 1000, ["A","B"]),
@@ -359,17 +411,7 @@ def exampleLine(passes=2):
 		("f", 1000, ["E","F"]),
                 ("g", 1000, ["F","G"])
 	]
-    print("Votes ",votelist)
-    a = seqPhragmén(votelist,7)
-    print("Sequential Phragmén gives")
-    printresult(a)
-    a = approvalvoting(votelist,7)
-    print()
-    print("Approval voting gives")
-    printresult(a)
-    a = seqPhragménwithpostprocessing(votelist,7,passes)
-    print("Sequential Phragmén with post processing gives")
-    printresult(a)
+    doall(votelist,7)
 
 
     
