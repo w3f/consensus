@@ -142,6 +142,9 @@ def seqPhragmén(votelist,numtoelect):
     a.loadstoweights()
     return a
 
+
+        
+
 def approvalvoting(votelist,numtoelect):
     nomlist,candidates=setuplists(votelist)
     #creating an assignment now also computes the total possible stake for each candidate
@@ -221,9 +224,9 @@ def equaliseall(a,maxiterations,tolerance):
         if maxdifference < tolerance:
             return
 
-def seqPhragménwithpostprocessing(votelist,numtoelect):
+def seqPhragménwithpostprocessing(votelist,numtoelect, passes=2):
     a = seqPhragmén(votelist,numtoelect)
-    equaliseall(a,1,0.1)
+    equaliseall(a,passes,0.1)
     return a
 
 def maybecandidate(a,newcandidate,shouldremoveworst, testonly, tolerance):
@@ -346,7 +349,7 @@ def example5():
     print("Sequential Phragmén with post processing gives")
     printresult(a)
 
-def exampleLine():
+def exampleLine(passes=2):
     votelist = [
 		("a", 2000, ["A"]),
 		("b", 1000, ["A","B"]),
@@ -364,7 +367,7 @@ def exampleLine():
     print()
     print("Approval voting gives")
     printresult(a)
-    a = seqPhragménwithpostprocessing(votelist,7)
+    a = seqPhragménwithpostprocessing(votelist,7,passes)
     print("Sequential Phragmén with post processing gives")
     printresult(a)
 
