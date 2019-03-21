@@ -1,4 +1,5 @@
 #from itertools import count
+import math
 class edge:
     def __init__(self,voterid,canid):
         self.voterid=voterid
@@ -50,12 +51,12 @@ class assignment:
             self.edgelist = copyassignment.edgelist
             self.voterload=copyassignment.voterload.copy()
             self.edgeload = copyassignment.edgeload.copy()
-            self.edgeweight-copyassignment.edgeweight.copy()
+            self.edgeweight=copyassignment.edgeweight.copy()
             self.cansupport=copyassignment.cansupport.copy()
-            self.canelected=copyassignment.caneelected.copy()
+            self.canelected=copyassignment.canelected.copy()
             self.electedcandidates=copyassignment.electedcandidates.copy()
             self.canapproval=copyassignment.canapproval.copy()
-            self.canscore=copyassignment.canscores.copy()
+            self.canscore=copyassignment.canscore.copy()
             self.canscorenumerator = copyassignment.canscorenumerator.copy()
             self.canscoredenominator = copyassignment.canscoredenominator.copy()
     def setload(self, edge,load):
@@ -228,10 +229,11 @@ def approvalvoting(votelist,numtoelect):
                 a.setweight(edge,nom.budget/numbelected)
     return a
 
-def printresult(a,listvoters=True):
-    for candidate in a.electedcandidates:
-        print(candidate.canid," is elected with stake ",a.cansupport[candidate.index], "and score ",a.canscore[candidate.index])
-    print()
+def printresult(a,listvoters=True,listelectedcandidates=True):
+    if listelectedcandidates:
+        for candidate in a.electedcandidates:
+            print(candidate.canid," is elected with stake ",a.cansupport[candidate.index], "and score ",a.canscore[candidate.index])
+        print()
     if listvoters:
         for nom in a.voterlist:
             print(nom.voterid," has load ",a.voterload[nom.index], "and supported ")
@@ -280,7 +282,7 @@ def equalise(a, nom, tolerance):
     return difference
 
 import random
-def equaliseall(a,maxiterations,tolerance):
+def equaliseall(a,maxiterations,tolerance,debug=False):
     for i in range(maxiterations):
         for j in range(len(a.voterlist)):
             nom=random.choice(a.voterlist)
@@ -290,17 +292,20 @@ def equaliseall(a,maxiterations,tolerance):
             difference=equalise(a,nom,tolerance/10)
             maxdifference=max(difference,maxdifference)
         if maxdifference < tolerance:
+            if debug:
+                print("max iterations ",maxiterations," actual iterations ",i+1)
             return
+    print(" reached max iterations ",maxiterations)
 
-def seqPhragménwithpostprocessing(votelist,numtoelect, passes=2):
+def seqPhragménwithpostprocessing(votelist,numtoelect, ratio=1):
     a = seqPhragmén(votelist,numtoelect)
-    equaliseall(a,passes,0.1)
+    passes=math.floor(ratio*numtoelect)
+    equaliseall(a,ratio*numtoelect,0.1, True)
     return a
 
 
 def factor3point15(votelist, numtoelect,tolerance=0.1):
     nomlist,candidates=setuplists(votelist)
-    #creating an assignment now also computes the total possible stake for each candidate
     a=assignment(nomlist,candidates)
     
     for round in range(numtoelect):
@@ -309,23 +314,39 @@ def factor3point15(votelist, numtoelect,tolerance=0.1):
         equaliseall(a,1000000,tolerance)
     return a
 
-def maybecandidate(a,newcandidate,shouldremoveworst, testonly, tolerance):
-    assert(a.canelected[candidate.index]==False)
+def maybecandidate(a,newcandidate,shouldremoveworst, tolerance):
+    assert(a.canelected[newcandidate.index]==False)
     currentvalue=min([a.cansupport[candidate.index] for candidate in a.electedcandidates])
     #To find a new assignment without losing our current one, we will need to copy the edges
-    b=assignment(a)
+    b=assignment(a.voterlist,a.candidates,a)
     if shouldremoveworst:
         worstcanidate =min(electedcandidates, key = lambda x: b.cansupport[x.index])
-        b.unelect[worstcandidate]
-    b.elect[newcandidate]
-    equaliseall(b,100000000,0.1)
-    newvalue=currentvalue=min([b.cansupport[candidate.index] for candidate in electedcandidates])
-    if not (testonly or (shouldremoveworst and newvalue < currentvalue)):
-        return b,newvalue
-    a = b
-    return a, newvalue
+        b.unelect(worstcandidate)
+    b.elect(newcandidate) 
+    equaliseall(b,100000000,tolerance)
+    newvalue=min([b.cansupport[candidate.index] for candidate in b.electedcandidates])
+    return b, newvalue
 
-    
+def SFFB18(votelist, numtoelect,tolerance=0.1):
+    nomlist,candidates=setuplists(votelist)
+    a=assignment(nomlist,candidates)
+    for round in range(numtoelect):
+        if round == 0:
+            newcandidate=max([(can,a.canapproval[can.index]) for can in a.candidates],key = lambda x : x[1])[0]
+            a.elect(newcandidate)
+            equaliseall(a,1,tolerance)
+        else:
+            bestvalue=0
+            for can in a.candidates:
+                if not a.canelected[can.index]:
+                    b,newvalue = maybecandidate(a,can, False, tolerance)
+                    if newvalue > bestvalue:
+                        bestassignment=b
+                        bestvalue=newvalue
+            if bestvalue > 0:
+                a=bestassignment
+    return a
+                    
 
 import unittest
 class electiontests(unittest.TestCase):
@@ -344,22 +365,40 @@ class electiontests(unittest.TestCase):
 def dotests():
     unittest.main()
 
-def doall(votelist, numtoelect, listvoters=True):
+import time
+def doall(votelist, numtoelect, listvoters=True, listcans=True):
     if listvoters:
         print("Votes ",votelist)
-    a = seqPhragmén(votelist,numtoelect)
-    print("Sequential Phragmén gives")
-    printresult(a,listvoters)
+    st=time.perf_counter() 
     a = approvalvoting(votelist,numtoelect)
-    print()
+    et=time.perf_counter() 
     print("Approval voting gives")
-    printresult(a,listvoters)
+    printresult(a,listvoters,listcans)
+    print(" in ",et-st," seconds.")
+    st=time.perf_counter() 
+    a = seqPhragmén(votelist,numtoelect)
+    et=time.perf_counter() 
+    print("Sequential Phragmén gives")
+    printresult(a,listvoters,listcans)
+    print(" in ",et-st," seconds.")
+    st=time.perf_counter() 
     a = seqPhragménwithpostprocessing(votelist,numtoelect)
+    et=time.perf_counter()
     print("Sequential Phragmén with post processing gives")
-    printresult(a,listvoters)
+    printresult(a,listvoters,listcans)
+    print(" in ",et-st," seconds.")
+    st=time.perf_counter() 
     a = factor3point15(votelist,numtoelect)
+    et=time.perf_counter() 
     print("The factor 3.15 thing gives")
-    printresult(a,listvoters)
+    printresult(a,listvoters,listcans)
+    print(" in ",et-st," seconds.")
+    st=time.perf_counter() 
+    a = SFFB18(votelist,numtoelect)
+    et=time.perf_counter() 
+    print("SFFB18 gives")
+    printresult(a,listvoters,listcans)
+    print(" in ",et-st," seconds.")
     
 
 def example1():
@@ -400,6 +439,14 @@ def example5():
 	]
     print("Votes ",votelist)
     doall(votelist,4)
+
+def example6():
+    #Now we want an example where seq Phragmén is not so good.
+    votelist=[("A",100.0,["V","W","X","Y","Z"]),("B",100.0,["W","X","Y","Z"]),
+              ("C",100.0,["X","Y","Z"]),("D",100.0,["Y","Z"]), ("E",100.0,["Z"]),
+              ("M",50.0, ["M"])]
+    print("Votes ",votelist)
+    doall(votelist,5)
     
 def exampleLine():
     votelist = [
@@ -412,10 +459,23 @@ def exampleLine():
                 ("g", 1000, ["F","G"])
 	]
     doall(votelist,7)
+          
+def ri(vals=20,noms=2000, votesize=10):
+    #Let's try a random instance
+    candidates=["Val"+str(i) for i in range(vals)]
+    votelist=[("Nom"+str(i), 100, random.sample(candidates,votesize)) for i in range(noms)]
+    doall(votelist, vals // 2, False, False)
 
-
-    
-    
+def riparty(vals=200,noms=2000, votesize=10):
+    #Half the validators are in a party which 1/4 of the nominators vote for.
+    # Approval voting does worse now
+    # and this is probably more realistic than the pure random instance.
+    candidates=["Val"+str(i) for i in range(vals//2)]
+    partycandidates=["PartyVal"+str(i) for i in range(vals- vals // 2)]
+    partynoms = noms // 4
+    votelist=[("Nom"+str(i), 100, random.sample(candidates,votesize)) for i in range(noms - partynoms)]
+    votelist += [("Nom"+str(i), 100, partycandidates) for i in range(partynoms)]
+    doall(votelist, vals // 4, False, False)
             
 
     
