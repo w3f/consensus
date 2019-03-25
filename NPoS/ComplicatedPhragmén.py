@@ -175,13 +175,14 @@ def calculateScores(a,cutoff):
                                                                                                                                                        
                   
 def calculateMaxScore(a):
-    supportList=[a.cansupport[i] for i in range(len(a.candidates))]
+    supportList=[a.cansupport[can.index] for can in a.electedcandidates]
     supportList.append(0.0)
     supportList.sort()
     lowerindex=0
-    upperindex=len(a.candidates)+1
+    upperindex=len(a.electedcandidates)+1
     currentindex=0
     while(True):
+        #print(len(supportList), currentindex, len(a.electedcandidates),upperindex,lowerindex)
         cutoff=supportList[currentindex]
         calculateScores(a,cutoff)
         scores=[(can, a.canscore[can.index]) for can in a.candidates if not a.canelected[can.index]]
@@ -189,6 +190,8 @@ def calculateMaxScore(a):
         if score > cutoff:
             # In this case both score and cutoff are lower bounds to the max score
             lowerindex=len([s for s in supportList if s <= score]) - 1
+            #print("lowerindex ",lowerindex, " upperindex ",upperindex, " cutoff ", cutoff, "score ",score, " candidate ",bestcandidate.canid)
+            #print("bottom support ",supportList[0], " real lowest support ",supportList[1], " highest support ",supportList[-1])
             if currentindex == upperindex-1 or currentindex==lowerindex:
                 return bestcandidate,score
         elif score < cutoff:
@@ -241,7 +244,6 @@ def printresult(a,listvoters=True,listelectedcandidates=True):
                 print(edge.canid," with stake ",a.edgeweight[edge.index], end=" ")
             print()
     print("Minimum support ",min([a.cansupport[candidate.index] for candidate in a.electedcandidates]))
-    print()
 
 def equalise(a, nom, tolerance):
     # Attempts to redistribute the nominators budget between elected validators
@@ -346,7 +348,94 @@ def SFFB18(votelist, numtoelect,tolerance=0.1):
             if bestvalue > 0:
                 a=bestassignment
     return a
-                    
+
+def binarysearchfeasible(votelist,numtoelect,tolerance=0.1):
+    nomlist,candidates=setuplists(votelist)
+    a=assignment(nomlist,candidates)
+
+    #First do factor 3.15
+    #but keep track of the order we elect people and the value then
+    orderelectedwithvalue=[]
+    for round in range(numtoelect):
+        bestcandidate,score=calculateMaxScore(a)
+        insertWithScore(a,bestcandidate, score)
+        equaliseall(a,1000000,tolerance/numtoelect)
+        currentvalue=min([a.cansupport[candidate.index] for candidate in a.electedcandidates])
+        orderelectedwithvalue.append((bestcandidate,currentvalue))
+    if len(a.candidates)==numtoelect:
+        return a
+    bestknownvalue=currentvalue
+    bestassignment=assignment(a.voterlist,a.candidates,a)
+    bestorderelected=orderelectedwithvalue.copy()
+    maxunelectedapproval = max([a.canapproval[i] for i in range(len(a.candidates)) if not a.canelected[i]])
+    totalvotes=sum([nom.budget for nom in a.voterlist])
+    maxvalue=min(3.15*currentvalue, max(currentvalue,maxunelectedapproval), totalvotes/numtoelect)
+    while(maxvalue - bestknownvalue > tolerance):
+        targetvalue=math.sqrt(maxvalue*bestknownvalue)
+        lastgoodindex=len([x for x in orderelectedwithvalue if x[1] >= targetvalue])-1
+        #print(orderelectedwithvalue, targetvalue,lastgoodindex, maxvalue,bestknownvalue,currentvalue,targetvalue)
+        assert(lastgoodindex >= 0)
+        assert(orderelectedwithvalue[lastgoodindex][1] >= targetvalue)
+        for x in orderelectedwithvalue[lastgoodindex+1:]:
+            a.unelect(x[0])
+        del orderelectedwithvalue[lastgoodindex+1:]
+        for nom in a.voterlist:
+            for edge in nom.edges:
+                if not a.canelected[edge.canindex]:
+                    a.setweight(edge,0)
+        equaliseall(a,1000000,tolerance/numtoelect)
+        currentvalue=min([a.cansupport[candidate.index] for candidate in a.electedcandidates])
+        if currentvalue < targetvalue:
+            if targetvalue >= sqrt(currentvalue, maxvalue):
+                #At this point we are getting so much error from tolerance in equaliseall
+                #that we should give up
+                print("Giving up with error at most ",maxvalue-bestknownvalue)
+                return
+            else:
+                targetvalue=currentvalue
+        #print(targetvalue,lastgoodindex, maxvalue,bestknownvalue,currentvalue)
+        
+
+        for round in range(lastgoodindex+1,numtoelect):
+            # First try maxscore candidate, which will help with PJR
+            bestcandidate,score=calculateMaxScore(a)
+            if score >= targetvalue:
+                insertWithScore(a,bestcandidate, score)
+                equaliseall(a,1000000,tolerance/numtoelect)
+                currentvalue=min([a.cansupport[candidate.index] for candidate in a.electedcandidates])
+                assert(currentvalue >= targetvalue)
+                orderelectedwithvalue.append((bestcandidate,currentvalue))
+                continue
+            else:
+                b,newvalue = maybecandidate(a,bestcandidate, False, tolerance)
+                if newvalue >= targetvalue:
+                    a=b
+                    orderelectedwithvalue.append((bestcandidate,newvalue))
+                    currentvalue=newvalue
+                    continue
+            #Then try some candidates in which we are guaranteed that one is feasible if threshold >= d*/2
+            calculateScores(a,targetvalue/2)
+            scores=[(can, a.canscore[can.index]) for can in a.candidates if not a.canelected[can.index] and a.canapproval[can.index] >= targetvalue and a.canscore[can.index] >= targetvalue/2]
+            scores.sort(reverse=True,key=lambda x: x[1])
+            for can,score in scores:
+                b,newvalue = maybecandidate(a,can, False, tolerance)
+                if newvalue >= targetvalue:
+                    a=b
+                    orderelectedwithvalue.append((can,newvalue))
+                    currentvalue=newvalue
+                    break
+            else:
+                break
+        # print("here",currentvalue,targetvalue)
+        if len(a.electedcandidates) < numtoelect:
+            maxvalue = targetvalue
+            a=bestassignment
+            orderelectedwithvalue=bestorderelected
+        else:
+            bestknownvalue=currentvalue
+            bestassignment=assignment(a.voterlist,a.candidates,a)
+            bestorderelected=orderelectedwithvalue.copy()
+    return a
 
 import unittest
 class electiontests(unittest.TestCase):
@@ -369,36 +458,17 @@ import time
 def doall(votelist, numtoelect, listvoters=True, listcans=True):
     if listvoters:
         print("Votes ",votelist)
-    st=time.perf_counter() 
-    a = approvalvoting(votelist,numtoelect)
-    et=time.perf_counter() 
-    print("Approval voting gives")
-    printresult(a,listvoters,listcans)
-    print(" in ",et-st," seconds.")
-    st=time.perf_counter() 
-    a = seqPhragmén(votelist,numtoelect)
-    et=time.perf_counter() 
-    print("Sequential Phragmén gives")
-    printresult(a,listvoters,listcans)
-    print(" in ",et-st," seconds.")
-    st=time.perf_counter() 
-    a = seqPhragménwithpostprocessing(votelist,numtoelect)
-    et=time.perf_counter()
-    print("Sequential Phragmén with post processing gives")
-    printresult(a,listvoters,listcans)
-    print(" in ",et-st," seconds.")
-    st=time.perf_counter() 
-    a = factor3point15(votelist,numtoelect)
-    et=time.perf_counter() 
-    print("The factor 3.15 thing gives")
-    printresult(a,listvoters,listcans)
-    print(" in ",et-st," seconds.")
-    st=time.perf_counter() 
-    a = SFFB18(votelist,numtoelect)
-    et=time.perf_counter() 
-    print("SFFB18 gives")
-    printresult(a,listvoters,listcans)
-    print(" in ",et-st," seconds.")
+    alglist=[(approvalvoting,"Approval voting"), (seqPhragmén, "Sequential Phragmén"),
+             (seqPhragménwithpostprocessing, "Sequential Phragmén with post processing"),            
+             (factor3point15, "The factor 3.15 thing"), (binarysearchfeasible,"Factor 2 by binary search"), (SFFB18, "SFFB18")]
+    for alg,name in alglist:
+        st=time.perf_counter() 
+        a = alg(votelist,numtoelect)
+        et=time.perf_counter() 
+        print(name, " gives")
+        printresult(a,listvoters,listcans)
+        print(" in ",et-st," seconds.")
+        print()
     
 
 def example1():
@@ -466,16 +536,29 @@ def ri(vals=20,noms=2000, votesize=10):
     votelist=[("Nom"+str(i), 100, random.sample(candidates,votesize)) for i in range(noms)]
     doall(votelist, vals // 2, False, False)
 
-def riparty(vals=200,noms=2000, votesize=10):
+def ripartylist(vals=200,noms=2000, votesize=10,seed=1):
     #Half the validators are in a party which 1/4 of the nominators vote for.
     # Approval voting does worse now
     # and this is probably more realistic than the pure random instance.
+    random.seed(seed)
     candidates=["Val"+str(i) for i in range(vals//2)]
     partycandidates=["PartyVal"+str(i) for i in range(vals- vals // 2)]
     partynoms = noms // 4
     votelist=[("Nom"+str(i), 100, random.sample(candidates,votesize)) for i in range(noms - partynoms)]
     votelist += [("Nom"+str(i), 100, partycandidates) for i in range(partynoms)]
+    return votelist
+
+
+def riparty(vals=200,noms=2000, votesize=10,seed=1):
+    #Half the validators are in a party which 1/4 of the nominators vote for.
+    # Approval voting does worse now
+    # and this is probably more realistic than the pure random instance.
+    votelist=ripartylist(vals,noms,seed)
     doall(votelist, vals // 4, False, False)
+
+
+
+
             
 
     
