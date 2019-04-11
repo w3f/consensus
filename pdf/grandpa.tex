@@ -113,13 +113,13 @@ We say that the system $G$,$P$ and $A$ achieves conditional eventual consensus, 
 
 \begin{definition} \label{def:finality-gadget} 
 Let $F$ be a protocol  with a set of voters $V$, a constant fraction of which may be Byzantine.
-We say that $F$ solves {\em blockchain Byzantine finality gadget problem} if for every block production protocol $P$ a voting rule $A$ such that the system $F,G,A$ achieves conditional eventual consensus, then we have the following
+We say that $F$ solves {\em blockchain Byzantine finality gadget problem} if for every block production protocol $P$ a voting rule $A$ , then we have the following
 
-A protocol for the blockchain Byzantine finality gadget problem has , each of whom has access to an oracle $A$ for the best chain given the last finalised block with the property that, as long as no new block is finalised, it achieves eventual consensus on some child of the last finalised block such that the following holds:
+%A protocol for the blockchain Byzantine finality gadget problem has , each of whom has access to an oracle $A$ for the best chain given the last finalised block with the property that, as long as no new block is finalised, it achieves eventual consensus on some child of the last finalised block such that the following holds:
 
 \begin{itemize}
 \item{\bf Safety:} All honest voters finalise the same block at each block number.
-\item{\bf Liveness:} All honest voters keep finalising blocks.
+\item{\bf Liveness:} If the system $F,G,A$ achieves conditional eventual consensus, then all honest voters keep finalising blocks.
 \item{\bf Validity:} If an honest voter finalises a block $B$ then that block was seen in the best chain observed by some honest voter containing some previously finalised ancestor of $B$,
 \end{itemize}
 
@@ -249,8 +249,11 @@ Note that we can easily update $g(S)$ to $g(S \cup \{v\})$, by checking if any c
 
 3 tells us that even if participants see different subsets of the votes cast in a given voting round, this rule may give them different blocks but all such blocks are in the same chain under this assumption. 
 
-We say that it is {\em impossible} for a set $S$ to have a supermajority for $B$ if $2f+1$ voters either vote for a block $\not \geq B$ or equivocate in $S$. Otherwise it is {\em possible} for $S$ to have a supermajority for $B$.
-Note that if $S$ is tolerant, it is possible for $S$ to have a supermajority for $B$ if and only if there is a tolerant $T \supseteq S$ that has a supermajority for $B$.
+Next, we define a notion of possibility to have a supermajority which needs t have that if the set of all votes in a vote $T$ is tolerant and some participant observes a subset $S \subseteq T$ that has a supermajority for a block $B$ then all partici[ants who see some other subset $S' \subseteq T$ still see that it is possible for $S$ to have a supermajority for $B$. We need a definition that extends to intolerant sets.
+
+We say that it is {\em impossible} for a set $S$ to have a supermajority for $B$ if at least $(n+f+1)/2$ voters either vote for a block $\not \geq B$ or equivocate in $S$. Otherwise it is {\em possible} for $S$ to have a supermajority for $B$.
+
+Note that if $S$ is tolerant, it is possible for $S$ to have a supermajority for $B$ if and only if there is a tolerant $T \supseteq S$ that has a supermajority for $B$, which can be constructed by adding a vote from $B$ for all voters without votes in $S$ and enough voters who already have votes in $S$ to bring the number of equivocations up to $f$.
 
 We say that it is {\em impossible} for any child of $B$ to have a supermajority in $S$ if $S$ has votes from at least $2f+1$ voters and it is impossible for $S$ to have a supermajority for each child of $B$ appearing on the chain of any vote in $S$.
 Again, provided $S$ is tolerant, this holds if and only if for any possible child of $B$, there is no tolerant $T \subseteq S$ that has a supermajority for that child.
@@ -274,7 +277,7 @@ In addition to a set of voters for each of the two votes in a round, we assume t
 
 We let $V_{r,v}$ and $C_{r,v}$ be the sets of prevotes and precommits respectively received by $v$ from round $r$ at the current time.
 
-We define $E_{r,v}$ to be $v$'s estimate of what might have been finalised in round $r$ given by the last block in the chain with head $g(V_{r,v})$ for which it is possible for $C_{r,r}$ to have a supermajority.
+We define $E_{r,v}$ to be $v$'s estimate of what might have been finalised in round $r$ given by the last block in the chain with head $g(V_{r,v})$ for which it is possible for $C_{r,r}$ to have a supermajority. Next we define a condition which will allow us to dafely conclude that $E_{r,v} \geq B$ for all $B$ that might be finalised in round $r$:
 If either $E_{r,v} < g(V_{r,v})$ or it is impossible for $C_{r,v}$ to have a supermajority for any children of $g(V_{r,v})$, then we say that {\em $v$ sees that round $r$ is completable}. $E_{0,v}$ is the genesis block, assuming we start at $r=1$.
 
 We have a time bound $T$ that we hope suffices to send messages and gossip them to everyone. 
@@ -303,6 +306,7 @@ and then broadcasts a precommit for $g(V_{r,v})$ {\em( (iii) is optional, we can
 
 }}
 
+Nite that $C_{r,v}$ and $V_{r,v}$ may change with time and also that $E_{r-1,v}$, which is a function of $V_{r-1,v}$ and $C_{r-1,v}$, can also change with time if $v$ sees more votes from the previous round.
 
 \subsection{Finalisation}
 

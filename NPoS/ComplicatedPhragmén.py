@@ -297,7 +297,8 @@ def equaliseall(a,maxiterations,tolerance,debug=False):
             if debug:
                 print("max iterations ",maxiterations," actual iterations ",i+1)
             return
-    print(" reached max iterations ",maxiterations)
+    if maxiterations > 1 or debug:
+        print(" reached max iterations ",maxiterations)
 
 def seqPhragménwithpostprocessing(votelist,numtoelect, ratio=1):
     a = seqPhragmén(votelist,numtoelect)
@@ -340,7 +341,7 @@ def SFFB18(votelist, numtoelect,tolerance=0.1):
         else:
             bestvalue=0
             for can in a.candidates:
-                if not a.canelected[can.index]:
+                if not a.canelected[can.index] and a.canapproval[can.index] > bestvalue:
                     b,newvalue = maybecandidate(a,can, False, tolerance)
                     if newvalue > bestvalue:
                         bestassignment=b
