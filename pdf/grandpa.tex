@@ -277,10 +277,14 @@ In addition to a set of voters for each of the two votes in a round, we assume t
 
 We let $V_{r,v}$ and $C_{r,v}$ be the sets of prevotes and precommits respectively received by $v$ from round $r$ at the current time.
 
-We define $E_{r,v}$ to be $v$'s estimate of what might have been finalised in round $r$ given by the last block in the chain with head $g(V_{r,v})$ for which it is possible for $C_{r,r}$ to have a supermajority. Next we define a condition which will allow us to dafely conclude that $E_{r,v} \geq B$ for all $B$ that might be finalised in round $r$:
-If either $E_{r,v} < g(V_{r,v})$ or it is impossible for $C_{r,v}$ to have a supermajority for any children of $g(V_{r,v})$, then we say that {\em $v$ sees that round $r$ is completable}. $E_{0,v}$ is the genesis block, assuming we start at $r=1$.
+We define $E_{r,v}$ to be $v$'s estimate of what might have been finalised in round $r$, given by the last block in the chain with head $g(V_{r,v})$ for which it is possible for $C_{r,r}$ to have a supermajority. Next we define a condition which will allow us to safely conclude that $E_{r,v} \geq B$ for all $B$ that might be finalised in round $r$:
+If either $E_{r,v} < g(V_{r,v})$ or it is impossible for $C_{r,v}$ to have a supermajority for any children of $g(V_{r,v})$, then we say that {\em $v$ sees that round $r$ is completable}.  $E_{0,v}$ is the genesis block, assuming we start at $r=1$.  
 
-We have a time bound $T$ that we hope suffices to send messages and gossip them to everyone. 
+In other words, a round $r$ is completable when our estimate chain $E_{r,v}$ contains everything that could have been finalised in round $r$, which makes it possible to begin the next round $r+1$.
+
+We have a time bound $T$ that we hope suffices to send messages and gossip them to everyone.
+Inside a round, the properties both of $E_{r,v}$ having a supermajority, meaning $E_{r,v} < g(V_{r,v})$, as well as of it being imposible to have a supermajority for some given block are monotone, so the property of being completable is monotone as well.
+We therefore expect that, if anyone anyone sees a round is completable, then everyone will see this within time $T$.  
 
 In round $r$ an honest participant $v$ does the following:
 
