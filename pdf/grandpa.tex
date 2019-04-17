@@ -43,7 +43,7 @@ But they generally only give probabilistic finality on a specific block - that u
 But what we'd prefer is to have provable finality - for example a signed statement by a set of authorities, the set of whom can be tracked, that the block is final.
 This is useful to prove what happened to light clients, who do not have the full chain or are not actively listening to the network, and to communicate with other chains, possibly as part of a scalability solution, where not anyone receives or stores all the data in the system. 
 
-Another popular consensus mechanism for blockchains is to get Byzantine agreement on each block.
+Another popular family of consensus mechanisms for blockchains involves getting Byzantine agreement on each block \cite{Tendermint.AlgorandAgreement}.
 This gives provable finality immediately. However this is slow if we have a large set of participants in the Byzantine agreement.
 
 The approach that we will take is similar to the approach that Ethereum plans to take with Casper the Friendly Finality Gadget (Casper FFG)\cite{CasperFFG}, which combines these approaches.
@@ -57,7 +57,8 @@ An important goal of this work is to formalise the finality gadget problem. We w
 
 \subsection{Formalising the problem}
 
-We need to incorporate into the definition of Byzantine agreement that we have access to a protocol that would achieve eventual consensus if we did not affect it.
+We want to formalise the notion of finality gadget, that can be used to modify a protocol that has eventual consensus with probabilistic finality to one with provavle finality.
+To achieve this, we need to incorporate into the definition of Byzantine agreement that we have access to a protocol that would achieve eventual consensus if we did not affect it.
 Consider a typical definition of a multi-values Byzantine agreement: 
 We have a set of participants $V$, the majority of whom obey the protocol, but a constant fraction may be Byzantine, meaning they behave arbitrarily, e.g. provide false or inconsistent information or randomly go offline when they ought to be online.
 
@@ -88,16 +89,10 @@ We say an oracle $A$ in a protocol is {\em eventually consistent} if it returns 
 
 \end{definition}
 
-In the case where $|S| > 2$, this definition of validity is stronger than the validity notion in multi-valued Byzantine agreement ported here verbatim because all honest voters decide a value with which some honest voter started. 
-This is because our earlier definition would be impossible if the fraction of Byzantine voters exceeds $1/|S|$, as we cannot detect Byzantine voters who act like honest voters, except for lying about their initial value.
-So if fewer than $1/|S|$ voters act like they have some initial value, the protocol cannot know if any are honest. 
+For the binary case, i.e. when $|S|=2$, the Byzantine finality gadget problem is reducible to Byzantine agreement. This does not hold for $|S| > 2$, because the definition of validity is stronger. Note that it is impossible for multi-valued Byzantine agreement to make the validity condition require that we decide an initial value of some honest voter and tolerate more than a $1/|S|$ fraction of faults, since we may have a $1/|S|$ fraction of voters reporting each inital value and Byzantine voters can act honestly enough not to be detectable. For finality gadgets, this stronger validity condition is possible and we will want even stronger versions that quantify when an honest voter had the value.
 
+We show in \ref{ssec:impossibility} that an asynchronous, deterministic binary finality gadget is impossible, even with one fault. This does not immediately follow from the celebrated impossibility result of \cite{flp} because we do not know a reduction in the necessary direction, from agreement to the finality gadget problem. The extra information voters have here, that $A$ will evntually agree for all voters, is not enough to make this possible.
 
-But for the case $|S|=2$, the two possible definitions of validity are equivalent.
-This means that we can reduce the binary version of the Byzantine finality gadget problem above to binary Byzantine agreement, by each voter just calling $A$ at the start to obtain their initial value, since if $A$ does not return the same value to every honest voter all the time, then it returns both values to honest voters some times.
-Thus there are many existing algorithms for the binary Byzantine finality gadget problem.
-However the interesting problem in this case is whether the celebrated impossibility result of \cite{flp} generalizes to this finality gadget problem, i.e., whether this oracle which is guaranteed to achieve eventual consensus makes it possible to have an asynchronous and deterministic protocol for agreement.
-A reduction is not immediately obvious, but it turns out that the finality gadget version is indeed impossible, as we shall see in \ref{ssec:impossibility}.
 
 Now how do we extend this to agreeing on a chain of blocks? One difficulty in formalising the problem is that the block production mechanism cannot be entirely separate from the finality gadget. In order to finalise new blocks, we must first build on the chain we have already finalised. So at a minimum, the block production mechanism needs to recognise which blocks the finality gadget has finalised. We will also allow the block production mechanism to interact with the state of the finality gadget in other ways.
 
@@ -143,7 +138,7 @@ Intuitively, fast termination implies that we finalise blocks fast as long as th
 These properties will typically only hold with high probability. In the asynchronous case, we would need to measure time in rounds of the protocol rather than seconds to make sense of these properties.  We are also interested in being able to remove and punish Byzantine voters, for which we will need:
 
 \begin{itemize}
-	\item{\bf Accountable Safety:} {\em If there are more than $f+1$ voters and blocks on different chains are finalised, then we can identify at least $f+1$ Byzantine voters.}
+	\item{\bf Accountable Safety:} {\em If blocks on different chains are finalised, then we can identify at least $f+1$ Byzantine voters.}
 \end{itemize}
 
 \subsection{Our results}
@@ -157,7 +152,7 @@ If the one block protocol has the right properties then they will agree on block
 For example, suppose we have a one block protocol that calls for a vote on blocks which requires a participant to observe a supermajority, say votes from  $2/3$ of voters, for some block, or else the participant observes that the vote is undecided. Now imagine running this vote in parallel for every block number and have any honest voter vote for blocks from a particular chain.
 Byzantine voters may vote more than once, but if we count a vote for a block as a vote for each ancestor of the block in the vote for the instance of the one block protocol with its number, then Byzantine voters must also vote for chains, though they can vote for multiple chains.
 If we do this, then we see that if a block has a supermajority in a vote, then so does all its ancestors in their votes. Thus the blocks with a supermajority form a chain.
-Furthermore, if only $1/3$ of voters equivocate then if a participant sees a subset of the votes for chains, then they must see a prefix of the chain of blocks for which all the votes have supermajorities. Intuitively, the protocol can agree on the prefix that $2/3$ of voters agree on using this.
+Furthermore, if only $1/3$ of voters equivocate then if a participant sees a subset of the votes for chains, then they must see a prefix of the chain of blocks for which all the votes have supermajorities. Intuitively, the protocol can agree on the prefix that $2/3$ of voters agree on using this. 
 
 To ensure safety, each participant maintains an estimate $E_r$ of the last block that could have been finalised in a round $r$. This has the property that in future rounds it overestimates the block that could have been finalised so that in round $r$, the chain with head $E_{r-1}$ contains all blocks that could have been finalised.
 Any honest voter only votes in round $r$ for chains containing their estimate $E_{r-1}$ and this guarantees that any block that could have been finalised in round $r-1$ will be finalised in round $r$.
@@ -232,7 +227,7 @@ A vote $v$ for a block $B$ by a validator $V$ is a message signed by $V$ contain
 A validator equivocates in a set of votes $S$ if they have more than one vote in $S$. We call a set $S$ of votes tolerant if the number of voters who equivocate in $S$ is at most $f$. We say that $S$ has supermajority for a block $B$ if the set of voters who either have a vote for blocks $\geq B$ or equivocate in $S$ has size at least $(n+f+1)/2$. (The reason to count equivocations like this is to retain monotonicity , that if $S \subset T$ then if $S$ has a supermajority for $B$ so does $T$, while being able to ignore yet more equivocating votes from an equivocating validator).
 
 The $2/3$-GHOST function $g(S)$ takes a set $S$ of votes and returns the block $B$ with highest block number such that $S$ has a supermajority for $B$.
-If there is no such block, then it returns `nil`. (if $f \neq \lfloor (n-1)/3 \rfloor$, then this is a misnomer and we may change the name accordingly.)
+If there is no such block, then it returns `nil`. (if $f \neq \lfloor (n-1)/3 \rfloor$, then this is a misnomer and we may change the name of the function accordingly.)
 
 Note that, if $S$ is tolerant, then we can compute $g(S)$ by starting at the genesis block and iteratively looking for a child of our current block with a supermajority, which must be unique if it exists. Thus we have:
 \begin{lemma} \label{lem:ghost-monotonicity}
@@ -284,7 +279,7 @@ In other words, a round $r$ is completable when our estimate chain $E_{r,v}$ con
 
 We have a time bound $T$ that we hope suffices to send messages and gossip them to everyone.
 Inside a round, the properties both of $E_{r,v}$ having a supermajority, meaning $E_{r,v} < g(V_{r,v})$, as well as of it being imposible to have a supermajority for some given block are monotone, so the property of being completable is monotone as well.
-We therefore expect that, if anyone anyone sees a round is completable, then everyone will see this within time $T$.  
+We therefore expect that, if anyone anyone sees a round is completable, then everyone will see this within time $T$. Leaving a gap of $2T$ between steps should then be  enough to ensure that we recieve all honest votes before continuing.
 
 In round $r$ an honest participant $v$ does the following:
 
