@@ -224,7 +224,7 @@ A vote $v$ for a block $B$ by a validator $V$ is a message signed by $V$ contain
 
 
 
-A validator equivocates in a set of votes $S$ if they have more than one vote in $S$. We call a set $S$ of votes tolerant if the number of voters who equivocate in $S$ is at most $f$. We say that $S$ has supermajority for a block $B$ if the set of voters who either have a vote for blocks $\geq B$ or equivocate in $S$ has size at least $(n+f+1)/2$. (The reason to count equivocations like this is to retain monotonicity , that if $S \subset T$ then if $S$ has a supermajority for $B$ so does $T$, while being able to ignore yet more equivocating votes from an equivocating validator).
+A validator equivocates in a set of votes $S$ if they have more than one vote in $S$. We call a set $S$ of votes tolerant if the number of voters who equivocate in $S$ is at most $f$. We say that $S$ has a supermajority for a block $B$ if the set of voters who either have a vote for blocks $\geq B$ or equivocate in $S$ has size at least $(n+f+1)/2$.  We count equivocations as votes for everything like this so that observing a vote is monotonic, meaning that if $S \subset T$ then if $S$ has a supermajority for $B$ so does $T$, while being able to ignore yet more equivocating votes from an equivocating validator.
 
 The $2/3$-GHOST function $g(S)$ takes a set $S$ of votes and returns the block $B$ with highest block number such that $S$ has a supermajority for $B$.
 If there is no such block, then it returns `nil`. (if $f \neq \lfloor (n-1)/3 \rfloor$, then this is a misnomer and we may change the name of the function accordingly.)
@@ -244,7 +244,7 @@ Note that we can easily update $g(S)$ to $g(S \cup \{v\})$, by checking if any c
 
 3 tells us that even if participants see different subsets of the votes cast in a given voting round, this rule may give them different blocks but all such blocks are in the same chain under this assumption. 
 
-Next, we define a notion of possibility to have a supermajority which needs t have that if the set of all votes in a vote $T$ is tolerant and some participant observes a subset $S \subseteq T$ that has a supermajority for a block $B$ then all partici[ants who see some other subset $S' \subseteq T$ still see that it is possible for $S$ to have a supermajority for $B$. We need a definition that extends to intolerant sets.
+Next, we define a notion of possibility to have a supermajority which needs t have that if the set of all votes in a vote $T$ is tolerant and some participant observes a subset $S \subseteq T$ that has a supermajority for a block $B$ then all participants who see some other subset $S' \subseteq T$ still see that it is possible for $S$ to have a supermajority for $B$. We need a definition that extends to intolerant sets.
 
 We say that it is {\em impossible} for a set $S$ to have a supermajority for $B$ if at least $(n+f+1)/2$ voters either vote for a block $\not \geq B$ or equivocate in $S$. Otherwise it is {\em possible} for $S$ to have a supermajority for $B$.
 
@@ -286,7 +286,7 @@ In round $r$ an honest participant $v$ does the following:
 \noindent \fbox{\parbox{6.3in}{
 
 \begin{enumerate}
-\item $v$ can start round $r > 1$ when round $r-1$ is completable and $v$ has cast votes in all previous rounds where they are a voter. Let $t_{r,v}$ be the time $v$ starts round $r$.
+\item A voter $v$ can start round $r > 1$ when round $r-1$ is completable and $v$ has cast votes in all previous rounds where they are a voter. Let $t_{r,v}$ be the time $v$ starts round $r$.
 
 \item At time $t_{r,v}$, if $v$ is the primary of this round and has not finalised $E_{r-1,v}$ then they broadcast $E_{r-1,v}$. If they have finalised it, they can broadcast $E_{r-1,v}$ anyway (but do not need to).
 
