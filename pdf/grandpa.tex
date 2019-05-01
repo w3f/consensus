@@ -501,7 +501,7 @@ For (b), combining (a) and Lemma \ref{lem:timings} (iii), we have that any hones
  Suppose that $t_r \geq \GST$, the primary $v$ of round $r$ is honest and no vote has more than $f$ Byzantine voters. Let $B=E_{r-1,v,t_{v,r}}$ be the block $v$ broadcasts if it is not final. Then every honest prevoter prevotes for the best chain including $B$ and all honest voter finalise $B$ by time $t_r+6T$.
  \end{lemma}
 
-\begin{proof} By Lemma \ref{lem:timings} and our network assumptions, no honest voter  prevotes before time $t_r+2T \geq t_{r,v}+2T$ and so at this time, they will have seen all prevotes and precommits seen by $v$ at $t_{r,v}$ and the block $B$ if $v$ broadcast it then. By Lemma \ref{lem:message-monotonicity-completed-estimate}, any honest voter $v'$ has $E_{r-1,v'} \leq B \leq g(V_{r-1,v}$ then.
+\begin{proof} By Lemma \ref{lem:timings} and our network assumptions, no honest voter  prevotes before time $t_r+2T \geq t_{r,v}+2T$ and so at this time, they will have seen all prevotes and precommits seen by $v$ at $t_{r,v}$ and the block $B$ if $v$ broadcast it then. By Lemma \ref{lem:message-monotonicity-completed-estimate}, any honest voter $v'$ has $E_{r-1,v'} \leq B \leq g(V_{r-1,v})$ then.
 
 So if the primary broadcast $B$, then $v'$ prevotes for the best chain including $B$. If the primary did not broadcast $B$, then they finalise it. By Corollary \ref{cor:overestimate-final}, it must be that $E_{r-1,v'} \geq B$ and so $E_{r-1,v'}=B$ and so in this case $v'$ also prevotes for the best chain including $B$.
 
@@ -770,6 +770,49 @@ If $h < 3f+1$ and $s_r=0$, then every $v \in S'$ locks only $B$. But then all su
 
 Crucially note that $h$ depends only on $S$, which is determined when $4f+1$ voters call the common coin and before it is flipped. Thus $s_r$ is independent of $h$. If $h < 3f+1$ then $s_r=0$ with probability $1/2$ and if $h \geq 3f+1$ then $s_r=1$ with probability $1/2$. So with probability $1/2$, we have either both $h < 3f+1$ and $s_r=0$ or both $h \geq 3f+1$ and $s_r=1$. Thus with probability at least $1/2$, we finalise $B'$ or $B''$ before the next round after $r+1$ when $s_r=1$.
 \end{proof}
+
+\section{Optimized version of GRANDPA}
+
+ There are a few ways we can optimise the GRANDPA protocol.
+ Firstly, a participant that is offline for many rounds should be able to catch up to the latest round by only seeing recent messages.
+ Secdondly, we shouldn't need to actively use many rounds worth of votes, only needing old rounds for challenges for accoiuntable safety and not finalising blocks.
+ Thirdly, We should wait $2T$ as little as possible. Conversely if communication is faster than block production, we shouldn't be running many rounds before a new block arrives.
+ 
+ To achieve this, we need to have mpre complicated conditions for when to perform each step of the protocol. Here is the resulting protocol:
+ 
+ To enter a round $r$, $v$ needs that round $r-1$ is completable and that $E_{r-2,v}$ is finalised. 
+ If $v$ sees messages that give this for a future round $r$, even if $v$ are not in round $r-1$, $v$ jumps straight to round $r$.
+ (when checking this condition, for the finalisation, we need to relax not finalising using precommits from future rounds to all rounds $< r$).
+ 
+ \noindent \fbox{\parbox{6.3in}{
+ \begin{enumerate}
+ \item If $v$ is the primary, it broadcast $E_{r-1,v}$ at the start time $t_{r,v}$
+ 
+ \item We prevote when one of the folowing conditions tells us to.
+ \begin{itemize}
+ \item[(i)] If it is impossible for $V_{r-1,v}$ to have a supermajority for any children of $E_{r-1,v}$, then $v$ prevotes for the best chain containing $E_{r-1,v}$
+ \item[(ii)] If $v$ has recieved $B$ from the primary, $v$ prevotes for the head of the  best chain containing $B$ as soon as one of the following holds:
+ 
+ \begin{itemize}
+ \item[(a)] $g(v_{r-1,v}) \geq B \geq E_{r-1,v}$
+ \item[(b)] The best chain containing $B$ is also the best chain containing $E_{r-1,v}$
+ (equivalently if we evaluate the best chain containing the eariler of the two blocks, then it contains the other)
+ \end{itemize}
+ \item[(iii)] If round $r$ is completable and $E_{r,v} \geq E_{r-1,v}$, then we prevote for $E_{r,v}$.
+ \item[(iv)] if we have reached time $t_{r,v}+2T$ then if we have not recieved a message from the primary or (ii) (a) does not hold, then $v$ prevotes for the head of best chain containing $E_{r-1,v}$ anyway.
+ \end{itemize}
+ 
+ \item After prevoting, we wait until $g(V_{r,v}) \geq E_{r-1,v}$,  then when one of the following holds, we precommit $g(V_{r,v})$
+ \begin{itemize}
+ \item[(i)] if round $r$ is completable
+ \item[(ii)] if $v$ has seen a child of the last finalised block and it is impossible for $V_{r,v}$ to have a supermajority for any child of $g(V_{r,v})$ .
+ \item[(iii)] If $v$ has seen a child of the last finalised block and we have reached time $t_{r,v}+4T$.
+ \end{itemize}
+ \end{enumerate}
+ }}
+ 
+ We claim that all results we proved about the protocol described in section ? apply to this protocol. the stronger properties this satisifies are that $v$ does not need to store votes from before round $r-1$ (except to answer challenges for accountable safety, which should be rare) and that if we have seen no descendants of the last finalised block, we pause until we do. 
+
 
 \bibliography{grandpa}
 
