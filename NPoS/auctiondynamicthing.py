@@ -9,7 +9,7 @@ class auction:
             print(bidid," bids ",amount," on [",start,",",end,"]")
         #Bid should intersect with all winning bids by same bidder
         for rangeotherbid in [i for i,w in zip(self.ranges,self.winningbidsonranges) if w[0]==bidid]:
-            if rangeotherbid[0] > end or rangeotherbid[1] < start:
+            if rangeotherbid[0] > end + 1 or rangeotherbid[1] + 1  < start:
                 if verbose:
                     print("Invalid bid as winning on [",rangeotherbid[0],",",rangeotherbid[1],"]")
                 return
@@ -36,7 +36,7 @@ def example1():
     a=auction()
     a.bid("x",0,3,1,True)
     a.bid("a",0,0,2,True)
-    a.bid("a",1,1,53,True)
+    a.bid("a",2,2,53,True)
     a.bid("b",1,1,1,True)
     a.bid("c",2,2,1,True)
     a.bid("d",3,3,1,True)
