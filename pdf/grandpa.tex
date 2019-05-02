@@ -219,11 +219,11 @@ We write $B \sim B'$ or $B$ and $B'$ are on the same chain if $B<B'$, $B=B'$ or 
 
 Blocks are ordered as a tree with the genesis block as root. So any two blocks have a common ancestor but two blocks not on the same chain do not have a common descendant.
 
-A vote $v$ for a block $B$ by a validator $V$ is a message signed by $V$ containing the blockhash of $B$ and meta information like the round numbers and the type of vote. 
+A vote $v$ for a block $B$ by a voter $V$ is a message signed by $V$ containing the blockhash of $B$ and meta information like the round numbers and the type of vote. 
 
 
 
-A validator equivocates in a set of votes $S$ if they have more than one vote in $S$. We call a set $S$ of votes tolerant if the number of voters who equivocate in $S$ is at most $f$. We say that $S$ has a supermajority for a block $B$ if the set of voters who either have a vote for blocks $\geq B$ or equivocate in $S$ has size at least $(n+f+1)/2$.  We count equivocations as votes for everything like this so that observing a vote is monotonic, meaning that if $S \subset T$ then if $S$ has a supermajority for $B$ so does $T$, while being able to ignore yet more equivocating votes from an equivocating validator.
+A voter equivocates in a set of votes $S$ if they have more than one vote in $S$. We call a set $S$ of votes tolerant if the number of voters who equivocate in $S$ is at most $f$. We say that $S$ has a supermajority for a block $B$ if the set of voters who either have a vote for blocks $\geq B$ or equivocate in $S$ has size at least $(n+f+1)/2$.  We count equivocations as votes for everything like this so that observing a vote is monotonic, meaning that if $S \subset T$ then if $S$ has a supermajority for $B$ so does $T$, while being able to ignore yet more equivocating votes from an equivocating voter.
 
 The $2/3$-GHOST function $g(S)$ takes a set $S$ of votes and returns the block $B$ with highest block number such that $S$ has a supermajority for $B$.
 If there is no such block, then it returns `nil`. (if $f \neq \lfloor (n-1)/3 \rfloor$, then this is a misnomer and we may change the name of the function accordingly.)
@@ -337,7 +337,7 @@ The response is of the following form:
 \item A either a set $S$ of prevotes for round $r''-1$, or else a set $S$ of precommits for round $r''-1$, in either case such that it is impossible for $S$ to have a supermajority for $B$.
 \end{itemize}
 
-Any honest voter should respond.  In particular, if no voter responds, then we consider all  voters how should have responded but didn't as Byzantine and we return this set of voters, along with any equivocators, which will be at least $n-f$ voters total. If any do respond, then if $r'' > r+1$, we can ask the same query for at least $n-f$ validators in round $r''-1$. We note however that if any voters do respond then we will not punish non-responders.
+Any honest voter should respond.  In particular, if no voter responds, then we consider all  voters how should have responded but didn't as Byzantine and we return this set of voters, along with any equivocators, which will be at least $n-f$ voters total. If any do respond, then if $r'' > r+1$, we can ask the same query for at least $n-f$ voters in round $r''-1$. We note however that if any voters do respond then we will not punish non-responders.
 
 If we ask such queries for a vote in all rounds between $r''=r'$ and $r''=r+1$ and get valid responses, since some voter responds when $r''=r+1$, then we have either a set $S$ of prevotes or precommits in round $r$ that show it is impossible for $S$ to have a supermajority for $B$ in round $r$.
 
@@ -577,7 +577,7 @@ Then any participant sees that if there is an $n$ such that
 \item[(ii)] the indicators the last finalised block height of blocks $n-100$ to $n$ in their best chain have median at most $n-1050$ and
 \item[(iii]) $n$ is the minimum that satisifies (i) and (ii)
 \end{itemize}
-then they switch to the best validator set given by block $n$. If the same block at height $n$ is on everyone's best chain, which can be shown to occur with high probability given (i) for many block production mechanisms, then everyone will eventually agree that we should switch to the validator set given by that block. If any $100$ consectutive blocks of the best chain are produced by honest and synchronised block producers then this will only happen if GRANDPA fails to finalise any block in the time it took to produce $1000$ blocks.
+then they switch to the best voter set given by block $n$. If the same block at height $n$ is on everyone's best chain, which can be shown to occur with high probability given (i) for many block production mechanisms, then everyone will eventually agree that we should switch to the voter set given by that block. If any $100$ consectutive blocks of the best chain are produced by honest and synchronised block producers then this will only happen if GRANDPA fails to finalise any block in the time it took to produce $1000$ blocks.
 
 \subsection{Alternatives to the last block hash}
 
@@ -662,7 +662,7 @@ If we switch to $1$ when all node have already decided $0$, then we decide $0$.
 
 We claim that some configuration in the run $r$, where there are two runs from it where $A$ is always $1$ that decide $0$ and $1$. We call such states $1$-bivalent.
 To see this, assume for a contradiction that $r$ contains no such configurations. Then there is are successive configurations $C$,$C'$ such that if $A$ return $1$ in the future from $C$ then we always decide $0$ but from $C'$, we always decide $1$.
-Let events be $(p,m,x)$ where node (processor/validator) $p$ receives message $m$ (which my be null) and executes some code where any calls to A return $x$ in $\{0,1\}$, then sends some messages. 
+Let events be $(p,m,x)$ where node (processor/voter) $p$ receives message $m$ (which my be null) and executes some code where any calls to A return $x$ in $\{0,1\}$, then sends some messages. 
 Then there is some event $(p,m,0)$ that when applied to $C$ gives $C'$. Now suppose that $p$ goes offline at $C$, then if $A$ always returns $1$ afterwards, then we still decide $1$. Thus there is a run $r'$ that starts at $C$ where $p$ tales no steps, $A$ always returns $1$ and all other nodes still output $1$.
 But since $p$ takes no steps in $r'$, we can apply $r'$ after $(p, m, 0)$ and so we have that $C'$ has a run where $A$ always returns $1$ but decides $1$, which is a contradiction.
 
@@ -789,16 +789,16 @@ Crucially note that $h$ depends only on $S$, which is determined when $4f+1$ vot
  
  \item We prevote when one of the folowing conditions tells us to.
  \begin{itemize}
- \item[(i)] If it is impossible for $V_{r-1,v}$ to have a supermajority for any children of $E_{r-1,v}$, then $v$ prevotes for the best chain containing $E_{r-1,v}$
- \item[(ii)] If $v$ has recieved $B$ from the primary, $v$ prevotes for the head of the  best chain containing $B$ as soon as one of the following holds:
+ %\item[(i)] If it is impossible for $V_{r-1,v}$ to have a supermajority for any children of $E_{r-1,v}$, then $v$ prevotes for the best chain containing $E_{r-1,v}$
+ \item[(i)] If $v$ has recieved $B$ from the primary, $v$ prevotes for the head of the  best chain containing $B$ as soon as one of the following holds:
  
  \begin{itemize}
  \item[(a)] $g(v_{r-1,v}) \geq B \geq E_{r-1,v}$
  \item[(b)] The best chain containing $B$ is also the best chain containing $E_{r-1,v}$
  (equivalently if we evaluate the best chain containing the eariler of the two blocks, then it contains the other)
  \end{itemize}
- \item[(iii)] If round $r$ is completable and $E_{r,v} \geq E_{r-1,v}$, then we prevote for $E_{r,v}$.
- \item[(iv)] if we have reached time $t_{r,v}+2T$ then if we have not recieved a message from the primary or (ii) (a) does not hold, then $v$ prevotes for the head of best chain containing $E_{r-1,v}$ anyway.
+ \item[(ii)] If round $r$ is completable and $E_{r,v} \geq E_{r-1,v}$, then we prevote for $E_{r,v}$.
+ \item[(iii)] if we have reached time $t_{r,v}+2T$ then if we have not recieved a message from the primary or (i) (a) does not hold, then $v$ prevotes for the head of best chain containing $E_{r-1,v}$ anyway.
  \end{itemize}
  
  \item After prevoting, we wait until $g(V_{r,v}) \geq E_{r-1,v}$,  then when one of the following holds, we precommit $g(V_{r,v})$
