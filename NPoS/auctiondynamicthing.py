@@ -43,5 +43,52 @@ def example1():
     print(a.calculatewinners())
     a.bid("x",0,3,2,True)
     print(a.calculatewinners())
+
+import unittest
+class AuctionTests(unittest.TestCase):
+    def testbids(self):
+        a=auction();
+        #We could even allow zero bids but we don't now:
+        a.bid("a",0,3,0, False)
+        self.assertIsNone(a.bestbidonrangeandvalue(0,3)[0][0])
+        a.bid("a",0,3,1, False)
+        self.assertEqual(a.bestbidonrangeandvalue(0,3)[0][0],"a")
+        #Overlapping bids are fine
+        a.bid("a",0,0,1, False)
+        self.assertEqual(a.bestbidonrangeandvalue(0,0)[0][0],"a")
+        # Separated bids are not
+        a.bid("a",2,2,1, False)
+        self.assertIsNone(a.bestbidonrangeandvalue(2,2)[0][0])
+        # Contiguous can be
+        a.bid("a",1,1,1, False)
+        self.assertEqual(a.bestbidonrangeandvalue(1,1)[0][0],"a")
+        #Equal bids don't win
+        a.bid("b",0,3,1, False)
+        self.assertEqual(a.bestbidonrangeandvalue(0,3)[0][0],"a")
+        #Higher bids do
+        a.bid("b",0,3,2, False)
+        self.assertEqual(a.bestbidonrangeandvalue(0,3)[0][0],"b")
+        
+        
+        
+    def testExample1(self):
+        a=auction()
+        a.bid("x",0,3,1)
+        a.bid("a",0,0,2)
+        a.bid("a",2,2,53)
+        a.bid("b",1,1,1)
+        a.bid("c",2,2,1)
+        a.bid("d",3,3,1)
+        self.assertEqual(a.calculatewinners(), ([('a', 0, 0), ('b', 1, 1), ('c', 2, 2), ('d', 3, 3)], 5))
+        a.bid("x",0,3,2)
+        self.assertEqual(a.calculatewinners(),([('x', 0, 3)], 8))
+
+        
+        
+        
+        
+        
+        
+        
     
 
