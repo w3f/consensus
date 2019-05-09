@@ -774,10 +774,10 @@ Crucially note that $h$ depends only on $S$, which is determined when $4f+1$ vot
 
  There are a few ways we can optimise the GRANDPA protocol.
  Firstly, a participant that is offline for many rounds should be able to catch up to the latest round by only seeing recent messages.
- Secdondly, we shouldn't need to actively use many rounds worth of votes, only needing old rounds for challenges for accoiuntable safety and not finalising blocks.
+ Secondly, we shouldn't need to actively use many rounds worth of votes, only needing old rounds for challenges for accountable safety and not finalising blocks.
  Thirdly, We should wait $2T$ as little as possible. Conversely if communication is faster than block production, we shouldn't be running many rounds before a new block arrives.
  
- To achieve this, we need to have mpre complicated conditions for when to perform each step of the protocol. Here is the resulting protocol:
+ To achieve this, we need to have more complicated conditions for when to perform each step of the protocol. Here is the resulting protocol:
  
  To enter a round $r$, $v$ needs that round $r-1$ is completable and that $E_{r-2,v}$ is finalised. 
  If $v$ sees messages that give this for a future round $r$, even if $v$ are not in round $r-1$, $v$ jumps straight to round $r$.
@@ -790,10 +790,10 @@ Crucially note that $h$ depends only on $S$, which is determined when $4f+1$ vot
  \item We prevote when one of the folowing conditions tells us to.
  \begin{itemize}
  %\item[(i)] If it is impossible for $V_{r-1,v}$ to have a supermajority for any children of $E_{r-1,v}$, then $v$ prevotes for the best chain containing $E_{r-1,v}$
- \item[(i)] If $v$ has recieved $B$ from the primary, $v$ prevotes for the head of the  best chain containing $B$ as soon as one of the following holds:
+ \item[(i)] If $v$ has received $B$ from the primary, $v$ prevotes for the head of the  best chain containing $B$ as soon as one of the following holds:
  
  \begin{itemize}
- \item[(a)] $g(v_{r-1,v}) \geq B \geq E_{r-1,v}$
+ \item[(a)] $g(V_{r-1,v}) \geq B \geq E_{r-1,v}$
  \item[(b)] The best chain containing $B$ is also the best chain containing $E_{r-1,v}$
  (equivalently if we evaluate the best chain containing the eariler of the two blocks, then it contains the other)
  \end{itemize}
