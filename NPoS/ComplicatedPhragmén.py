@@ -554,7 +554,7 @@ def riparty(vals=200,noms=2000, votesize=10,seed=1):
     #Half the validators are in a party which 1/4 of the nominators vote for.
     # Approval voting does worse now
     # and this is probably more realistic than the pure random instance.
-    votelist=ripartylist(vals,noms,seed)
+    votelist=ripartylist(vals,noms,votesize,seed)
     doall(votelist, vals // 4, False, False)
 
 
