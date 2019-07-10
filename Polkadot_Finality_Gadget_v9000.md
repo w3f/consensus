@@ -273,7 +273,7 @@ So we have two possible chain selection rules for block producers:
 
 ### Why do we wait at the end of a round and sometimes before precommitting?
 
-If the network  is badly behaved, then these steps may involve waiting an arbitrarily long time. When the network is well behaved (after the GST in our model), we should not be waiting. Indeed there is little point not waiting to recieve 2/3 of voters' votes as we cannot finalise anything without them. But if the gossip network is not perfect, an some messages never arrive, then we may need to implement voters asking other voters for votes from previous rouns in a similar way to the challenge procedure, to avoid deadlock.
+If the network  is badly behaved, then these steps may involve waiting an arbitrarily long time. When the network is well behaved (after the GST in our model), we should not be waiting. Indeed there is little point not waiting to recieve 2/3 of voters' votes as we cannot finalise anything without them. But if the gossip network is not perfect, and some messages never arrive, then we may need to implement voters asking other voters for votes from previous rouns in a similar way to the challenge procedure, to avoid deadlock.
 
 In exchange for this, we get the property that we do not need to pay attention to votes from before the previous round in order to vote correctly in this one. Without waiting, we could be in a situation where we might have finalised a block in some round $r$, but the network becomes unreliable for many rounds and gets few votes on time, in which case we would need to remember the votes from round $r$ to finalise the block later. 
 
