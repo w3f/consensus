@@ -42,13 +42,12 @@ We consider the question of finality for blockchain protocols: when will a block
 But what we'd prefer is to have provable finality - for example a signed statement by a set of authorities, the set of whom can be tracked, that the block is final.
 This is useful to prove what happened to light clients, who do not have the full chain or are not actively listening to the network, and to communicate with other chains, possibly as part of a scalability solution, where not anyone receives or stores all the data in the system. 
 
-Another popular family of consensus mechanisms for blockchains involves getting Byzantine agreement on each block \cite{Tendermint.AlgorandAgreement}.
-This gives provable finality immediately. However this is slow if we have a large set of participants in the Byzantine agreement.
+Another popular family of consensus mechanisms for blockchains involves getting Byzantine agreement on each block e.g. (Tendermint)\cite{Tendermint} and (Algorand)\cite{AlgorandAgreement}. These mechanisms were in turn inspired by the first decentralized consensus algorithm design, known simply as Practical Byzantine Fault Tolerance (pBFT)\cite{pBFT} authored by Miguel Castro and Barbara Liskov from MIT in 1999. The pBFT consensus family gives provable finality quickly. However, this mechanism slows considerably, causing communication scalability challenges, if we have a large set of participants that must cast votes to reach Byzantine agreement. Algorand Byzantine Agreement "achieves scalability by choosing a committee, a small set of representatives randomly selected from the total set of users—to run each step of its protocol." (See page 2, "Consensus by Committee") (Algorand)\cite{AlgorandAgreement}
 
 The approach that we will take is similar to the approach that Ethereum plans to take with Casper the Friendly Finality Gadget (Casper FFG)\cite{CasperFFG}, which combines these approaches.
 We will use a block production mechanism and chain selection rule that give eventual consensus and then add a finality gadget, a protocol that finalises blocks that the participants already agree on, to get provable finality.
 
-We present a finality gadget that works in a partially synchronous network model, GRANDPA, that works in the presence f up to $1/3$ Byzantine actors as well as an asynchronous finality gadget, that can cope with $1/5$ Byzantine actors. 
+We present a finality gadget that works in a partially synchronous network model, GRANDPA, that works in the presence of up to $1/3$ Byzantine actors as well as an asynchronous finality gadget, that can cope with $1/5$ Byzantine actors. 
 
 Recent research on consensus has come up with many different block production mechanisms that give eventual consensus. We want formal guarantees to hold for finality gadgets that can easily be applied to many possible block production mechanisms. Thus we want to make the least assumptions about the block production mechanism as possible.
 
