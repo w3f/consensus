@@ -126,7 +126,7 @@ We first need to show that for any prevote or precommit in round $r$ cast by an 
 Thus if $B'' \not\geq B$, then we had $E_{r-1,v} \not\geq B$.
 Next we need to show that if we had $E_{r-1,v} \not\geq B$ at the time of the vote then we can respond to the query validly. If $B$ wasn't on the same chain with $g(V_{r-1,v})$, then by Lemma 2 (iii), it was impossible for $V_{r-1,v}$ to have a supermajority for $B$. If it was on the same chain as $g(V_{r,-1v})$, then it was on the same chain as $E_{r-1,v}$ as well. Since $E_{r-1,v} \not\geq B$, in this case we must have $B > E_{r-1,v}$. However, possibly using that round $r-1$ is completable, it was impossible for $C_{r-1,v}$ to have a supermajority for any child of $E_{r-1,v}$ on the same chain with $g(V_{v,r})$ and in particular for the child of $E_{r-1,v}$ on $\textrm{chain}(B)$. By Lemma 2 (i), this means $C_{r-1,v}$ did not have a supermajority for $B$.
 
-Thus we have that, at the time of th vote, for one of $V_{r-1,v}$, $C_{r-1,v}$, it was imposible to have a supermajority for $B$. The current sets $V_{r-1,v}$ and $C_{r-1,v}$ are supersets of those at the time of the vote, and so by Lemma 2 (ii), it is still impossible. Thus $v$ can respond validly.
+Thus we have that, at the time of the vote, for one of $V_{r-1,v}$, $C_{r-1,v}$, it was imposible to have a supermajority for $B$. The current sets $V_{r-1,v}$ and $C_{r-1,v}$ are supersets of those at the time of the vote, and so by Lemma 2 (ii), it is still impossible. Thus $v$ can respond validly.
 
 
 This is enough to show Theorem 1. Not that if $v$ sees a commit message for a block $B$ in round $r$ and has that $E_{r',v} \not\geq B$, for some completable round $r' \geq r$, then they should also be able to start a challenge procedure that succesfully identifies at least $f+1$ Byzantine voters in some round. Thus we have that:
@@ -177,7 +177,7 @@ Let $t_r$ be the first time any honest particpant enters round $r$ i.e. the mini
 (iv) for any honest $v$, $t_{r+1,v} \leq t_r + 6T$.
 
 
-**Proof:** Let $v'$ be one of th first valiators to enter round $r$ i.e. with $t_{r,v'}=t_r$. By our network assumption, all messages recieved by $v'$ beore they ended are recieved by all honest participants before time $t_r+T$. In particular at time $t_r$, $v'$ sees that all previous rounds are completable and so by Lemma 4, so does every other honest validator by time $t_r+T$. Also since for $r' < r$, at some time $s_{r'} \leq t_r$ $g(V_{r',v',s_r'}) \geq E_{r',v',s_r'}$, again by Lemma 4, for all honest $v$, $g(V_{r',v,t_r+T}) \geq E_{r',v,t_r+T}$. Looking at the conditions for voting, this means that any honest validator does not need to wait before voting in any round $r' \leq r$. Thus they cast any remaining votes and enter round $r$ by time $t_r + T$. This shows (i).
+**Proof:** Let $v'$ be one of the first valiators to enter round $r$ i.e. with $t_{r,v'}=t_r$. By our network assumption, all messages recieved by $v'$ beore they ended are recieved by all honest participants before time $t_r+T$. In particular at time $t_r$, $v'$ sees that all previous rounds are completable and so by Lemma 4, so does every other honest validator by time $t_r+T$. Also since for $r' < r$, at some time $s_{r'} \leq t_r$ $g(V_{r',v',s_r'}) \geq E_{r',v',s_r'}$, again by Lemma 4, for all honest $v$, $g(V_{r',v,t_r+T}) \geq E_{r',v,t_r+T}$. Looking at the conditions for voting, this means that any honest validator does not need to wait before voting in any round $r' \leq r$. Thus they cast any remaining votes and enter round $r$ by time $t_r + T$. This shows (i).
 
 For (ii), note that the only reason why an honest voter would not wait until time $t_{r,v}+2T \geq t_r+ 2T$ is when $n-f$ voters have already prevoted. But since some of those $n-f$ votes are honest, this is impossible before $t_r+2T$
 
@@ -210,7 +210,7 @@ For (b), combining (a) and Lemma 7 (iii), we have that any honest voter $v$ prec
 
 **proof**: By Lemma 7 and our nwtork asumptions, no honet voter  prevotes befor time $t_r+2T \geq t_{r,v}+2T$ and so at this time, they will have seen all prevotes and precommits seen by $v$ at $t_{r,v}$ and the block $B$ if $v$ broacast it then. By Lemma 5, any honest voter $v'$ has $E_{r-1,v'} \leq B \leq g(V_{r-1,v}$ then.
 
-So if the primary broadcast $B$, then $v'$ prevotes for the best chain including $B$. If the primary did not broadcast $B$, then they finalise it. By Lemma 4, it must be that $E_{r-1,v'} \geq B$ and so $E_{r-1,v'}=B$ and so in this case $v'$ also prevots for th best chain including $B$.
+So if the primary broadcast $B$, then $v'$ prevotes for the best chain including $B$. If the primary did not broadcast $B$, then they finalise it. By Lemma 4, it must be that $E_{r-1,v'} \geq B$ and so $E_{r-1,v'}=B$ and so in this case $v'$ also prevots for the best chain including $B$.
 
 Since all honest voters prevote $\geq B$, $g(H_r) \geq B$ and so by Lemma 8, all honest particpants finalise $B$ by time $t_r+6T$
 
@@ -220,7 +220,7 @@ Since all honest voters prevote $\geq B$, $g(H_r) \geq B$ and so by Lemma 8, all
 **Lemma 10** Suppose that $t_r \geq GST+T$ and the primary of round $r$ is honest. 
 Let $B$ be the latest block that is ever finalised in rounds  $<r$ (even if no honest paticpant finalises it until after $t_r$). If all honest voters for the prevote in round $r$ agree that the best chain containing $B$ include the same child $B'$ of $B$, then they all finalises some child of $B$ before $t_r+6T$.
 
-**proof** By Lemma 4, any honest particapant sees that $E_{r-1} \geq B$ during round $r$. Let $v$ be the pimary of round $r$ and $B''=E_{r-1,v,t_{r,v}}$. If $B'' > B$, then by Lemma 9, all honest validators finalise $B''$ by time $t_r+6T$ which means they finalised a child of $B$. If $B''=B$, then by Lemma 8, all honest voters prevote for th bst chain including $B$. By assumption these chains inclue $B'$ and so $g(H_r) \geq B$. By Lemma 8, this means that $B'$ is finalised by time $t_r+6T$.
+**proof** By Lemma 4, any honest particapant sees that $E_{r-1} \geq B$ during round $r$. Let $v$ be the pimary of round $r$ and $B''=E_{r-1,v,t_{r,v}}$. If $B'' > B$, then by Lemma 9, all honest validators finalise $B''$ by time $t_r+6T$ which means they finalised a child of $B$. If $B''=B$, then by Lemma 8, all honest voters prevote for the best chain including $B$. By assumption these chains inclue $B'$ and so $g(H_r) \geq B$. By Lemma 8, this means that $B'$ is finalised by time $t_r+6T$.
 
 
 
