@@ -717,7 +717,7 @@ Since $V'_{r,v}$ contains votes from $4f+1$ voters, there are votes from at leas
 \end{proof}
 
 Our network assumption and a simple induction shows that we do not deadlock.
-\begin{corollary} All honest voters eventually prevote and precommit in evrey round and all honest participants reach every round.\end{corollary}
+\begin{corollary} All honest voters eventually prevote and precommit in every round and all honest participants reach every round.\end{corollary}
 
 \begin{lemma} \label{lem:possibly-final-implies-permanent-lock}
 If there are enough precommits to finalise a block $B$ in round $r$, then all honest voters who prevote in future rounds will be locked to $B$ or its descendants when they do. At the end of the next round $r' > r$ with $s_{r'}=1$, all participants will have finalised $B$.
