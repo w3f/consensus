@@ -585,13 +585,13 @@ The danger with voting for the last blockhash in the best chain is that maybe no
 
 To get round the first alone, it might be better to vote for a block 3/4 along (rounding further) the unfinalised chain , rather than for th head.
 
-But the second suggests that maybe we should be including signatures for several of the latest blocks in a chain. We could include that last 2 or 3. We could also do e.g. the the blocks with block numbers with the last 2 multiples of each power of two since th last finalised block, which gives log unfinalised chain length messages but should have many blocks in common.
+But the second suggests that maybe we should be including signatures for several of the latest blocks in a chain. We could include that last 2 or 3. We could also do e.g. the the blocks with block numbers with the last 2 multiples of each power of two since the last finalised block, which gives log unfinalised chain length messages but should have many blocks in common.
 
-When presented with a vote that includes many blocks, we should interpret them as being for th last block we've seen if any. Then we need to be able to update that vote to a later block when that is seen. This retains monotonicity of a supermajority for/ it is impossible to have a supermajority for over time.
+When presented with a vote that includes many blocks, we should interpret them as being for the last block we've seen if any. Then we need to be able to update that vote to a later block when that is seen. This retains monotonicity of a supermajority for/ it is impossible to have a supermajority for over time.
 
 It does not matter if some of the votes are for a block that does not exist as everyone will ignore that part of the vote. But including votes for block that are seen but are not on a chain is an equivocation and is slashable. We need to count such votes as votes for the had of every chain in the vote (as someone might interpret them as for any one of them).
 
-Then if we need to BLS aggregate votes that are $\geq B$ for a commit message or query response, it is OK to use any vote that is $\geq B$, not necessarily the vote for th head. This should reduce the number of blockhashs sign, in the optimistic case down to 1.
+Then if we need to BLS aggregate votes that are $\geq B$ for a commit message or query response, it is OK to use any vote that is $\geq B$, not necessarily the vote for the head. This should reduce the number of blockhashs sign, in the optimistic case down to 1.
 
 \subsection{  Block production rule}
 
@@ -661,9 +661,9 @@ Then by correctness $r$ decides $0$. Now we consider what can happen when $A$ sw
 If we switch to $1$ when all node have already decided $0$, then we decide $0$.
 
 We claim that some configuration in the run $r$, where there are two runs from it where $A$ is always $1$ that decide $0$ and $1$. We call such states $1$-bivalent.
-To see this, assume for a contradiction that $r$ contains no such configurations. Then there is are successive configurations $C$,$C'$ such that if $A$ return $1$ in the future from $C$ then we always decide $0$ but from $C'$, we always decide $1$.
-Let events be $(p,m,x)$ where node (processor/voter) $p$ receives message $m$ (which my be null) and executes some code where any calls to A return $x$ in $\{0,1\}$, then sends some messages. 
-Then there is some event $(p,m,0)$ that when applied to $C$ gives $C'$. Now suppose that $p$ goes offline at $C$, then if $A$ always returns $1$ afterwards, then we still decide $1$. Thus there is a run $r'$ that starts at $C$ where $p$ tales no steps, $A$ always returns $1$ and all other nodes still output $1$.
+To see this, assume for a contradiction that $r$ contains no such configurations. Then there are successive configurations $C$,$C'$ such that if $A$ return $1$ in the future from $C$ then we always decide $0$ but from $C'$, we always decide $1$.
+Let events be $(p,m,x)$ where node (processor/voter) $p$ receives message $m$ (which may be null) and executes some code where any calls to A return $x$ in $\{0,1\}$, then sends some messages. 
+Then there is some event $(p,m,0)$ that when applied to $C$ gives $C'$. Now suppose that $p$ goes offline at $C$, then if $A$ always returns $1$ afterwards, then we still decide $1$. Thus there is a run $r'$ that starts at $C$ where $p$ takes no steps, $A$ always returns $1$ and all other nodes still output $1$.
 But since $p$ takes no steps in $r'$, we can apply $r'$ after $(p, m, 0)$ and so we have that $C'$ has a run where $A$ always returns $1$ but decides $1$, which is a contradiction.
 
 Now let $C$ be a $1$-bivalent configuration. We can follow the FLP proof to show that there is a run from $C$ for which $A$ always returns $1$, all messages are delivered but all configurations are 1-bivalent and so the protocol never decides. This completes the proof by contradiction that there is no correct protocol.
@@ -717,7 +717,7 @@ Since $V'_{r,v}$ contains votes from $4f+1$ voters, there are votes from at leas
 \end{proof}
 
 Our network assumption and a simple induction shows that we do not deadlock.
-\begin{corollary} All honest voters eventually prevote and precommit in evrey round and all honest participants reach every round.\end{corollary}
+\begin{corollary} All honest voters eventually prevote and precommit in every round and all honest participants reach every round.\end{corollary}
 
 \begin{lemma} \label{lem:possibly-final-implies-permanent-lock}
 If there are enough precommits to finalise a block $B$ in round $r$, then all honest voters who prevote in future rounds will be locked to $B$ or its descendants when they do. At the end of the next round $r' > r$ with $s_{r'}=1$, all participants will have finalised $B$.
