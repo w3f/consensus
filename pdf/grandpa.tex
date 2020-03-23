@@ -88,10 +88,13 @@ The rest of the paper is organized as follows:
 
 \section{Model, Definitions, and Impossibilities}
 
-\subsection{Formalising the problem}
 
-We want to formalise the notion of finality gadget, that can be used to modify a protocol that has eventual consensus with probabilistic finality to one with provavle finality.
-To achieve this, we need to incorporate into the definition of Byzantine agreement that we have access to a protocol that would achieve eventual consensus if we did not affect it.
+We want to formalise the notion of finality gadget to be a sub-protocol that can be deployed along any protocol providing with
+eventual consensus and probabilistic finality and enhance with provable finality.
+To achieve this, we need to incorporate into the classic definition of Byzantine agreement 
+the fact that we additionally have access to a protocol that would achieve eventual consensus if we did not affect it.
+
+\subsection{Byzantine Agreement with a Consistency Oracle}
 Consider a typical definition of a multi-values Byzantine agreement: 
 We have a set of participants $V$, the majority of whom obey the protocol, but a constant fraction may be Byzantine, meaning they behave arbitrarily, e.g. provide false or inconsistent information or randomly go offline when they ought to be online.
 
@@ -105,7 +108,7 @@ We have a set of participants $V$, the majority of whom obey the protocol, but a
 
 \end{definition}
 
-We can change this definition to assume that instead of having an initial value, all voters have access to an external protocol, an oracle for values, that achieves eventual consensus in that it returns the same value to all voters when called after some time.
+We can change this definition to assume that instead of having an initial value, all voters have access to an external protocol, an oracle for values, that achieves eventual consensus in that it returns the same value to all voters when called after some unknown time.
 
 \begin{definition}
 We say an oracle $A$ in a protocol is {\em eventually consistent} if it returns the same value to all participants after some unspecified time.
@@ -122,12 +125,17 @@ We say an oracle $A$ in a protocol is {\em eventually consistent} if it returns 
 
 \end{definition}
 
-For the binary case, i.e. when $|S|=2$, the Byzantine finality gadget problem is reducible to Byzantine agreement. This does not hold for $|S| > 2$, because the definition of validity is stronger. Note that it is impossible for multi-valued Byzantine agreement to make the validity condition require that we decide an initial value of some honest voter and tolerate more than a $1/|S|$ fraction of faults, since we may have a $1/|S|$ fraction of voters reporting each inital value and Byzantine voters can act honestly enough not to be detectable. For finality gadgets, this stronger validity condition is possible and we will want even stronger versions that quantify when an honest voter had the value.
+\paragraph{Impossibility of Deterministic Agreement with an Oracle.}
+For the binary case, i.e. when $|S|=2$, the Byzantine finality gadget problem is reducible to Byzantine agreement. This does not hold for $|S| > 2$, because the definition of validity is stronger in our protocol. Note that it is impossible for multi-valued Byzantine agreement to make the validity condition require that we decide an initial value of some honest voter and tolerate more than a $1/|S|$ fraction of faults, since we may have a $1/|S|$ fraction of voters reporting each initial value and Byzantine voters can act honestly enough not to be detectable. For finality gadgets, this stronger validity condition is possible. A natural question is then weather the celebrated FLP~\cite{flp} impossibility holds for our stronger requirements.
+Next, we show that an asynchronous, deterministic binary finality gadget is impossible, even with one fault. 
+This means that the extra information voters have here, that $A$ will eventually agree for all voters, is not enough to make this possible.
 
-We show in \ref{ssec:impossibility} that an asynchronous, deterministic binary finality gadget is impossible, even with one fault. This does not immediately follow from the celebrated impossibility result of \cite{flp}, which shows that an asynchronous, deterministic binary Byzantine agreeement protocol is impossible,  because we do not know a reduction in the necessary direction, from agreement to the finality gadget problem. The extra information voters have here, that $A$ will evntually agree for all voters, is not enough to make this possible.
+\xxx{Add the proof}
 
 
-Now how do we extend this to agreeing on a chain of blocks? One difficulty in formalising the problem is that the block production mechanism cannot be entirely separate from the finality gadget. In order to finalise new blocks, we must first build on the chain we have already finalised. So at a minimum, the block production mechanism needs to recognise which blocks the finality gadget has finalised. We will also allow the block production mechanism to interact with the state of the finality gadget in other ways.
+\subsection{Definition of a Finality Gadget}
+
+In this section we show how to extend the one-shot agreement to agreeing on a chain of blocks. One difficulty in formalising the problem is that the block production mechanism cannot be entirely separate from the finality gadget. In order to finalise new blocks, we must first build on the chain we have already finalised. So at a minimum, the block production mechanism needs to recognise which blocks the finality gadget has finalised. We will also allow the block production mechanism to interact with the state of the finality gadget in other ways.
 
 We want the finality gadget to work with the most general block production mechanisms as possible. Thus we need a condition that combines the property of eventual consensus and this requirement to build on the last finalised block, but is otherwise not too restrictive.
 We assume a kind of conditional eventual consensus.
@@ -137,26 +145,29 @@ We also want a protocol that does not terminate, but instead keeps on finalising
 We assume that there is a block production protocol $P$ that runs at the same time as the finality gadget protocol $G$. Actors who are participants in both protocols may behave differently in $P$ depending on what happened in $G$.
 However in the reverse direction, the only way that an honest voter $v$'s behaviour in $G$ is affected by $P$ is through a voting rule, a function $A(v,s_v,B)$ that depends on $v$ and its state $s_v$ and takes a block $B$ and returns a block $B'$ at the head of a chain including $B$.
 
-We say that the system $G$,$P$ and $A$ achieves {\em conditional eventual consensus}, if $G$ has finalised a block $B$, then eventually, either $G$ will finalise some descendant of $B$ or else all the chains with head $A_{v,s_v}(B)$ for all voters $v$ at all future states $s_v$ will contain the same descendant $B'$ of $B$.
+We say that the system $G$, $P$, and $A$ achieves {\em conditional eventual consensus}, if $G$ has finalised a block $B$, then eventually, either $G$ will finalise some descendant of $B$ or else all the chains with head $A_{v,s_v}(B)$ for all voters $v$ at all future states $s_v$ will contain the same descendant $B'$ of $B$.
 
 \begin{definition} \label{def:finality-gadget} 
 Let $F$ be a protocol  with a set of voters $V$, a constant fraction of which may be Byzantine.
-We say that $F$ solves {\em blockchain Byzantine finality gadget problem} if for every block production protocol $P$ a voting rule $A$ , then we have the following
+We say that $F$ solves {\em blockchain Byzantine finality gadget problem} if for every block production protocol $P$ and voting rule $A$ we have the following
 
 %A protocol for the blockchain Byzantine finality gadget problem has , each of whom has access to an oracle $A$ for the best chain given the last finalised block with the property that, as long as no new block is finalised, it achieves eventual consensus on some child of the last finalised block such that the following holds:
 
 \begin{itemize}
 \item{\bf Safety:} All honest voters finalise the same block at each block number.
-\item{\bf Liveness:} If the system $F,G,A$ achieves conditional eventual consensus, then all honest voters keep finalising blocks.
+\item{\bf Liveness:} If the system $F, G, A$ achieves conditional eventual consensus, then all honest voters keep finalising blocks.
 \item{\bf Validity:} If an honest voter finalises a block $B$ then that block was seen in the best chain observed by some honest voter containing some previously finalised ancestor of $B$,
 \end{itemize}
 
 \end{definition}
 
-As a motivating example, we could take $F$ as being using proof of work to build on the longest chain including the last block $G$ finalised and take $A(v,s_v,B)$ as being the longest chain including $B$ that $v$ sees in state $s_v$. It is well-known \cite{bitcoinpapers} that longest chain with proof of work achieves eventual consensus under the right assumptions and similar arguments show that in this case we have conditional eventual consensus.
-As long as we do not change the chain we are building on by finalising another block, then we will eventually agree on some prefix longer than the last finalised block.
-Thus any finality gadget that satisfies Definition \ref{def:finality-gadget}, will work in this system so that all honest voters finalise an increasingly long common chain.
+\xxx{Lef I do not understand the paragraph below, clarify.}
+
+As an example, we could assume $F$ uses proof of work to build on the longest chain and includes the last block $G$ finalised. Then we take $A(v,s_v,B)$ as being the longest chain which includes $B$ and which $v$ sees in state $s_v$. It is well-known \cite{bitcoinpapers} that longest chain with proof of work achieves eventual consensus under the right assumptions and similar arguments show that in this case we have conditional eventual consensus.
+As long as we do not change the chain we are building on by finalising another block, we will eventually agree on some prefix longer than the last finalised block.
+Thus, any finality gadget that satisfies Definition \ref{def:finality-gadget} will work in this system so that all honest voters finalise an increasingly long common chain.
 Thanks to the abstraction above, we can switch $F$ for one of many possible alternative consensus algorithms and $G$ will still work.
+
 
 \com{
 To analyse the performance of our finality gadget, we will need versions of the last two properties that appropriately depend on time: 
@@ -220,51 +231,43 @@ It is not clear that it is, nor is it clear how to prove liveness for such a rul
 
 
 
-
-\section{Preliminaries} \label{sec:prelims}
 }
-{\bf Network model}: We will mostly be using a partially synchronous gossip network model, such as that described in \cite{Tendermint} section II A.
-Participants communicate via a gossip network, where they are connected to a subset of other participants, and forward all messages they receive to all their connected peers.
-We assume that the network graph is such that any Byzantine participants are not able to cut off an honest participant and so any message sent or received by an honest participant reaches all honest participants.
-The partial synchrony we will use is the model where messages are received within time $T$, but possibly only after some Global Synchronisation Time $\GST$.
+\subsection{Preliminaries} \label{sec:prelims}
+
+\paragraph{Network model}: We will mostly be using a partially synchronous network model.
+We assume that any message sent or received by an honest participant reaches all honest participants within time $T$, but possibly only after some Global Synchronisation Time $\GST$.
 Concretely, any message sent or received by some honest participant at time $t$ is received by all honest participants by time $\GST+T$ at the latest.
 
 
-{\bf voters}: We will want to change the set of participants who actively agree sometimes. To model this, we have a large set of participants who follow messages.
+\paragraph{Voters:} \com{We will want to change the set of participants who actively agree sometimes. 
+To model this, we have a large set of participants who follow messages.}
 For each voting step, there is a set of $n$ voters.
 We will frequently need to assume that for each such step, at most  $f < n/3$ voters are Byzantine.
 We need $n-f$ of voters to agree on finality. Whether or not block producers ever vote, they will need to be participants who track the state of the protocol.
 
-{\bf votes}: A vote is a block hash, together with some metadata such as round number and the type of vote, such as {\em prevote} or {\em precommit}, all signed with a voter's private key.
+\paragraph{Votes:}A vote is a block hash, together with some metadata such as round number and the type of vote, such as {\em prevote} or {\em precommit}, all signed with a voter's private key.
 
-{\bf Rounds}: each participant has their own idea of what the current round number is. Every prevote and precommit has an associated round number. Honest voters only vote once (for each type of vote) in each round and don't vote in earlier rounds after later ones.
-
+\paragraph{Rounds:}Each participant has their own idea of what is the current round number. Every prevote and precommit has an associated round number. Honest voters only vote once (for each type of vote) in each round and do not vote in earlier rounds after later ones.
 Participants need to keep track of which block they see as currently being the latest finalised block and an estimate of which block could have been finalised in the last round. 
 
 
-
-
 For block $B$, we write $\mathrm{chain}(B)$ for the chain whose head is $B$. The block number, $n(B)$ of a block $B$ is the length of $\mathrm{chain}(B)$.
-
 For blocks $B'$ and $B$, we say $B$ is later than $B'$ if it has a higher block number.
-We write $B > B'$ or that $B$ is descendant of $B'$ for $B$, $B'$ appearing in the same blockchain with $B'$ later i.e. $B' \in \mathrm{chain}(B)$ with $n(B) > n(B')$ and $B < B'$ or $B$ is an ancestor of $B'$ for $B \in \mathrm{chain}(B')$ with $n(B') > n(B)$.
-$B \geq B'$ and $B \leq B'$ are similar except allowing $B = B$.
+We write $B > B'$ or that $B$ is descendant of $B'$ for $B$, $B'$ appearing in the same blockchain with $B'$ later i.e. $B' \in \mathrm{chain}(B)$ with $n(B) > n(B')$.
+$B \geq B'$ and $B \leq B'$ are similar except allowing $B = B'$.
 We write $B \sim B'$ or $B$ and $B'$ are on the same chain if $B<B'$, $B=B'$ or $B> B'$; and $B \nsim B'$ or $B$ and $B'$ are not on the same chain if there is no such chain.
 
 Blocks are ordered as a tree with the genesis block as root. So any two blocks have a common ancestor but two blocks not on the same chain do not have a common descendant.
+A vote $v$ for a block $B$ by a voter $V$ is a message signed by $V$ containing the blockhash of $B$ and meta-information like the round numbers and the type of vote. 
 
-A vote $v$ for a block $B$ by a voter $V$ is a message signed by $V$ containing the blockhash of $B$ and meta information like the round numbers and the type of vote. 
+A voter equivocates in a set of votes $S$ if they have cast multiple different votes in $S$. We call a set $S$ of votes safe if the number of voters who equivocate in $S$ is at most $f$. We say that $S$ has a supermajority for a block $B$ if the set of voters who either have a vote for blocks $\geq B$ or equivocate in $S$ has size at least $(n+f+1)/2$.  We count equivocations as votes for everything so that observing a vote is monotonic, meaning that if $S \subset T$ then if $S$ has a supermajority for $B$ so does $T$, while being able to ignore yet more equivocating votes from an equivocating voter.
 
-
-
-A voter equivocates in a set of votes $S$ if they have more than one vote in $S$. We call a set $S$ of votes tolerant if the number of voters who equivocate in $S$ is at most $f$. We say that $S$ has a supermajority for a block $B$ if the set of voters who either have a vote for blocks $\geq B$ or equivocate in $S$ has size at least $(n+f+1)/2$.  We count equivocations as votes for everything like this so that observing a vote is monotonic, meaning that if $S \subset T$ then if $S$ has a supermajority for $B$ so does $T$, while being able to ignore yet more equivocating votes from an equivocating voter.
-
+For our finality gadget (GRANDPA) we use the ghost~\cite{ghost} eventual consensus algorithm as $F$.
 The $2/3$-GHOST function $g(S)$ takes a set $S$ of votes and returns the block $B$ with highest block number such that $S$ has a supermajority for $B$.
-If there is no such block, then it returns `nil`. (if $f \neq \lfloor (n-1)/3 \rfloor$, then this is a misnomer and we may change the name of the function accordingly.)
-
-Note that, if $S$ is tolerant, then we can compute $g(S)$ by starting at the genesis block and iteratively looking for a child of our current block with a supermajority, which must be unique if it exists. Thus we have:
+If there is no such block, then it returns `nil`. \com{(if $f \neq \lfloor (n-1)/3 \rfloor$, then this is a misnomer and we may change the name of the function accordingly.)}
+Note that, if $S$ is safe, then we can compute $g(S)$ by starting at the genesis block and iteratively looking for a child of our current block with a supermajority, which must be unique if it exists. Thus we have:
 \begin{lemma} \label{lem:ghost-monotonicity}
-Let $T$ be a tolerant set of votes. Then
+Let $T$ be a safe set of votes. Then
 \begin{enumerate}
 \item The above definition uniquely defines $g(T)$
 \item If $S \subseteq T$ has $g(S) \neq$ nil, then $g(S) \leq g(T)$.
@@ -274,20 +277,18 @@ Let $T$ be a tolerant set of votes. Then
 \end{lemma}
 
 Note that we can easily update $g(S)$ to $g(S \cup \{v\})$, by checking if any child of $g(S)$ now has a supermajority.
+The third rule tells us that even if participants see different subsets of the votes cast in a given voting round, this rule may give them different blocks but all such blocks are in the same chain under this assumption. 
 
-3 tells us that even if participants see different subsets of the votes cast in a given voting round, this rule may give them different blocks but all such blocks are in the same chain under this assumption. 
-
-Next, we define a notion of possibility to have a supermajority which needs t have that if the set of all votes in a vote $T$ is tolerant and some participant observes a subset $S \subseteq T$ that has a supermajority for a block $B$ then all participants who see some other subset $S' \subseteq T$ still see that it is possible for $S$ to have a supermajority for $B$. We need a definition that extends to intolerant sets.
-
+Next, we define a notion of possibility to have a supermajority which says that if the set of all votes in a vote $T$ is safe and some participant observes a subset $S \subseteq T$ that has a supermajority for a block $B$ then all participants who see some other subset $S' \subseteq T$ still see that it is possible for $S$ to have a supermajority for $B$. We need a definition that extends to unsafe sets.
 We say that it is {\em impossible} for a set $S$ to have a supermajority for $B$ if at least $(n+f+1)/2$ voters either vote for a block $\not \geq B$ or equivocate in $S$. Otherwise it is {\em possible} for $S$ to have a supermajority for $B$.
 
-Note that if $S$ is tolerant, it is possible for $S$ to have a supermajority for $B$ if and only if there is a tolerant $T \supseteq S$ that has a supermajority for $B$, which can be constructed by adding a vote from $B$ for all voters without votes in $S$ and enough voters who already have votes in $S$ to bring the number of equivocations up to $f$.
+Note that if $S$ is safe, it is possible for $S$ to have a supermajority for $B$ if and only if there is a safe $T \supseteq S$ that has a supermajority for $B$, which can be constructed by adding a vote from $B$ for all voters without votes in $S$ and enough voters who already have votes in $S$ to bring the number of equivocations up to $f$.
 
 We say that it is {\em impossible} for any child of $B$ to have a supermajority in $S$ if $S$ has votes from at least $2f+1$ voters and it is impossible for $S$ to have a supermajority for each child of $B$ appearing on the chain of any vote in $S$.
-Again, provided $S$ is tolerant, this holds if and only if for any possible child of $B$, there is no tolerant $T \subseteq S$ that has a supermajority for that child.
-
-Note that it is possible for an intolerant $S$ to both have a supermajority for $S$ and for it to be impossible to have such a supermajority under these definitions, as we regard such sets as impossible anyway.
-
+Again, provided $S$ is safe, this holds if and only if for any possible child of $B$, there is no safe $T \subseteq S$ that has a supermajority for that child.
+\com{
+Note that it is possible for an unsafe $S$ to both have a supermajority for $S$ and for it to be impossible to have such a supermajority under these definitions, as we regard such sets as impossible anyway.
+}
 \begin{lemma} \label{lem:impossible}
 \begin{itemize}
 \item[(i)] If $B' \geq B$ and it is impossible for $S$ to have a supermajority for $B$, then it is impossible for $S$ to have a supermajority for $B'$.
@@ -376,7 +377,7 @@ Any honest voter should respond.  In particular, if no voter responds, then we c
 
 If we ask such queries for a vote in all rounds between $r''=r'$ and $r''=r+1$ and get valid responses, since some voter responds when $r''=r+1$, then we have either a set $S$ of prevotes or precommits in round $r$ that show it is impossible for $S$ to have a supermajority for $B$ in round $r$.
 
-If $S$ is a set of precommits, then if we take the union of $S$ and the set of precommits in the commit message for $B$, then the resulting set of precommits for round $r$ has a supermajority for $B$ and it is impossible for it to have a supermajority for $B$. This is possible if the set is not tolerant and so there must be at least $f+1$ voters who equivocate an so are Byzantine.
+If $S$ is a set of precommits, then if we take the union of $S$ and the set of precommits in the commit message for $B$, then the resulting set of precommits for round $r$ has a supermajority for $B$ and it is impossible for it to have a supermajority for $B$. This is possible if the set is not safe and so there must be at least $f+1$ voters who equivocate an so are Byzantine.
 
 If we get a set $S$ of prevotes for round $r$ that does not have a supermajority for $B$, then we need to ask a query of the form
 
@@ -423,7 +424,7 @@ If there at most $f$ Byzantine voters in any vote, $B$ was finalised in round $r
 \subsection{Liveness }
 
 We show the protocol is deadlock free and also that it finalises new blocks quickly in a weakly synchronous model.
-For this section, we will assume that there are at most $f < n/3$ Byzantine voters for each vote, and so that the sets of prevotes and precommits for each round are tolerant.
+For this section, we will assume that there are at most $f < n/3$ Byzantine voters for each vote, and so that the sets of prevotes and precommits for each round are safe.
 
 We define $V_{r,v,t}$ be the set $V_{r,v}$ at time $t$ and similarly for $C_{r,v,t}$ and the block $E_{r,v,t}$ .
 
@@ -679,7 +680,7 @@ The goal is to have all non-faulty nodes output the same $v$, which must be $0$ 
 
 Fischer, Lynch and Paterson\cite{flp} showed that this is impossible if there is one faulty node.
 
-The binary fault-tolerant finality gadget problem is similar, except now there is an oracle $A$ that any node can call at any time with the following properties:
+The binary fault-safe finality gadget problem is similar, except now there is an oracle $A$ that any node can call at any time with the following properties:
 
 either $A$ always outputs $x$ in $\{0,1\}$ to all nodes at all times
 or else there is an $x$ in $\{0,1\}$ and
