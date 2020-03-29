@@ -125,12 +125,47 @@ We say an oracle $A$ in a protocol is {\em eventually consistent} if it returns 
 
 \end{definition}
 
-\paragraph{Impossibility of Deterministic Agreement with an Oracle.}
+\paragraph{Impossibility of Deterministic Agreement with an Oracle.}\label{ssec:impossibility}
 For the binary case, i.e. when $|S|=2$, the Byzantine finality gadget problem is reducible to Byzantine agreement. This does not hold for $|S| > 2$, because the definition of validity is stronger in our protocol. Note that it is impossible for multi-valued Byzantine agreement to make the validity condition require that we decide an initial value of some honest voter and tolerate more than a $1/|S|$ fraction of faults, since we may have a $1/|S|$ fraction of voters reporting each initial value and Byzantine voters can act honestly enough not to be detectable. For finality gadgets, this stronger validity condition is possible. A natural question is then weather the celebrated FLP~\cite{flp} impossibility holds for our stronger requirements.
 Next, we show that an asynchronous, deterministic binary finality gadget is impossible, even with one fault. 
 This means that the extra information voters have here, that $A$ will eventually agree for all voters, is not enough to make this possible.
 
-\xxx{Add the proof}
+
+\paragraph{Proof:}
+The asynchronous binary fault tolerant agreement problem is as follows:
+
+We have  number of voters which each have an initial $v_i$ in $\{0,1\}$
+
+We may have one or more faulty nodes, which here means going offline at some point. Nodes have asynchronous communication - so any message arrives but we have no guarantee when it will.
+The goal is to have all non-faulty nodes output the same $v$, which must be $0$ if all inputs $v_i$ are $0$ and $1$ if all are $1$.
+
+Fischer, Lynch and Paterson\cite{flp} showed that this is impossible if there is one faulty node.
+
+The binary fault-safe finality gadget problem is similar, except now there is an oracle $A$ that any node can call at any time with the following properties:
+
+either $A$ always outputs $x$ in $\{0,1\}$ to all nodes at all times
+or else there is an $x$ in $\{0,1\}$ and
+for each node $i$, there is a $T_i$ such that when $i$ calls $A$ before $T_i$. it gives $x$ but if it calls $A$ after $T_i$, it returns not $x$ .
+
+and we want that if A never switches, then all non-faulty nodes output x. If A does switch then all non-faulty nodes should output the same thing, but it can be 0 or 1. 
+
+Then this is also impossible, even for one faulty node, which just goes offline. Note that this generalises Byzantine agreement, since if we could each node $i$ could call $A$ once at the start and use the output as $v_i$. (For the multi-valued case, we will define the problem so that this reduction does not hold.)
+
+
+\begin{proof}[Proof sketch] We follow the notation of  \cite{flp} and assume for a contradiction that we use a correct protocol. 
+Let $r$ be a run of the protocol where $A$ gives $0$ all the time.
+Then by correctness $r$ decides $0$. Now we consider what can happen when $A$ switches to $1$ after each configuration in $r$. If it switches to $1$ at the start, then the protocol decides $1$.
+If we switch to $1$ when all node have already decided $0$, then we decide $0$.
+
+We claim that some configuration in the run $r$, where there are two runs from it where $A$ is always $1$ that decide $0$ and $1$. We call such states $1$-bivalent.
+To see this, assume for a contradiction that $r$ contains no such configurations. Then there are successive configurations $C$,$C'$ such that if $A$ return $1$ in the future from $C$ then we always decide $0$ but from $C'$, we always decide $1$.
+Let events be $(p,m,x)$ where node (processor/voter) $p$ receives message $m$ (which may be null) and executes some code where any calls to A return $x$ in $\{0,1\}$, then sends some messages. 
+Then there is some event $(p,m,0)$ that when applied to $C$ gives $C'$. Now suppose that $p$ goes offline at $C$, then if $A$ always returns $1$ afterwards, then we still decide $1$. Thus there is a run $r'$ that starts at $C$ where $p$ takes no steps, $A$ always returns $1$ and all other nodes still output $1$.
+But since $p$ takes no steps in $r'$, we can apply $r'$ after $(p, m, 0)$ and so we have that $C'$ has a run where $A$ always returns $1$ but decides $1$, which is a contradiction.
+
+Now let $C$ be a $1$-bivalent configuration. We can follow the FLP proof to show that there is a run from $C$ for which $A$ always returns $1$, all messages are delivered but all configurations are 1-bivalent and so the protocol never decides. This completes the proof by contradiction that there is no correct protocol.
+\end{proof}
+
 
 
 \subsection{Definition of a Finality Gadget}
@@ -170,36 +205,10 @@ Thanks to the abstraction above, we can switch $F$ for one of many possible alte
 
 
 \com{
-To analyse the performance of our finality gadget, we will need versions of the last two properties that appropriately depend on time: 
-
-\begin{itemize}
-\item{\bf Fast termination:} {\em If the last finalised block has number $n$ and, until another block is finalised, the best chain observed by all participants will include the same block with block number $n+1$, then a block with number $n+1$ will be finalised within time $T$.}
-\item{\bf Recent validity:} {\em If an honest voter finalises a block $B$ then that block was seen in the best chain observed by some honest voter containing some previously finalised ancestor of $B$ more recently than time $T$ ago.}
-\end{itemize}
-
-Intuitively, fast termination implies that we finalise blocks fast as long as the block production mechanism achieves consensus fast whereas recent validity bounds the cost of starting to agree on something the block production mechanism's consensus later decides is not the best. In this case, we may waste time building on a chain that is never finalised so it is important to bound how long we do that.
-
-These properties will typically only hold with high probability. In the asynchronous case, we would need to measure time in rounds of the protocol rather than seconds to make sense of these properties.  We are also interested in being able to remove and punish Byzantine voters, for which we will need:
-
-\begin{itemize}
-	\item{\bf Accountable Safety:} {\em If blocks on different chains are finalised, then we can identify at least $f+1$ Byzantine voters.}
-\end{itemize}
 
 \subsection{Our results}
 
-\subsection{Our approach}
 
-To discover up with a solution to the blockchain Byzantine finality gadget problem, we will typically look at various Byzantine agreement protocols and use those to find protocols for the multi-valued Byzantine finality gadget problem. 
-Agreement protocols with appropriate properties can used to find protocols for the blockchain Byzantine finality gadget problem by considering running them in parallel at every block number.
-If the one block protocol has the right properties then they will agree on blocks consistently, so if we finalise a block then we also finalise its ancestors and we can come up with a succinct protocol.
-
-For example, suppose we have a one block protocol that calls for a vote on blocks which requires a participant to observe a supermajority, say votes from  $2/3$ of voters, for some block, or else the participant observes that the vote is undecided. Now imagine running this vote in parallel for every block number and have any honest voter vote for blocks from a particular chain.
-Byzantine voters may vote more than once, but if we count a vote for a block as a vote for each ancestor of the block in the vote for the instance of the one block protocol with its number, then Byzantine voters must also vote for chains, though they can vote for multiple chains.
-If we do this, then we see that if a block has a supermajority in a vote, then so does all its ancestors in their votes. Thus the blocks with a supermajority form a chain.
-Furthermore, if only $1/3$ of voters equivocate then if a participant sees a subset of the votes for chains, then they must see a prefix of the chain of blocks for which all the votes have supermajorities. Intuitively, the protocol can agree on the prefix that $2/3$ of voters agree on using this. 
-
-To ensure safety, each participant maintains an estimate $E_r$ of the last block that could have been finalised in a round $r$. This has the property that in future rounds it overestimates the block that could have been finalised so that in round $r$, the chain with head $E_{r-1}$ contains all blocks that could have been finalised.
-Any honest voter only votes in round $r$ for chains containing their estimate $E_{r-1}$ and this guarantees that any block that could have been finalised in round $r-1$ will be finalised in round $r$.
 
 \subsection{Related Work}
 
@@ -298,24 +307,54 @@ Note that it is possible for an unsafe $S$ to both have a supermajority for $S$ 
 \end{lemma}
 
 
-\section{The GRANDPA protocol} \label{sec:grandpa}
+\section{Finality Gadget Protocols} \label{sec:finality}
 
-In this section, we give the protocol for GRANDPA, our finality gadget in the partially synchronous setting.
+\com{
+To discover up with a solution to the blockchain Byzantine finality gadget problem, we will typically look at various Byzantine agreement protocols and use those to find protocols for the multi-valued Byzantine finality gadget problem. 
+Agreement protocols with appropriate properties can be used to find protocols for the blockchain Byzantine finality gadget problem by considering running them in parallel at every block number.
+If the one block protocol has the right properties then they will agree on blocks consistently, so if we finalise a block then we also finalise its ancestors and we can come up with a succinct protocol.
+
+For example, suppose we have a one block protocol that calls for a vote on blocks which requires a participant to observe a supermajority, say votes from  $2/3$ of voters, for some block, or else the participant observes that the vote is undecided. Now imagine running this vote in parallel for every block number and have any honest voter vote for blocks from a particular chain.
+Byzantine voters may vote more than once, but if we count a vote for a block as a vote for each ancestor of the block in the vote for the instance of the one block protocol with its number, then Byzantine voters must also vote for chains, though they can vote for multiple chains.
+If we do this, then we see that if a block has a supermajority in a vote, then so does all its ancestors in their votes. Thus the blocks with a supermajority form a chain.
+Furthermore, if only $1/3$ of voters equivocate then if a participant sees a subset of the votes for chains, then they must see a prefix of the chain of blocks for which all the votes have supermajorities. Intuitively, the protocol can agree on the prefix that $2/3$ of voters agree on using this. 
+
+To ensure safety, each participant maintains an estimate $E_r$ of the last block that could have been finalised in a round $r$. This has the property that in future rounds it overestimates the block that could have been finalised so that in round $r$, the chain with head $E_{r-1}$ contains all blocks that could have been finalised.
+Any honest voter only votes in round $r$ for chains containing their estimate $E_{r-1}$ and this guarantees that any block that could have been finalised in round $r-1$ will be finalised in round $r$.
+}
+
+In order to find a solution to the finality gadget protocol we look in
+consensus protocols that solve the stronger problem as described in the previous section. The key idea for our solution is to inherit the safety properties of a consensus protocol, but use the underlying blockchain as the driving force of liveness. This results in a protocol which does not block when for example the network is split. 
+Instead, only the finalization stops, but the blocks keep getting created and propagated to everyone.
+This means that when the conditions are safe again, the finality gadget only needs to finalize the head of the chain\footnote{Which the oracle will return quickly to a supermajority of miner},
+instead of having to transmit and run consensus on every block. 
+In Figure~\ref{fig:finality}, we analyze the differences between classic blockchain protocols~\cite{bitcoin,ethereum}, finality gadget, and hybrid consensus solutions~\cite{byzcoin,hybrid,algorand}
+\xxx{Experiment: Catchup 100s of blocks Hotstuff vs GRANDPA}.
 
 
-In addition to a set of voters for each of the two votes in a round, we assume that each round has a participant designated as primary and all participants agree on the voter sets and primary. We will typically either choose the primary pseudorandomly from or rotate through the voter set.
 
-We let $V_{r,v}$ and $C_{r,v}$ be the sets of prevotes and precommits respectively received by $v$ from round $r$ at the current time.
+
+
+\subsection{The GRANDPA Protocol}\label{sec:grandpa}
+In this section, we give our solution to the Byzantine finality gadget problem, GRANDPA.  Our finality gadget works the partially synchronous setting, we also provide a fully asynchronous solution in Appendix~{app:async}.
+
+GRANDPA works in rounds, each round has a set of $3f+1$ eligible voters, $2f+1$ of which are assumed honest. Furthermore, we assume that each round has a participant designated as primary and all participants agree on the voter sets and primary. We will can either choose the primary pseudorandomly from or rotate through the voter set.
+On a high-level, each round consists of a double-echo protocol after which every party waits in order to detect whether we can finalize a block in this round (this block does not need to be the immediate ancestor of the last finalized block, it might be far ahead from the last finalized block). If the round is unsuccessful, the parties simply move on to the next round with a new primary. When a good primary is selected, the oracle is consistent (returns the same value to all honest parties),
+and the network is in synchrony (after $\GST$), then a new block will be finalized and it will transitively finalized all its ancestors.
+
+More specifically, we let $V_{r,v}$ and $C_{r,v}$ be the sets of prevotes and precommits respectively received by $v$ from round $r$ at the current time.
 
 We define $E_{r,v}$ to be $v$'s estimate of what might have been finalised in round $r$, given by the last block in the chain with head $g(V_{r,v})$ for which it is possible for $C_{r,r}$ to have a supermajority. Next we define a condition which will allow us to safely conclude that $E_{r,v} \geq B$ for all $B$ that might be finalised in round $r$:
 If either $E_{r,v} < g(V_{r,v})$ or it is impossible for $C_{r,v}$ to have a supermajority for any children of $g(V_{r,v})$, then we say that {\em $v$ sees that round $r$ is completable}.  $E_{0,v}$ is the genesis block, assuming we start at $r=1$.  
 
 In other words, a round $r$ is completable when our estimate chain $E_{r,v}$ contains everything that could have been finalised in round $r$, which makes it possible to begin the next round $r+1$.
 
-We have a time bound $T$ that we hope suffices to send messages and gossip them to everyone.
-Inside a round, the properties both of $E_{r,v}$ having a supermajority, meaning $E_{r,v} < g(V_{r,v})$, as well as of it being imposible to have a supermajority for some given block are monotone, so the property of being completable is monotone as well.
-We therefore expect that, if anyone anyone sees a round is completable, then everyone will see this within time $T$. Leaving a gap of $2T$ between steps should then be  enough to ensure that we recieve all honest votes before continuing.
+We have a time bound $T$ that after $\GST$ suffices for all honest participants to communicate with each other.
+Inside a round, the properties both of $E_{r,v}$ having a supermajority, meaning $E_{r,v} < g(V_{r,v})$, as well as of it being impossible to have a supermajority for some given block are monotone, so the property of being completable is monotone as well.
+We therefore expect that, if anyone sees a round is completable, then everyone will see this within time $T$. Leaving a gap of $2T$ between steps is then enough to ensure that every party receives all honest votes before continuing.
 
+
+\paragraph{Protocol Description.}
 In round $r$ an honest participant $v$ does the following:
 
 \noindent \fbox{\parbox{6.3in}{
@@ -340,9 +379,9 @@ and then broadcasts a precommit for $g(V_{r,v})$ {\em( (iii) is optional, we can
 
 }}
 
-Nite that $C_{r,v}$ and $V_{r,v}$ may change with time and also that $E_{r-1,v}$, which is a function of $V_{r-1,v}$ and $C_{r-1,v}$, can also change with time if $v$ sees more votes from the previous round.
+Note that $C_{r,v}$ and $V_{r,v}$ may change with time and also that $E_{r-1,v}$, which is a function of $V_{r-1,v}$ and $C_{r-1,v}$, can also change with time if $v$ sees more votes from the previous round.
 
-\subsection{Finalisation}
+\paragraph{Finalisation.}
 
 If, for some round $r$, at any point after the precommit step of round $r$, we have that $B=g(C_{r,v})$ is later than our last finalised block and $V_{r,v}$ has a supermajority, then we finalise $B$.
 We may also send a commit message for $B$ that consists of $B$ and a set of precommits for blocks $\geq B$ (ideally for $B$ itself if possible see "Alternatives to the last blockhash" below). 
@@ -351,7 +390,53 @@ To avoid spam, we only send commit messages for $B$ if we have not receive any v
 
 If we receive a valid commit message for $B$ for round $r$, then it contains enough precommits to finalise $B$ itself if we haven't already done so, so we'll finalise $B$ as long as we are past the precommit step of round $r$.
 
+
+\com{
+\subsection{Discussion}
+
+\paragraph{Wait at the end of a round before precommitting.}
+
+If the network  is badly behaved, then these steps may involve waiting an arbitrarily long time. When the network is well behaved (after the $\GST$ in our model), we should not be waiting. Indeed there is little point not waiting to receive $2f+1$ of voters' votes as we cannot finalise anything without them.
+But if the gossip network is not perfect and some messages never arrive, then we may need to make voters asking other voters for votes from previous rounds.\com{ in a similar way to the challenge procedure, to avoid deadlock.}
+
+In exchange for our design choice of waiting, we get the property that we do not need to pay attention to votes from before the previous round in order to vote correctly in this one. Without waiting, we could be in a situation where we might have finalised a block in some round r, but the network becomes unreliable for many rounds and gets few votes on time, in which case we need to remember the votes from round r to finalise the block later. 
+
+\subsubsection{Using a Primary}
+
+We only need the primary for liveness. 
+We need some form of coordination to defeat the repeated vote splitting attack. The idea behind that attack is that if we are in a situation where almost 2/3 of voters vote for something an the rest vote for another, then the Byzantine voters can control when we see a supermajority for something. If they can carefully time this, they may be able to split the next vote. 
+Without the primary, they could do this for prevotes, getting a supermajority for a block $B$ late, then split precommiher from being finalised like this even if the (unknown) fraction of Byzantine players is small.
+
+When the network is well-behaved, an honest primary can defeat this attack by deciding how much we should agree on. We could also use a common coin for the same thing, where people would prevote for either the best chain containing $E_{r-1,v}$ or $g(V_{r-1,v})$ depending on the common coin.
+With on-chain voting, it is possible that we could use probabilistic finality of the block production mechanism - that if we don't finalise a block and always build on the best chain containing the last finalised block then not only will the best chain eventually converge, but if a block is behind the head of the best chain, then with positive probability, it will eventually be in the best chain everyone sees.
+
+In our setup, having a primary is the simplest option for this.
+ts so we don't see that it is impossible for there to be a supermajority for $B$ until late. 
+If $B$ is not the best block given the last finalised block but $B'$  with the same block number, they could stop eit
+
+}
+
+
+
 \section{ Analysis }
+
+
+To analyse the performance of our finality gadget, we will need versions of our properties that appropriately depend on time: 
+
+\begin{itemize}
+\item{\bf Fast termination:} {\em If the last finalised block has number $n$ and, until another block is finalised, the best chain observed by all participants will include the same block with block number $n+1$, then a block with number $n+1$ will be finalised within time $T$.}
+\item{\bf Recent validity:} {\em If an honest voter finalises a block $B$ then that block was seen in the best chain observed by some honest voter containing some previously finalised ancestor of $B$ more recently than time $T$ ago.}
+\end{itemize}
+
+Intuitively, fast termination implies that we finalise blocks fast as long as the block production mechanism achieves consensus fast whereas recent validity bounds the cost of starting to agree on something the block production mechanism's consensus later decides is not the best. In this case, we may waste time building on a chain that is never finalised so it is important to bound how long we do that.
+
+These properties will typically only hold with high probability. In the asynchronous case, we would need to measure time in rounds of the protocol rather than seconds to make sense of these properties.  We are also interested in being able to remove and punish Byzantine voters, for which we will need:
+
+\begin{itemize}
+	\item{\bf Accountable Safety:} {\em If blocks on different chains are finalised, then we can identify at least $f+1$ Byzantine voters.}
+\end{itemize}
+
+
 
 \subsection{ Accountable Safety}
 
@@ -576,6 +661,50 @@ Then either all honest participants finalise $B$ before time $t_r+6T$ or no hone
 
 
 
+\section{Optimized version of GRANDPA}
+
+ There are a few ways we can optimise the GRANDPA protocol.
+ Firstly, a participant that is offline for many rounds should be able to catch up to the latest round by only seeing recent messages.
+ Secondly, we shouldn't need to actively use many rounds worth of votes, only needing old rounds for challenges for accountable safety and not finalising blocks.
+ Thirdly, We should wait $2T$ as little as possible. Conversely if communication is faster than block production, we shouldn't be running many rounds before a new block arrives.
+ 
+ To achieve this, we need to have more complicated conditions for when to perform each step of the protocol. Here is the resulting protocol:
+ 
+ To enter a round $r$, $v$ needs that round $r-1$ is completable and that $E_{r-2,v}$ is finalised. 
+ If $v$ sees messages that give this for a future round $r$, even if $v$ are not in round $r-1$, $v$ jumps straight to round $r$.
+ (when checking this condition, for the finalisation, we need to relax not finalising using precommits from future rounds to all rounds $< r$).
+ 
+ \noindent \fbox{\parbox{6.3in}{
+ \begin{enumerate}
+ \item If $v$ is the primary, it broadcast $E_{r-1,v}$ at the start time $t_{r,v}$
+ 
+ \item We prevote when one of the folowing conditions tells us to.
+ \begin{itemize}
+ %\item[(i)] If it is impossible for $V_{r-1,v}$ to have a supermajority for any children of $E_{r-1,v}$, then $v$ prevotes for the best chain containing $E_{r-1,v}$
+ \item[(i)] If $v$ has received $B$ from the primary, $v$ prevotes for the head of the  best chain containing $B$ as soon as one of the following holds:
+ 
+ \begin{itemize}
+ \item[(a)] $g(V_{r-1,v}) \geq B \geq E_{r-1,v}$
+ \item[(b)] The best chain containing $B$ is also the best chain containing $E_{r-1,v}$
+ (equivalently if we evaluate the best chain containing the eariler of the two blocks, then it contains the other)
+ \end{itemize}
+ \item[(ii)] If round $r$ is completable and $E_{r,v} \geq E_{r-1,v}$, then we prevote for $E_{r,v}$.
+ \item[(iii)] if we have reached time $t_{r,v}+2T$ then if we have not recieved a message from the primary or (i) (a) does not hold, then $v$ prevotes for the head of best chain containing $E_{r-1,v}$ anyway.
+ \end{itemize}
+ 
+ \item After prevoting, we wait until $g(V_{r,v}) \geq E_{r-1,v}$,  then when one of the following holds, we precommit $g(V_{r,v})$
+ \begin{itemize}
+ \item[(i)] if round $r$ is completable
+ \item[(ii)] if $v$ has seen a child of the last finalised block and it is impossible for $V_{r,v}$ to have a supermajority for any child of $g(V_{r,v})$ .
+ \item[(iii)] If $v$ has seen a child of the last finalised block and we have reached time $t_{r,v}+4T$.
+ \end{itemize}
+ \end{enumerate}
+ }}
+ 
+ We claim that all results we proved about the protocol described in Section \ref{sec:grandpa} apply to this protocol. the stronger properties this satisifies are that $v$ does not need to store votes from before round $r-1$ (except to answer challenges for accountable safety, which should be rare) and that if we have seen no descendants of the last finalised block, we pause until we do. 
+
+
+
 
 \section{Practicalities}
 
@@ -643,67 +772,10 @@ So we have two possible chain selection rules for block producers:
 \end{enumerate}
 
 1 is better if finalisation is happening quickly compared to block production and 2 is best if block production is much faster. We could also consider hybrid rules like adopt 1 unless we see that the protocol is stuck or slow, then we switch to 2.
-
-\section{Why?}
-
-\subsection{Why do we wait at the end of a round and sometimes before precommitting?}
-
-If the network  is badly behaved, then these steps may involve waiting an arbitrarily long time. When the network is well behaved (after the $\GST$ in our model), we should not be waiting. Indeed there is little point not waiting to receive 2/3 of voters' votes as we cannot finalise anything without them.
-But if the gossip network is not perfect, an some messages never arrive, then we may need to implement voters asking other voters for votes from previous rounds in a similar way to the challenge procedure, to avoid deadlock.
-
-In exchange for this, we get the property that we do not need to pay attention to votes from before the previous round in order to vote correctly in this one. Without waiting, we could be in a situation where we might have finalised a block in some round r, but the network becomes unreliable for many rounds and gets few votes on time, in which case we' need to remember the votes from round r to finalise the block later. 
-
-\subsection{Why have a primary?}
-
-We only need the primary for liveness. 
-We need some form of coordination to defeat the repeated vote splitting attack. The idea behind that attack is that if we are in a situation where almost 2/3 of voters vote for something an the rest vote for another, then the Byzantine voters can control when we see a supermajority for something. If they can carefully time this, they may be able to split the next vote. 
-Without the primary, they could do this for prevotes, getting a supermajority for a block $B$ late, then split precommits so we don't see that it is impossible for there to be a supermajority for $B$ until late. 
-If $B$ is not the best block given the last finalised block but $B'$  with the same block number, they could stop either from being finalised like this even if the (unknown) fraction of Byzantine players is small.
-
-When the network is well-behaved, an honest primary can defeat this attack by deciding how much we should agree on. We could also use a common coin for the same thing, where people would prevote for either the best chain containing $E_{r-1,v}$ or $g(V_{r-1,v})$ depending on the common coin.
-With on-chain voting, it is possible that we could use probabilistic finality of the block production mechanism - that if we don't finalise a block and always build on the best chain containing the last finalised block then not only will the best chain eventually converge, but if a block is behind the head of the best chain, then with positive probability, it will eventually be in the best chain everyone sees.
-
-In our setup, having a primary is the simplest option for this.
-
+\com{
 \section{The asynchronous finality gadget problem}
 
 Here we give an extension of the \cite{flp} result that shows the impossibility of having an asynchronous and deterministic finality gadget protocol and give an asynchronous protocol that uses a common coin primitive.
-
-\subsection{Impossibility of a deterministic protocol} \label{ssec:impossibility}
-
-The asynchronous binary fault tolerant agreement problem is as follows:
-
-We have  number of voters which each have an initial $v_i$ in $\{0,1\}$
-
-We may have one or more faulty nodes, which here means going offline at some point. Nodes have asynchronous communication - so any message arrives but we have no guarantee when it will.
-The goal is to have all non-faulty nodes output the same $v$, which must be $0$ if all inputs $v_i$ are $0$ and $1$ if all are $1$.
-
-Fischer, Lynch and Paterson\cite{flp} showed that this is impossible if there is one faulty node.
-
-The binary fault-safe finality gadget problem is similar, except now there is an oracle $A$ that any node can call at any time with the following properties:
-
-either $A$ always outputs $x$ in $\{0,1\}$ to all nodes at all times
-or else there is an $x$ in $\{0,1\}$ and
-for each node $i$, there is a $T_i$ such that when $i$ calls $A$ before $T_i$. it gives $x$ but if it calls $A$ after $T_i$, it returns not $x$ .
-
-and we want that if A never switches, then all non-faulty nodes output x. If A does switch then all non-faulty nodes should output the same thing, but it can be 0 or 1. 
-
-Then this is also impossible, even for one faulty node, which just goes offline. Note that this generalises Byzantine agreement, since if we could each node $i$ could call $A$ once at the start and use the output as $v_i$. (For the multi-valued case, we will define the problem so that this reduction does not hold.)
-
-
-\begin{proof}[Proof sketch] We follow the notation of  \cite{flp} and assume for a contradiction that we use a correct protocol. 
-Let $r$ be a run of the protocol where $A$ gives $0$ all the time.
-Then by correctness $r$ decides $0$. Now we consider what can happen when $A$ switches to $1$ after each configuration in $r$. If it switches to $1$ at the start, then the protocol decides $1$.
-If we switch to $1$ when all node have already decided $0$, then we decide $0$.
-
-We claim that some configuration in the run $r$, where there are two runs from it where $A$ is always $1$ that decide $0$ and $1$. We call such states $1$-bivalent.
-To see this, assume for a contradiction that $r$ contains no such configurations. Then there are successive configurations $C$,$C'$ such that if $A$ return $1$ in the future from $C$ then we always decide $0$ but from $C'$, we always decide $1$.
-Let events be $(p,m,x)$ where node (processor/voter) $p$ receives message $m$ (which may be null) and executes some code where any calls to A return $x$ in $\{0,1\}$, then sends some messages. 
-Then there is some event $(p,m,0)$ that when applied to $C$ gives $C'$. Now suppose that $p$ goes offline at $C$, then if $A$ always returns $1$ afterwards, then we still decide $1$. Thus there is a run $r'$ that starts at $C$ where $p$ takes no steps, $A$ always returns $1$ and all other nodes still output $1$.
-But since $p$ takes no steps in $r'$, we can apply $r'$ after $(p, m, 0)$ and so we have that $C'$ has a run where $A$ always returns $1$ but decides $1$, which is a contradiction.
-
-Now let $C$ be a $1$-bivalent configuration. We can follow the FLP proof to show that there is a run from $C$ for which $A$ always returns $1$, all messages are delivered but all configurations are 1-bivalent and so the protocol never decides. This completes the proof by contradiction that there is no correct protocol.
-\end{proof}
 
 \subsection{1/5 BFT finality gadget using a common coin}
 
@@ -805,49 +877,7 @@ If $h < 3f+1$ and $s_r=0$, then every $v \in S'$ locks only $B$. But then all su
 
 Crucially note that $h$ depends only on $S$, which is determined when $4f+1$ voters call the common coin and before it is flipped. Thus $s_r$ is independent of $h$. If $h < 3f+1$ then $s_r=0$ with probability $1/2$ and if $h \geq 3f+1$ then $s_r=1$ with probability $1/2$. So with probability $1/2$, we have either both $h < 3f+1$ and $s_r=0$ or both $h \geq 3f+1$ and $s_r=1$. Thus with probability at least $1/2$, we finalise $B'$ or $B''$ before the next round after $r+1$ when $s_r=1$.
 \end{proof}
-
-\section{Optimized version of GRANDPA}
-
- There are a few ways we can optimise the GRANDPA protocol.
- Firstly, a participant that is offline for many rounds should be able to catch up to the latest round by only seeing recent messages.
- Secondly, we shouldn't need to actively use many rounds worth of votes, only needing old rounds for challenges for accountable safety and not finalising blocks.
- Thirdly, We should wait $2T$ as little as possible. Conversely if communication is faster than block production, we shouldn't be running many rounds before a new block arrives.
- 
- To achieve this, we need to have more complicated conditions for when to perform each step of the protocol. Here is the resulting protocol:
- 
- To enter a round $r$, $v$ needs that round $r-1$ is completable and that $E_{r-2,v}$ is finalised. 
- If $v$ sees messages that give this for a future round $r$, even if $v$ are not in round $r-1$, $v$ jumps straight to round $r$.
- (when checking this condition, for the finalisation, we need to relax not finalising using precommits from future rounds to all rounds $< r$).
- 
- \noindent \fbox{\parbox{6.3in}{
- \begin{enumerate}
- \item If $v$ is the primary, it broadcast $E_{r-1,v}$ at the start time $t_{r,v}$
- 
- \item We prevote when one of the folowing conditions tells us to.
- \begin{itemize}
- %\item[(i)] If it is impossible for $V_{r-1,v}$ to have a supermajority for any children of $E_{r-1,v}$, then $v$ prevotes for the best chain containing $E_{r-1,v}$
- \item[(i)] If $v$ has received $B$ from the primary, $v$ prevotes for the head of the  best chain containing $B$ as soon as one of the following holds:
- 
- \begin{itemize}
- \item[(a)] $g(V_{r-1,v}) \geq B \geq E_{r-1,v}$
- \item[(b)] The best chain containing $B$ is also the best chain containing $E_{r-1,v}$
- (equivalently if we evaluate the best chain containing the eariler of the two blocks, then it contains the other)
- \end{itemize}
- \item[(ii)] If round $r$ is completable and $E_{r,v} \geq E_{r-1,v}$, then we prevote for $E_{r,v}$.
- \item[(iii)] if we have reached time $t_{r,v}+2T$ then if we have not recieved a message from the primary or (i) (a) does not hold, then $v$ prevotes for the head of best chain containing $E_{r-1,v}$ anyway.
- \end{itemize}
- 
- \item After prevoting, we wait until $g(V_{r,v}) \geq E_{r-1,v}$,  then when one of the following holds, we precommit $g(V_{r,v})$
- \begin{itemize}
- \item[(i)] if round $r$ is completable
- \item[(ii)] if $v$ has seen a child of the last finalised block and it is impossible for $V_{r,v}$ to have a supermajority for any child of $g(V_{r,v})$ .
- \item[(iii)] If $v$ has seen a child of the last finalised block and we have reached time $t_{r,v}+4T$.
- \end{itemize}
- \end{enumerate}
- }}
- 
- We claim that all results we proved about the protocol described in Section \ref{sec:grandpa} apply to this protocol. the stronger properties this satisifies are that $v$ does not need to store votes from before round $r-1$ (except to answer challenges for accountable safety, which should be rare) and that if we have seen no descendants of the last finalised block, we pause until we do. 
-
+}
 
 \bibliography{grandpa}
 
