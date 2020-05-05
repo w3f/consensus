@@ -69,8 +69,10 @@
 
 %TODO mandatory: add short abstract of the document
 \begin{abstract}
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent convallis orci arcu, eu mollis dolor. Aliquam eleifend suscipit lacinia. Maecenas quam mi, porta ut lacinia sed, convallis ac dui. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse potenti. 
-\end{abstract}
+Classic Byzantine fault tolerant consensus protocols forfeit liveness in the face of asynchrony in order to preserve safety, whereas most deployed blockchain protocols forfeit safety in order to remain live. 
+In this work, we achieve the best of both worlds by proposing a novel abstractions called the \emph{finality gadget}.
+A finality gadget allows for transactions to always optimistically commit, but informs the clients that these transactions might be unsafe.
+In this work we formally model the finality gadget abstraction, prove that it is impossible to solve it deterministically in full asynchrony (even though it is stronger than consensus), and provide a partially synchronous protocol which is currently securing a major blockchain. This way we show that the protocol designer can decouple safety and liveness in order to speed up recovery from failures. We believe that there can be other types of finality gadgets that provide weaker safety (e.g., probabilistic) in order to gain more efficiency and this can depend on the probability that the network is not in synchrony.
 
 \section{Introduction}
 
@@ -103,7 +105,7 @@ provides provable finality guarantees instead of probabilistic.
 To this end we formalise the finality gadget problem and show that it is impossible to satisfy its properties with a deterministic asynchronous protocol. 
 To circumvent this impossibility result , we introduce the GRANDPA finality gadget that works in a partially synchronous network model, in the presence of up to $1/3$ Byzantine actors. 
 The combination of GRANDPA with a classic block production mechanism like GHOST~\cite{lewenberg15inclusive} results in the existing deployment of the polkadot network which provides fast finality under good network conditions and protects the clients without compromising the liveness when under attack. The implementation of GRANDPA will be made available on github.
-
+\com{
 
 In summary we make the following contributions:
 \begin{itemize}
@@ -113,7 +115,7 @@ In summary we make the following contributions:
 \item Prove that BFG is impossible in asychrony and present GRANDPA
 
 \end{itemize}
-
+}
 
 %The approach that we will take is similar to the approach that Ethereum plans to take with Casper the Friendly Finality Gadget (Casper FFG)\cite{CasperFFG}, which combines these approaches.
 %We will use a block production mechanism and chain selection rule that give eventual consensus and then add a finality gadget, a protocol that finalises blocks that the participants already agree on, to get provable finality.
@@ -161,14 +163,14 @@ We say an oracle $A$ in a protocol is {\em eventually consistent} if it returns 
 
 \end{definition}
 
-\paragraph{Impossibility of Deterministic Agreement with an Oracle.}\label{ssec:impossibility}
+\subsubsection{Impossibility of Deterministic Agreement with an Oracle.}\label{ssec:impossibility}
 \xxx{Al can you extend this?}
 For the binary case, i.e. when $|S|=2$, the Byzantine finality gadget problem is reducible to Byzantine agreement. This does not hold for $|S| > 2$, because the definition of validity is stronger in our protocol. Note that it is impossible for multi-valued Byzantine agreement to make the validity condition require that we decide an initial value of some honest voter and tolerate more than a $1/|S|$ fraction of faults, since we may have a $1/|S|$ fraction of voters reporting each initial value and Byzantine voters can act honestly enough not to be detectable. For finality gadgets, this stronger validity condition is possible. A natural question is then weather the celebrated FLP~\cite{fischer85impossibility} impossibility holds for our stronger requirements.
 Next, we show that an asynchronous, deterministic binary finality gadget is impossible, even with one fault. 
 This means that the extra information voters have here, that $A$ will eventually agree for all voters, is not enough to make this possible.
 
 
-\paragraph{Proof:}
+\subsubsection{Proof:}
 \xxx{TODO:Al}
 The asynchronous binary fault tolerant agreement problem is as follows:
 
@@ -281,20 +283,20 @@ It is not clear that it is, nor is it clear how to prove liveness for such a rul
 }
 \subsection{Preliminaries} \label{sec:prelims}
 
-\paragraph{Network model}: We will mostly be using a partially synchronous network model.
+\subsubsection{Network model}: We will mostly be using a partially synchronous network model.
 We assume that any message sent or received by an honest participant reaches all honest participants within time $T$, but possibly only after some Global Synchronisation Time $\GST$.
 Concretely, any message sent or received by some honest participant at time $t$ is received by all honest participants by time $\GST+T$ at the latest.
 
 
-\paragraph{Voters:} \com{We will want to change the set of participants who actively agree sometimes. 
+\subsubsection{Voters:} \com{We will want to change the set of participants who actively agree sometimes. 
 To model this, we have a large set of participants who follow messages.}
 For each voting step, there is a set of $n$ voters.
 We will frequently need to assume that for each such step, at most  $f < n/3$ voters are Byzantine.
 We need $n-f$ of voters to agree on finality. Whether or not block producers ever vote, they will need to be participants who track the state of the protocol.
 
-\paragraph{Votes:}A vote is a block hash, together with some metadata such as round number and the type of vote, such as {\em prevote} or {\em precommit}, all signed with a voter's private key.
+\subsubsection{Votes:}A vote is a block hash, together with some metadata such as round number and the type of vote, such as {\em prevote} or {\em precommit}, all signed with a voter's private key.
 
-\paragraph{Rounds:}Each participant has their own idea of what is the current round number. Every prevote and precommit has an associated round number. Honest voters only vote once (for each type of vote) in each round and do not vote in earlier rounds after later ones.
+\subsubsection{Rounds:}Each participant has their own idea of what is the current round number. Every prevote and precommit has an associated round number. Honest voters only vote once (for each type of vote) in each round and do not vote in earlier rounds after later ones.
 Participants need to keep track of which block they see as currently being the latest finalised block and an estimate of which block could have been finalised in the last round. 
 
 
@@ -392,7 +394,7 @@ Inside a round, the properties both of $E_{r,v}$ having a supermajority, meaning
 We therefore expect that, if anyone sees a round is completable, then everyone will see this within time $T$. Leaving a gap of $2T$ between steps is then enough to ensure that every party receives all honest votes before continuing.
 
 
-\paragraph{Protocol Description.}
+\subsubsection{Protocol Description.}
 In round $r$ an honest participant $v$ does the following:
 
 \noindent \fbox{\parbox{6.3in}{
@@ -419,7 +421,7 @@ and then broadcasts a precommit for $g(V_{r,v})$ {\em( (iii) is optional, we can
 
 Note that $C_{r,v}$ and $V_{r,v}$ may change with time and also that $E_{r-1,v}$, which is a function of $V_{r-1,v}$ and $C_{r-1,v}$, can also change with time if $v$ sees more votes from the previous round.
 
-\paragraph{Finalisation.}
+\subsubsection{Finalisation.}
 
 If, for some round $r$, at any point after the precommit step of round $r$, we have that $B=g(C_{r,v})$ is later than our last finalised block and $V_{r,v}$ has a supermajority, then we finalise $B$.
 We may also send a commit message for $B$ that consists of $B$ and a set of precommits for blocks $\geq B$ (ideally for $B$ itself if possible see "Alternatives to the last blockhash" below). 
@@ -431,7 +433,7 @@ If we receive a valid commit message for $B$ for round $r$, then it contains eno
 \com{
 \subsection{Discussion}
 
-\paragraph{Wait at the end of a round before precommitting.}
+\subsubsection{Wait at the end of a round before precommitting.}
 
 If the network  is badly behaved, then these steps may involve waiting an arbitrarily long time. When the network is well behaved (after the $\GST$ in our model), we should not be waiting. Indeed there is little point not waiting to receive $2f+1$ of voters' votes as we cannot finalise anything without them.
 But if the gossip network is not perfect and some messages never arrive, then we may need to make voters asking other voters for votes from previous rounds.\com{ in a similar way to the challenge procedure, to avoid deadlock.}
