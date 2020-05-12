@@ -25,9 +25,24 @@
 
 \Copyright{John Q. Public and Joan R. Public} %TODO mandatory, please use full first names. LIPIcs license is "CC-BY";  http://creativecommons.org/licenses/by/3.0/
 
-\ccsdesc[100]{\textcolor{red}{Replace ccsdesc macro with valid one}} %TODO mandatory: Please choose ACM 2012 classifications from https://dl.acm.org/ccs/ccs_flat.cfm 
+\begin{CCSXML}
+<ccs2012>
+<concept>
+<concept_id>10003752.10003809.10010172</concept_id>
+<concept_desc>Theory of computation~Distributed algorithms</concept_desc>
+<concept_significance>500</concept_significance>
+</concept>
+<concept>
+<concept_id>10002978</concept_id>
+<concept_desc>Security and privacy</concept_desc>
+<concept_significance>500</concept_significance>
+</concept>
+</ccs2012>
+\end{CCSXML}
 
-\keywords{Dummy keyword} %TODO mandatory; please add comma-separated list of keywords
+\ccsdesc[500]{Theory of computation~Distributed algorithms}
+\ccsdesc[500]{Security and privacy}
+\keywords{Blockchain, distributed consensus, finality gadget, network asynchrony} %TODO mandatory; please add comma-separated list of keywords
 
 \category{} %optional, e.g. invited paper
 
@@ -52,12 +67,12 @@
 %Editor-only macros:: begin (do not touch as author)%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \EventEditors{John Q. Open and Joan R. Access}
 \EventNoEds{2}
-\EventLongTitle{42nd Conference on Very Important Topics (CVIT 2016)}
-\EventShortTitle{CVIT 2016}
-\EventAcronym{CVIT}
-\EventYear{2016}
-\EventDate{December 24--27, 2016}
-\EventLocation{Little Whinging, United Kingdom}
+\EventLongTitle{3 International Symposium on Distributed Computing}
+\EventShortTitle{DISC 2020}
+\EventAcronym{DISC}
+\EventYear{2020}
+\EventDate{October 12--16, 2020}
+\EventLocation{Freiburg, Germany}
 \EventLogo{}
 \SeriesVolume{42}
 \ArticleNo{23}
@@ -71,9 +86,9 @@
 \begin{abstract}
 Classic Byzantine fault tolerant consensus protocols forfeit liveness in the face of asynchrony in order to preserve safety, whereas most deployed blockchain protocols forfeit safety in order to remain live. 
 In this work, we achieve the best of both worlds by proposing a novel abstractions called the \emph{finality gadget}.
-A finality gadget allows for transactions to always optimistically commit, but informs the clients that these transactions might be unsafe.
+A finality gadget allows for transactions to always optimistically commit, but informs the clients that these transactions might be unsafe. As a result, a blockchain can  execute transactions optimistically and only commit them after they have been sufficiently and provably audited.
 In this work we formally model the finality gadget abstraction, prove that it is impossible to solve it deterministically in full asynchrony (even though it is stronger than consensus), and provide a partially synchronous protocol which is currently securing a major blockchain. This way we show that the protocol designer can decouple safety and liveness in order to speed up recovery from failures. We believe that there can be other types of finality gadgets that provide weaker safety (e.g., probabilistic) in order to gain more efficiency and this can depend on the probability that the network is not in synchrony.
-
+\end{abstract}
 \section{Introduction}
 
 
@@ -82,29 +97,29 @@ secure automated value exchange without the need for a central managing authorit
 In order to achieve this, they build on peer-to-peer networks where special nodes (usually called miners) 
 collect transactions from users and run a consensus protocol in order to maintain a distributed public ledger
 known as the \textit{blockchain}.
-One of the challenges of the consensus protocols run by these systems is that they only have the property of eventual consensus - that an ever growing prefix of the chain will be agreed upon by all participants forever onward. But this eventual consensus process generally takes tens of minutes and only gives probabilistic guarantees - if we see a few blocks building on a given block, we can estimate the probability that it is final.
+One of the challenges of the consensus protocols run by these systems is that they only have the property of eventual consensus - that an ever growing prefix of the chain will be agreed upon by all participants forever onward. But this eventual consensus process generally takes tens of minutes and only gives probabilistic guarantees - if we see a few blocks building on a given chain, we can estimate the probability that it is final.
 Unfortunately these guarantees only hold if the underlying network is well-connected and the client able to find an uncensored source of information, two assumptions that
-do not hold in adversarial environments~\cite{apostolaki16hijacking, gervais15tampering, heilman15eclipse}.
+do not hold in adversarial environments~\cite{apostolaki16hijacking, gervais15tampering, heilman15eclipse,pass16analysis}.
+A second challenge is that of consistently verifying transactions that might be optimistically appended on-chain (e.g., optimistic rollups~\cite{al19lazyledger}). Currently, only valid transactions are appended on-chain, making the expectation of rolling back the chain almost equivalent to an attack.
 
-The underlying problem which enables these attacks is that first generation blockchain protocols do not consider finality (i.e., when will a block never be reverted) as a first class property, prioritizing liveness instead.
-New generation protocols~\cite{kokoris16enhancing,decker16bitcoin,pass16hybrid} propose the complete opposite, to forfeit liveness when finality is not readily achievable.
-This can  only happen if we  change the existing infrastructure and has multiple additional shortcomings.
-First, these ``hybrid'' consensus protocols are exclusive. The protocol needs to put a limit on the number of participating miners in order to achieve good performance, which might lead to centralization. 
-Second, tying consensus with liveness of the chain means that there is no optimism and blocks are committed only when all verification information are available. As a result, they lose the ability to make some (unsafe) progress when the network is unstable, which can help speedup the recovery process when the network heals. \xxx{Al:Describe why this is a problem in the context of polkadot and other probabilistic protocols.}
-
+The underlying problem of these challenges is that first generation blockchain protocols~\cite{nakamoto08bitcoin,garay15bitcoin} do not consider finality (i.e., when will a block never be reverted) as a first class property, prioritizing liveness instead.
+On the opposite side of the spectrum, new generation protocols~\cite{kokoris16enhancing,decker16bitcoin,pass16hybrid} (which actually build old the old quorum-based ideas) propose the complete opposite, to forfeit liveness when finality is not readily achievable.
+To deploy this novel protocols we  need to change the existing infrastructure and has multiple additional shortcomings.
+First, these ``safety-first'' consensus protocols are exclusive. The protocol needs to put a limit on the number of participating miners in order to achieve good performance, which might lead to centralization. 
+Second, tying consensus with liveness of the chain means that there is no optimism and blocks are committed only when all verification information are available. As a result, they lose the ability to make some (unsafe) progress when the network is unstable, which can (a) help speedup the recovery process when the network heals and (b) provide a broadcast channel to the parties in order to post optimistic proposals that can later be verified by all parties (since the blockchain provides a single-view) and ultimately committed.
 
 In this work we show the  that the middle ground also merits exploration. We introduce the idea of lazy finality which is encapsulated in the abstraction of a \emph{finality gadget.}
-Separating the liveness of the consensus protocol from the finality of the blocks can have four concrete benefits for the overlying blockchain protocol. First, not every node that is competing to mine a block needs to be part of the finality gadget, hence we can get the \textit{best of both worlds} (i.e., full inclusive decentralization and scalable fast finality). Second we can reorganize the chain for blocks that have not yet been finalized \xxx{Al put a sentence on why this is a cool property.}. Third, a finality gadget can be deployed gradually and light clients can choose to consult it or follow the longest chain rule and ignore it, enabling light client heterogeneity. 
+Separating the liveness of the consensus protocol from the finality of the blocks can have four concrete benefits for the overlying blockchain protocol. First, not every node that is competing to mine a block needs to be part of the finality gadget, hence we can get the \textit{best of both worlds} (i.e., full inclusive decentralization and scalable fast finality). Second we can reorganize the chain for blocks that have not yet been finalized, which allows for probabilistic protocols such as optimistic rollups~\cite{al19lazyledger}. Third, a finality gadget can be deployed gradually and light clients can choose to consult it or follow the longest chain rule and ignore it, enabling light client heterogeneity. 
 The light client that trust the gadget do not need to have the full chain or actively listen to the network. 
 This can in turn enable scalability~\cite{avarikioti19divide} in an ecosystem of multiple chains (weather sharding~\cite{kokoris17omniledger,al18chainspace,androulaki18channels} or heterogeneous~\cite{zamyatin19sok}), where no single party receives or stores all the data in the system. 
-Finally, the finality gadget protocol is simpler than consensus protocols since they do not require a complex and costly view change phase.
+Finally, the finality gadget protocol is simpler than consensus protocols since they do not require a complex and costly view change phase, thanks to the oracle that provides unsafe liveness when a leader blocks.
 
 
 More specifically, this work introduces the abstraction of a \emph{finality gadget} that runs along any block production mechanism (e.g., Nakamoto consensus) and
 provides provable finality guarantees instead of probabilistic.
-To this end we formalise the finality gadget problem and show that it is impossible to satisfy its properties with a deterministic asynchronous protocol. 
+To this end we formalize the finality gadget problem and show that it is impossible to satisfy its properties with a deterministic asynchronous protocol. 
 To circumvent this impossibility result , we introduce the GRANDPA finality gadget that works in a partially synchronous network model, in the presence of up to $1/3$ Byzantine actors. 
-The combination of GRANDPA with a classic block production mechanism like GHOST~\cite{lewenberg15inclusive} results in the existing deployment of the polkadot network which provides fast finality under good network conditions and protects the clients without compromising the liveness when under attack. The implementation of GRANDPA will be made available on github.
+The combination of GRANDPA with a classic block production mechanism like GHOST~\cite{lewenberg15inclusive} results in the existing deployment of the polkadot network\footnote{https://polkadot.network/} which provides fast finality under good network conditions and protects the clients without compromising the liveness when under attack. The implementation of GRANDPA will be made available on github.
 \com{
 
 In summary we make the following contributions:
@@ -127,7 +142,7 @@ In summary we make the following contributions:
 \section{Model, Definitions, and Impossibilities}
 
 
-We want to formalise the notion of finality gadget to be a sub-protocol that can be deployed along any protocol with
+We want to formalize the notion of finality gadget to be a sub-protocol that can be deployed along any protocol with
 eventual consensus and probabilistic finality and enhancing such protocol with provable finality.
 To achieve this, we need to incorporate into the classic definition of Byzantine agreement 
 the fact that we additionally have access to a protocol that would achieve eventual consensus if we did not affect it.
@@ -164,38 +179,34 @@ We say an oracle $A$ in a protocol is {\em eventually consistent} if it returns 
 \end{definition}
 
 \subsubsection{Impossibility of Deterministic Agreement with an Oracle.}\label{ssec:impossibility}
-\xxx{Al can you extend this?}
-For the binary case, i.e. when $|S|=2$, the Byzantine finality gadget problem is reducible to Byzantine agreement. This does not hold for $|S| > 2$, because the definition of validity is stronger in our protocol. Note that it is impossible for multi-valued Byzantine agreement to make the validity condition require that we decide an initial value of some honest voter and tolerate more than a $1/|S|$ fraction of faults, since we may have a $1/|S|$ fraction of voters reporting each initial value and Byzantine voters can act honestly enough not to be detectable. For finality gadgets, this stronger validity condition is possible. A natural question is then weather the celebrated FLP~\cite{fischer85impossibility} impossibility holds for our stronger requirements.
+
+For the binary case, i.e. when $|S|=2$, the Byzantine finality gadget problem is reducible to Byzantine agreement. This does not hold for $|S| > 2$, because the definition of validity is stronger in our protocol. It is impossible for multi-valued Byzantine agreement to make the validity condition of deciding on initial value of some honest voter and tolerating more than a $1/|S|$ fraction of faults, since we may have a $1/|S|$ fraction of voters reporting each initial value and Byzantine voters can act honestly enough not to be detectable. For finality gadgets, this stronger validity condition is possible. A natural question is then weather the celebrated FLP~\cite{fischer85impossibility} impossibility holds for our stronger requirements.
 Next, we show that an asynchronous, deterministic binary finality gadget is impossible, even with one fault. 
 This means that the extra information voters have here, that $A$ will eventually agree for all voters, is not enough to make this possible.
 
 
-\subsubsection{Proof:}
-\xxx{TODO:Al}
+\subsubsection{Proof Sketch:}
+
 The asynchronous binary fault tolerant agreement problem is as follows:
 
 We have  number of voters which each have an initial $v_i$ in $\{0,1\}$
-
 We may have one or more faulty nodes, which here means going offline at some point. Nodes have asynchronous communication - so any message arrives but we have no guarantee when it will.
 The goal is to have all non-faulty nodes output the same $v$, which must be $0$ if all inputs $v_i$ are $0$ and $1$ if all are $1$.
 
 Fischer, Lynch and Paterson\cite{fischer85impossibility} showed that this is impossible if there is one faulty node.
+The binary fault-safe finality gadget problem is similar, except now there is an oracle $A$ that any node can call at any time with the following properties.
+First, either $A$ always outputs $x$ in $\{0,1\}$ to all nodes at all times
+or else there is an $x$ in $\{0,1\}$ and, second,
+for each node $i$, there is a $T_i$ such that when $i$ calls $A$ before $T_i$. it gives $x$but if it calls $A$ after $T_i$, it returns not $x$ .
 
-The binary fault-safe finality gadget problem is similar, except now there is an oracle $A$ that any node can call at any time with the following properties:
-
-either $A$ always outputs $x$ in $\{0,1\}$ to all nodes at all times
-or else there is an $x$ in $\{0,1\}$ and
-for each node $i$, there is a $T_i$ such that when $i$ calls $A$ before $T_i$. it gives $x$ but if it calls $A$ after $T_i$, it returns not $x$ .
-
-and we want that if A never switches, then all non-faulty nodes output x. If A does switch then all non-faulty nodes should output the same thing, but it can be 0 or 1. 
-
-Then this is also impossible, even for one faulty node, which just goes offline. Note that this generalises Byzantine agreement, since if we could each node $i$ could call $A$ once at the start and use the output as $v_i$. (For the multi-valued case, we will define the problem so that this reduction does not hold.)
+We want that if A never switches, then all non-faulty nodes output x. If A does switch then all non-faulty nodes should output the same thing, but it can be 0 or 1. But, now we basically instantiated a binary agreement problem without an oracle.
+As a result deciding after the oracle switches value is as hard as not having an oracle at all.\com{ is also impossible, even for one faulty node, which just goes offline. Note that this generalises Byzantine agreement, since if we could show that each node $i$ could call $A$ once at the start and use the output as $v_i$.(For the multi-valued case, we will define the problem so that this reduction does not hold.)}
 
 
 \begin{proof}[Proof sketch] We follow the notation of  \cite{fischer85impossibility} and assume for a contradiction that we use a correct protocol. 
 Let $r$ be a run of the protocol where $A$ gives $0$ all the time.
 Then by correctness $r$ decides $0$. Now we consider what can happen when $A$ switches to $1$ after each configuration in $r$. If it switches to $1$ at the start, then the protocol decides $1$.
-If we switch to $1$ when all node have already decided $0$, then we decide $0$.
+If it switches to $1$ when all node have already decided $0$, then it decides $0$.
 
 We claim that some configuration in the run $r$, where there are two runs from it where $A$ is always $1$ that decide $0$ and $1$. We call such states $1$-bivalent.
 To see this, assume for a contradiction that $r$ contains no such configurations. Then there are successive configurations $C$,$C'$ such that if $A$ return $1$ in the future from $C$ then we always decide $0$ but from $C'$, we always decide $1$.
@@ -235,8 +246,6 @@ We say that $F$ solves {\em blockchain Byzantine finality gadget problem} if for
 \end{itemize}
 
 \end{definition}
-
-\xxx{Lef I do not understand the paragraph below, clarify.}
 
 As an example, we could assume $F$ uses proof of work to build on the longest chain and includes the last block $G$ finalised. Then we take $A(v,s_v,B)$ as being the longest chain which includes $B$ and which $v$ sees in state $s_v$. It is well-known \cite{nakamoto08bitcoin} that longest chain with proof of work achieves eventual consensus under the right assumptions and similar arguments show that in this case we have conditional eventual consensus.
 As long as we do not change the chain we are building on by finalising another block, we will eventually agree on some prefix longer than the last finalised block.
@@ -283,7 +292,7 @@ It is not clear that it is, nor is it clear how to prove liveness for such a rul
 }
 \subsection{Preliminaries} \label{sec:prelims}
 
-\subsubsection{Network model}: We will mostly be using a partially synchronous network model.
+\subsubsection{Network model}: We will be using a partially synchronous network model.
 We assume that any message sent or received by an honest participant reaches all honest participants within time $T$, but possibly only after some Global Synchronisation Time $\GST$.
 Concretely, any message sent or received by some honest participant at time $t$ is received by all honest participants by time $\GST+T$ at the latest.
 
@@ -367,16 +376,15 @@ In order to find a solution to the finality gadget protocol we look in
 consensus protocols that solve the stronger problem as described in the previous section. The key idea for our solution is to inherit the safety properties of a consensus protocol, but use the underlying blockchain as the driving force of liveness. This results in a protocol which does not stop when for example the network is split. 
 Instead, only the finalization stops, but the blocks keep getting created and propagated to everyone.
 This means that when the conditions are safe again, the finality gadget only needs to finalize the head of the chain\footnote{Which the oracle will return quickly to a supermajority of miners.},
-instead of having to transmit and run consensus on every block. 
-In Figure~\ref{fig:finality}, we analyze the differences between classic blockchain protocols~\cite{nakamoto08bitcoin,wood14ethereum}, finality gadget, and hybrid consensus solutions~\cite{kokoris16enhancing,gilad17algorand}
-\xxx{Experiment: Catchup 100s of blocks Hotstuff vs GRANDPA}.
+instead of having to transmit and run consensus on every block. \com{
+In Figure~\ref{fig:finality}, we analyze the differences between classic blockchain protocols~\cite{nakamoto08bitcoin,wood14ethereum}, finality gadget, and hybrid consensus solutions~\cite{kokoris16enhancing,gilad17algorand}}
 
 
 
 
 
 \subsection{The GRANDPA Protocol}\label{sec:grandpa}
-In this section, we give our solution to the Byzantine finality gadget problem, GRANDPA.  Our finality gadget works the partially synchronous setting, we also provide a fully asynchronous solution in Appendix~\ref{app:async}.
+In this section, we give our solution to the Byzantine finality gadget problem, GRANDPA.  Our finality gadget works the partially synchronous setting.
 
 GRANDPA works in rounds, each round has a set of $3f+1$ eligible voters, $2f+1$ of which are assumed honest. Furthermore, we assume that each round has a participant designated as primary and all participants agree on the voter sets and primary. We will can either choose the primary pseudorandomly from or rotate through the voter set.
 On a high-level, each round consists of a double-echo protocol after which every party waits in order to detect whether we can finalize a block in this round (this block does not need to be the immediate ancestor of the last finalized block, it might be far ahead from the last finalized block). If the round is unsuccessful, the parties simply move on to the next round with a new primary. When a good primary is selected, the oracle is consistent (returns the same value to all honest parties),
@@ -397,7 +405,7 @@ We therefore expect that, if anyone sees a round is completable, then everyone w
 \subsubsection{Protocol Description.}
 In round $r$ an honest participant $v$ does the following:
 
-\noindent \fbox{\parbox{6.3in}{
+\noindent \fbox{\parbox{5.5in}{
 
 \begin{enumerate}
 \item A voter $v$ can start round $r > 1$ when round $r-1$ is completable and $v$ has cast votes in all previous rounds where they are a voter. Let $t_{r,v}$ be the time $v$ starts round $r$.
@@ -421,10 +429,10 @@ and then broadcasts a precommit for $g(V_{r,v})$ {\em( (iii) is optional, we can
 
 Note that $C_{r,v}$ and $V_{r,v}$ may change with time and also that $E_{r-1,v}$, which is a function of $V_{r-1,v}$ and $C_{r-1,v}$, can also change with time if $v$ sees more votes from the previous round.
 
-\subsubsection{Finalisation.}
+\subsubsection{Finalization.}
 
 If, for some round $r$, at any point after the precommit step of round $r$, we have that $B=g(C_{r,v})$ is later than our last finalised block and $V_{r,v}$ has a supermajority, then we finalise $B$.
-We may also send a commit message for $B$ that consists of $B$ and a set of precommits for blocks $\geq B$ (ideally for $B$ itself if possible see "Alternatives to the last blockhash" below). 
+We may also send a commit message for $B$ that consists of $B$ and a set of precommits for blocks $\geq B$.
 
 To avoid spam, we only send commit messages for $B$ if we have not receive any valid commit messages for $B$ and its descendants and we wait some time chosen uniformly at random from $[0,1]$ seconds or so before broadcasting.
 If we receive a valid commit message for $B$ for round $r$, then it contains enough precommits to finalise $B$ itself if we haven't already done so, so we'll finalise $B$ as long as we are past the precommit step of round $r$.
@@ -436,7 +444,7 @@ If we receive a valid commit message for $B$ for round $r$, then it contains eno
 \subsubsection{Wait at the end of a round before precommitting.}
 
 If the network  is badly behaved, then these steps may involve waiting an arbitrarily long time. When the network is well behaved (after the $\GST$ in our model), we should not be waiting. Indeed there is little point not waiting to receive $2f+1$ of voters' votes as we cannot finalise anything without them.
-But if the gossip network is not perfect and some messages never arrive, then we may need to make voters asking other voters for votes from previous rounds.\com{ in a similar way to the challenge procedure, to avoid deadlock.}
+But if the  network is not perfect and some messages never arrive, then we may need to make voters asking other voters for votes from previous rounds.\com{ in a similar way to the challenge procedure, to avoid deadlock.}
 
 In exchange for our design choice of waiting, we get the property that we do not need to pay attention to votes from before the previous round in order to vote correctly in this one. Without waiting, we could be in a situation where we might have finalised a block in some round r, but the network becomes unreliable for many rounds and gets few votes on time, in which case we need to remember the votes from round r to finalise the block later. 
 
@@ -571,9 +579,9 @@ As it is possible for $C_{r,v',t'}$ to have a supermajority for $E_{r,v',t'}$, t
  
 \subsubsection{Deadlock Freeness}
 
-Now we can show deadlock freeness for the asynchronous gossip network model, when a message that is sent or received by any honest participant is eventually received by all honest participants.
+Now we can show deadlock freeness for the asynchronous network model, when a message that is sent or received by any honest participant is eventually received by all honest participants. This holds because the oracle encapsulates this eventual delivery guarantee.
 
-\begin{proposition} Suppose that we are in the asynchronous gossip network model and that at most $f$ voters for any vote are Byzantine. Then the protocol is deadlock free.\end{proposition}
+\begin{proposition} Suppose that we are in the asynchronous network model and that at most $f$ voters for any vote are Byzantine. Then the protocol is deadlock free.\end{proposition}
 
 \begin{proof} We need to show that if all honest participants reach some vote, then all of them eventually reach the next.
 
@@ -599,12 +607,12 @@ An easy induction completes the proof of the proposition.
 
 \subsubsection{Weakly synchronous liveness}
 
-Now we consider the weakly synchronous gossip network model. The idea that there is some global stabilisation time($\GST$) such that any message received or sent by an honest participant at time $t$ is received by all honest participants at time $\max\{t,\GST\}+T$.
+Now we consider the weakly synchronous network model. The idea that there is some global stabilisation time($\GST$) such that any message received or sent by an honest participant at time $t$ is received by all honest participants at time $\max\{t,\GST\}+T$.
 
 Let $t_r$ be the first time any honest participant enters round $r$ i.e. the minimum over honest participants $v$ of $t_{r,v}$.
 
 \begin{lemma} \label{lem:timings}
-Assume the weakly synchronous gossip network model and that each vote has at most $f$ Byzantine voters. Then if $t_r \geq \GST$, we have that
+Assume the weakly synchronous network model and that each vote has at most $f$ Byzantine voters. Then if $t_r \geq \GST$, we have that
 \begin{itemize}
 \item[(i)] $t_r \leq t_{r,v} \leq t_r+T$ for any honest participant $v$,
 \item[(ii)] no honest voter prevotes before time $t_r+2T$,
@@ -632,7 +640,7 @@ Thus $v$ sees that round $r$ is completable at time $t_r+6T$. Since they have al
 \end{proof}
 
 \begin{lemma} \label{lem:honest-prevote-timings}
-Suppose $t_r \geq \GST$ and very vote has at most $f$ Byzantine voters. Let $H_r$ be the set of prevotes ever cast by honest voters in round $r$. Then
+Suppose $t_r \geq \GST$ and every vote has at most $f$ Byzantine voters. Let $H_r$ be the set of prevotes ever cast by honest voters in round $r$. Then
 \begin{itemize}
 \item[(a)] any honest voter precommits to a block $\geq  g(H_r)$,
 
@@ -713,7 +721,7 @@ Then either all honest participants finalise $B$ before time $t_r+6T$ or no hone
  If $v$ sees messages that give this for a future round $r$, even if $v$ are not in round $r-1$, $v$ jumps straight to round $r$.
  (when checking this condition, for the finalisation, we need to relax not finalising using precommits from future rounds to all rounds $< r$).
  
- \noindent \fbox{\parbox{6.3in}{
+ \noindent \fbox{\parbox{5.5in}{
  \begin{enumerate}
  \item If $v$ is the primary, it broadcast $E_{r-1,v}$ at the start time $t_{r,v}$
  
@@ -744,6 +752,24 @@ Then either all honest participants finalise $B$ before time $t_r+6T$ or no hone
 
 
 
+\section{Conclusion}
+
+In this paper we formalized the abstraction of a finality gadget, showed that it is impossible in asynchrony and proposed GRANDPA, a partially synchronous protocol. 
+Finality gadgets strike a balance between the classic BFT consensus protocols that aggressively commit transaction and the Bitcoin-style consensus protocols that probabilistically commit transactions with a direct dependency on the underlying network's synchrony. 
+
+Using a finality gadget on top of a blockchain (which is used as an oracle) has multiple benefits.
+First, it remains live during network instability and is able to commit a lot of transactions quickly when the network re-stabilized. Second, it allows for optimistic commitment and efficient roll-back of transactions, using the blockchain as an unsafe-but-probably-correct broadcast channel. Finally, it provide flexibility to the light-clients on verifying only small parts of the blockchain. 
+
+In the future, we envision using finality gadgets in order to federate multiple insecure blockchains (i.e., sharding state) to a global secure one and enabling them to communicate. The main chain will provide optimistic commitment of the state of the sub-chains and after verification the finality gadget will either commit or roll-back the transactions efficiently.
+
+
+
+
+
+
+
+
+\com{
 
 \section{Practicalities}
 
@@ -810,7 +836,7 @@ So we have two possible chain selection rules for block producers:
 \item Build on best chain including whichever of $\{E_r,E_{r-1},B\}$ is latest and $\geq B$.
 \end{enumerate}
 
-1 is better if finalisation is happening quickly compared to block production and 2 is best if block production is much faster. We could also consider hybrid rules like adopt 1 unless we see that the protocol is stuck or slow, then we switch to 2.
+1 is better if finalisation is happening quickly compared to block production and 2 is best if block production is much faster. We could also consider hybrid rules like adopt 1 unless we see that the protocol is stuck or slow, then we switch to 2.}
 \com{
 \section{The asynchronous finality gadget problem}
 
@@ -818,7 +844,7 @@ Here we give an extension of the \cite{flp} result that shows the impossibility 
 
 \subsection{1/5 BFT finality gadget using a common coin}
 
-In this section, we will assume the asynchronous gossip network model. By the previous impossibility result, we will need to use randomness to get a finality gadget in this model. We assume that we have access to a common coin protocol.
+In this section, we will assume the asynchronous  network model. By the previous impossibility result, we will need to use randomness to get a finality gadget in this model. We assume that we have access to a common coin protocol.
  
 For every vote, We have $n$ voters , at most $f$ of which are Byzantine and $n = 5f+1$.  For a voter $v$, Let $V_{r,v}$, $C_{r,v}$ be the set of prevotes and precommits from round $r$ that $v$ has seen.
 
