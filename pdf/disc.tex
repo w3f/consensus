@@ -84,10 +84,10 @@
 
 %TODO mandatory: add short abstract of the document
 \begin{abstract}
-Classic Byzantine fault tolerant consensus protocols forfeit liveness in the face of asynchrony in order to preserve safety, whereas most deployed blockchain protocols forfeit safety in order to remain live. 
+Classic Byzantine fault-tolerant consensus protocols forfeit liveness in the face of asynchrony in order to preserve safety, whereas most deployed blockchain protocols forfeit safety in order to remain live. 
 In this work, we achieve the best of both worlds by proposing a novel abstractions called the \emph{finality gadget}.
-A finality gadget allows for transactions to always optimistically commit, but informs the clients that these transactions might be unsafe. As a result, a blockchain can  execute transactions optimistically and only commit them after they have been sufficiently and provably audited.
-In this work we formally model the finality gadget abstraction, prove that it is impossible to solve it deterministically in full asynchrony (even though it is stronger than consensus), and provide a partially synchronous protocol which is currently securing a major blockchain. This way we show that the protocol designer can decouple safety and liveness in order to speed up recovery from failures. We believe that there can be other types of finality gadgets that provide weaker safety (e.g., probabilistic) in order to gain more efficiency and this can depend on the probability that the network is not in synchrony.
+A finality gadget allows for transactions to always optimistically commit but informs the clients that these transactions might be unsafe. As a result, a blockchain can execute transactions optimistically and only commit them after they have been sufficiently and provably audited.
+In this work, we formally model the finality gadget abstraction, prove that it is impossible to solve it deterministically in full asynchrony (even though it is stronger than consensus) and provide a partially synchronous protocol which is currently securing a major blockchain. This way we show that the protocol designer can decouple safety and liveness in order to speed up recovery from failures. We believe that there can be other types of finality gadgets that provide weaker safety (e.g., probabilistic) in order to gain more efficiency and this can depend on the probability that the network is not in synchrony.
 \end{abstract}
 \section{Introduction}
 
@@ -97,43 +97,43 @@ secure automated value exchange without the need for a central managing authorit
 In order to achieve this, they build on peer-to-peer networks where special nodes (usually called miners) 
 collect transactions from users and run a consensus protocol in order to maintain a distributed public ledger
 known as the \textit{blockchain}.
-One of the challenges of the consensus protocols run by these systems is that they only have the property of eventual consensus - that an ever growing prefix of the chain will be agreed upon by all participants forever onward. But this eventual consensus process generally takes tens of minutes and only gives probabilistic guarantees - if we see a few blocks building on a given chain, we can estimate the probability that it is final.
-Unfortunately these guarantees only hold if the underlying network is well-connected and the client able to find an uncensored source of information, two assumptions that
+One of the challenges of the consensus protocols run by these systems is that they only have the property of eventual consensus - that an ever-growing prefix of the chain will be agreed upon by all participants forever onward. But this eventual consensus process generally takes tens of minutes and only gives probabilistic guarantees - if we see a few blocks building on a given chain, we can estimate the probability that it is final.
+Unfortunately, these guarantees only hold if the underlying network is well-connected and the client able to find an uncensored source of information, two assumptions that
 do not hold in adversarial environments~\cite{apostolaki16hijacking, gervais15tampering, heilman15eclipse,pass16analysis}.
 A second challenge is that of consistently verifying transactions that might be optimistically appended on-chain (e.g., optimistic rollups~\cite{al19lazyledger}). Currently, only valid transactions are appended on-chain, making the expectation of rolling back the chain almost equivalent to an attack.
 
-The underlying problem of these challenges is that first generation blockchain protocols~\cite{nakamoto08bitcoin,garay15bitcoin} do not consider finality (i.e., when will a block never be reverted) as a first class property, prioritizing liveness instead.
-On the opposite side of the spectrum, new generation protocols~\cite{kokoris16enhancing,decker16bitcoin,pass16hybrid} (which actually build old the old quorum-based ideas) propose the complete opposite, to forfeit liveness when finality is not readily achievable.
-To deploy this novel protocols we  need to change the existing infrastructure and has multiple additional shortcomings.
+The underlying problem of these challenges is that first-generation blockchain protocols~\cite{nakamoto08bitcoin,garay15bitcoin} do not consider finality (i.e., when will a block never be reverted) as a first-class property, prioritizing liveness instead.
+On the opposite side of the spectrum, new generation protocols~\cite{kokoris16enhancing,decker16bitcoin,pass16hybrid} (which actually build on the old quorum-based ideas) propose the complete opposite, to forfeit liveness when finality is not readily achievable.
+To deploy these novel protocols we need to change the existing infrastructure and have multiple additional shortcomings.
 First, these ``safety-first'' consensus protocols are exclusive. The protocol needs to put a limit on the number of participating miners in order to achieve good performance, which might lead to centralization. 
-Second, tying consensus with liveness of the chain means that there is no optimism and blocks are committed only when all verification information are available. As a result, they lose the ability to make some (unsafe) progress when the network is unstable, which can (a) help speedup the recovery process when the network heals and (b) provide a broadcast channel to the parties in order to post optimistic proposals that can later be verified by all parties (since the blockchain provides a single-view) and ultimately committed.
+Second, tying consensus with liveness of the chain means that there is no optimism, and blocks are committed only when all verification information are available. As a result, they lose the ability to make some (unsafe) progress when the network is unstable, which can (a) help speed up the recovery process when the network heals and (b) provide a broadcast channel to the parties in order to post optimistic proposals that can later be verified by all parties (since the blockchain provides a single-view) and ultimately committed.
 
-In this work we show the  that the middle ground also merits exploration. We introduce the idea of lazy finality which is encapsulated in the abstraction of a \emph{finality gadget.}
-Separating the liveness of the consensus protocol from the finality of the blocks can have four concrete benefits for the overlying blockchain protocol. First, not every node that is competing to mine a block needs to be part of the finality gadget, hence we can get the \textit{best of both worlds} (i.e., full inclusive decentralization and scalable fast finality). Second we can reorganize the chain for blocks that have not yet been finalized, which allows for probabilistic protocols such as optimistic rollups~\cite{al19lazyledger}. Third, a finality gadget can be deployed gradually and light clients can choose to consult it or follow the longest chain rule and ignore it, enabling light client heterogeneity. 
-The light client that trust the gadget do not need to have the full chain or actively listen to the network. 
-This can in turn enable scalability~\cite{avarikioti19divide} in an ecosystem of multiple chains (weather sharding~\cite{kokoris17omniledger,al18chainspace,androulaki18channels} or heterogeneous~\cite{zamyatin19sok}), where no single party receives or stores all the data in the system. 
-Finally, the finality gadget protocol is simpler than consensus protocols since they do not require a complex and costly view change phase, thanks to the oracle that provides unsafe liveness when a leader blocks.
+In this work, we show that the middle ground also merits exploration. We introduce the idea of lazy finality which is encapsulated in the abstraction of a \emph{finality gadget.}
+Separating the liveness of the consensus protocol from the finality of the blocks can have four concrete benefits for the overlying blockchain protocol. First, not every node that is competing to mine a block needs to be part of the finality gadget, hence we can get the \textit{best of both worlds} (i.e., full inclusive decentralization and scalable fast finality). Second, we can reorganize the chain for blocks that have not yet been finalized, which allows for probabilistic protocols such as optimistic rollups~\cite{al19lazyledger}. Third, a finality gadget can be deployed gradually and light clients can choose to consult it or follow the longest chain rule and ignore it, enabling light client heterogeneity. 
+The light clients that trust the gadget do not need to have the full chain or actively listen to the network. 
+This can, in turn, enable scalability~\cite{avarikioti19divide} in an ecosystem of multiple chains (weather sharding~\cite{kokoris17omniledger,al18chainspace,androulaki18channels} or heterogeneous~\cite{zamyatin19sok}), where no single party receives or stores all the data in the system. 
+Finally, the finality gadget protocol is simpler than consensus protocols since they do not require a complex and costly view change phase, thanks to the use of  an underlying blockchain that provides unsafe liveness and a consistent view when a leader blocks.
 
 
-More specifically, this work introduces the abstraction of a \emph{finality gadget} that runs along any block production mechanism (e.g., Nakamoto consensus) and
+More specifically, this work introduces the abstraction of a \emph{finality gadget} that runs along with any block production mechanism (e.g., Nakamoto consensus) and
 provides provable finality guarantees instead of probabilistic.
-To this end we formalize the finality gadget problem and show that it is impossible to satisfy its properties with a deterministic asynchronous protocol. 
-To circumvent this impossibility result , we introduce the GRANDPA finality gadget that works in a partially synchronous network model, in the presence of up to $1/3$ Byzantine actors. 
-The combination of GRANDPA with a classic block production mechanism like GHOST~\cite{lewenberg15inclusive} results in the existing deployment of the polkadot network\footnote{https://polkadot.network/} which provides fast finality under good network conditions and protects the clients without compromising the liveness when under attack. The implementation of GRANDPA will be made available on github.
+To this end, we formalize the finality gadget problem and show that it is impossible to satisfy its properties with a deterministic asynchronous protocol. 
+To circumvent this impossibility result, we introduce the GRANDPA finality gadget that works in a partially synchronous network model, in the presence of up to $1/3$ Byzantine actors. 
+The combination of GRANDPA with a classic block production mechanism like GHOST~\cite{lewenberg15inclusive} results in the existing deployment of the Polkadot network\footnote{https://polkadot.network/} which provides fast finality under good network conditions and protects the clients without compromising the liveness when under attack. The implementation of GRANDPA will be made available on github.
 \com{
 
-In summary we make the following contributions:
+In summary, we make the following contributions:
 \begin{itemize}
 
-\item Introduce the idea of lazy finality and instiate it through a finality gadget abstraction
+\item Introduce the idea of lazy finality and instantiate it through a finality gadget abstraction
 
-\item Prove that BFG is impossible in asychrony and present GRANDPA
+\item Prove that BFG is impossible in asynchrony and present GRANDPA
 
 \end{itemize}
 }
 
 %The approach that we will take is similar to the approach that Ethereum plans to take with Casper the Friendly Finality Gadget (Casper FFG)\cite{CasperFFG}, which combines these approaches.
-%We will use a block production mechanism and chain selection rule that give eventual consensus and then add a finality gadget, a protocol that finalises blocks that the participants already agree on, to get provable finality.
+%We will use a block production mechanism and chain selection rule that give eventual consensus and then add a finality gadget, a protocol that finalizes blocks that the participants already agree on, to get provable finality.
 
 %We present a finality gadget that works in a partially synchronous network model, GRANDPA, that works in the presence f up to $1/3$ Byzantine actors as well as an asynchronous finality gadget, that can cope with $1/5$ Byzantine actors. 
 
@@ -142,7 +142,7 @@ In summary we make the following contributions:
 \section{Model, Definitions, and Impossibilities}
 
 
-We want to formalize the notion of finality gadget to be a sub-protocol that can be deployed along any protocol with
+We want to formalize the notion of finality gadget to be a sub-protocol that can be deployed along with any protocol with
 eventual consensus and probabilistic finality and enhancing such protocol with provable finality.
 To achieve this, we need to incorporate into the classic definition of Byzantine agreement 
 the fact that we additionally have access to a protocol that would achieve eventual consensus if we did not affect it.
@@ -173,45 +173,45 @@ We say an oracle $A$ in a protocol is {\em eventually consistent} if it returns 
 \begin{itemize}
 \item {\bf Agreement:} All honest voters decide the same value for $f_v$
 \item {\bf Termination:} All honest voters eventually decide a value
-\item {\bf Validity:} All honest voters decide a value that $A$ returned to some honest voter sometime.
+\item {\bf Validity:} All honest voters decide a value that $A$ returned to some honest voter sometimes.
 \end{itemize}
 
 \end{definition}
 
 \subsubsection{Impossibility of Deterministic Agreement with an Oracle.}\label{ssec:impossibility}
 
-For the binary case, i.e. when $|S|=2$, the Byzantine finality gadget problem is reducible to Byzantine agreement. This does not hold for $|S| > 2$, because the definition of validity is stronger in our protocol. It is impossible for multi-valued Byzantine agreement to make the validity condition of deciding on initial value of some honest voter and tolerating more than a $1/|S|$ fraction of faults, since we may have a $1/|S|$ fraction of voters reporting each initial value and Byzantine voters can act honestly enough not to be detectable. For finality gadgets, this stronger validity condition is possible. A natural question is then weather the celebrated FLP~\cite{fischer85impossibility} impossibility holds for our stronger requirements.
+For the binary case, i.e. when $|S|=2$, the Byzantine finality gadget problem is reducible to Byzantine agreement. This does not hold for $|S| > 2$, because the definition of validity is stronger in our protocol. The multi-valued Byzantine agreement cannot provide the validity condition of deciding on the initial value of some honest voter and tolerating more than a $1/|S|$ fraction of faults, since we may have a $1/|S|$ fraction of voters reporting each initial value and Byzantine voters can act honestly enough not to be detectable. For finality gadgets, this stronger validity condition is possible. A natural question is then whether the celebrated FLP~\cite{fischer85impossibility} impossibility holds for our stronger requirements.
 Next, we show that an asynchronous, deterministic binary finality gadget is impossible, even with one fault. 
 This means that the extra information voters have here, that $A$ will eventually agree for all voters, is not enough to make this possible.
 
 
 \subsubsection{Proof Sketch:}
 
-The asynchronous binary fault tolerant agreement problem is as follows:
+The asynchronous binary fault-tolerant agreement problem is as follows:
 
-We have  number of voters which each have an initial $v_i$ in $\{0,1\}$
+We have a number of voters which each has an initial $v_i$ in $\{0,1\}$
 We may have one or more faulty nodes, which here means going offline at some point. Nodes have asynchronous communication - so any message arrives but we have no guarantee when it will.
 The goal is to have all non-faulty nodes output the same $v$, which must be $0$ if all inputs $v_i$ are $0$ and $1$ if all are $1$.
 
-Fischer, Lynch and Paterson\cite{fischer85impossibility} showed that this is impossible if there is one faulty node.
+Fischer, Lynch, and Paterson\cite{fischer85impossibility} showed that this is impossible if there is one faulty node.
 The binary fault-safe finality gadget problem is similar, except now there is an oracle $A$ that any node can call at any time with the following properties.
 First, either $A$ always outputs $x$ in $\{0,1\}$ to all nodes at all times
 or else there is an $x$ in $\{0,1\}$ and, second,
 for each node $i$, there is a $T_i$ such that when $i$ calls $A$ before $T_i$. it gives $x$but if it calls $A$ after $T_i$, it returns not $x$ .
 
 We want that if A never switches, then all non-faulty nodes output x. If A does switch then all non-faulty nodes should output the same thing, but it can be 0 or 1. But, now we basically instantiated a binary agreement problem without an oracle.
-As a result deciding after the oracle switches value is as hard as not having an oracle at all.\com{ is also impossible, even for one faulty node, which just goes offline. Note that this generalises Byzantine agreement, since if we could show that each node $i$ could call $A$ once at the start and use the output as $v_i$.(For the multi-valued case, we will define the problem so that this reduction does not hold.)}
+As a result, deciding after the oracle switches value is as hard as not having an oracle at all.\com{ is also impossible, even for one faulty node, which just goes offline. Note that this generalizes Byzantine agreement, since if we could show that each node $i$ could call $A$ once at the start and use the output as $v_i$.(For the multi-valued case, we will define the problem so that this reduction does not hold.)}
 
 
 \begin{proof}[Proof sketch] We follow the notation of  \cite{fischer85impossibility} and assume for a contradiction that we use a correct protocol. 
 Let $r$ be a run of the protocol where $A$ gives $0$ all the time.
-Then by correctness $r$ decides $0$. Now we consider what can happen when $A$ switches to $1$ after each configuration in $r$. If it switches to $1$ at the start, then the protocol decides $1$.
-If it switches to $1$ when all node have already decided $0$, then it decides $0$.
+Then by correctness, $r$ decides $0$. Now we consider what can happen when $A$ switches to $1$ after each configuration in $r$. If it switches to $1$ at the start, then the protocol decides $1$.
+If it switches to $1$ when all nodes have already decided $0$, then it decides $0$.
 
 We claim that some configuration in the run $r$, where there are two runs from it where $A$ is always $1$ that decide $0$ and $1$. We call such states $1$-bivalent.
 To see this, assume for a contradiction that $r$ contains no such configurations. Then there are successive configurations $C$,$C'$ such that if $A$ return $1$ in the future from $C$ then we always decide $0$ but from $C'$, we always decide $1$.
 Let events be $(p,m,x)$ where node (processor/voter) $p$ receives message $m$ (which may be null) and executes some code where any calls to A return $x$ in $\{0,1\}$, then sends some messages. 
-Then there is some event $(p,m,0)$ that when applied to $C$ gives $C'$. Now suppose that $p$ goes offline at $C$, then if $A$ always returns $1$ afterwards, then we still decide $1$. Thus there is a run $r'$ that starts at $C$ where $p$ takes no steps, $A$ always returns $1$ and all other nodes still output $1$.
+Then there is some event $(p,m,0)$ that when applied to $C$ gives $C'$. Now suppose that $p$ goes offline at $C$, then if $A$ always returns $1$ afterwards, then we still decide $1$. Thus there is a run $r'$ that starts at $C$ where $p$ takes no steps, $A$ always returns $1$, and all other nodes still output $1$.
 But since $p$ takes no steps in $r'$, we can apply $r'$ after $(p, m, 0)$ and so we have that $C'$ has a run where $A$ always returns $1$ but decides $1$, which is a contradiction.
 
 Now let $C$ be a $1$-bivalent configuration. We can follow the FLP proof to show that there is a run from $C$ for which $A$ always returns $1$, all messages are delivered but all configurations are 1-bivalent and so the protocol never decides. This completes the proof by contradiction that there is no correct protocol.
@@ -221,35 +221,35 @@ Now let $C$ be a $1$-bivalent configuration. We can follow the FLP proof to show
 
 \subsection{Definition of a Finality Gadget}
 
-In this section we show how to extend the one-shot agreement to agreeing on a chain of blocks. One difficulty in formalising the problem is that the block production mechanism cannot be entirely separate from the finality gadget. In order to finalise new blocks, we must first build on the chain we have already finalised. So at a minimum, the block production mechanism needs to recognise which blocks the finality gadget has finalised. We will also allow the block production mechanism to interact with the state of the finality gadget in other ways.
+In this section, we show how to extend the one-shot agreement to agree on a chain of blocks. One difficulty in formalizing the problem is that the block production mechanism cannot be entirely separate from the finality gadget. In order to finalize new blocks, we must first build on the chain we have already finalized. So at a minimum, the block production mechanism needs to recognize which blocks the finality gadget has finalized. We will also allow the block production mechanism to interact with the state of the finality gadget in other ways.
 
-We want the finality gadget to work with the most general block production mechanisms as possible. Thus we need a condition that combines the property of eventual consensus and this requirement to build on the last finalised block, but is otherwise not too restrictive.
+We want the finality gadget to work with the most general block production mechanisms as possible. Thus we need a condition that combines the property of eventual consensus and this requirement to build on the last finalized block, but is otherwise not too restrictive.
 We assume a kind of conditional eventual consensus.
-If we keep building on our last finalised block $B$ and don't finalise any new blocks, then eventually we have consensus on a longer chain than just $B$, which the finality gadget can use to finalise another block.
-We also want a protocol that does not terminate, but instead keeps on finalising more blocks. 
+If we keep building on our last finalized block $B$ and do not finalize any new blocks, then eventually we have consensus on a longer chain than just $B$, which the finality gadget can use to finalize another block.
+We also want a protocol that does not terminate, but instead keeps on finalizing more blocks. 
 
 We assume that there is a block production protocol $P$ that runs at the same time as the finality gadget protocol $G$. Actors who are participants in both protocols may behave differently in $P$ depending on what happened in $G$.
-However in the reverse direction, the only way that an honest voter $v$'s behaviour in $G$ is affected by $P$ is through a voting rule, a function $A(v,s_v,B)$ that depends on $v$ and its state $s_v$ and takes a block $B$ and returns a block $B'$ at the head of a chain including $B$.
+However in the reverse direction, the only way that an honest voter $v$'s behavior in $G$ is affected by $P$ is through a voting rule, a function $A(v,s_v, B)$ that depends on $v$ and its state $s_v$ and takes a block $B$ and returns a block $B'$ at the head of a chain including $B$.
 
-We say that the system $G$, $P$, and $A$ achieves {\em conditional eventual consensus}, if $G$ has finalised a block $B$, then eventually, either $G$ will finalise some descendant of $B$ or else all the chains with head $A_{v,s_v}(B)$ for all voters $v$ at all future states $s_v$ will contain the same descendant $B'$ of $B$.
+We say that the system $G$, $P$, and $A$ achieves {\em conditional eventual consensus}, if $G$ has finalized a block $B$, then eventually, either $G$ will finalize some descendant of $B$ or else all the chains with head $A_{v,s_v}(B)$ for all voters $v$ at all future states $s_v$ will contain the same descendant $B'$ of $B$.
 
 \begin{definition} \label{def:finality-gadget} 
-Let $F$ be a protocol  with a set of voters $V$, a constant fraction of which may be Byzantine.
+Let $F$ be a protocol with a set of voters $V$, a constant fraction of which may be Byzantine.
 We say that $F$ solves {\em blockchain Byzantine finality gadget problem} if for every block production protocol $P$ and voting rule $A$ we have the following
 
-%A protocol for the blockchain Byzantine finality gadget problem has , each of whom has access to an oracle $A$ for the best chain given the last finalised block with the property that, as long as no new block is finalised, it achieves eventual consensus on some child of the last finalised block such that the following holds:
+%A protocol for the blockchain Byzantine finality gadget problem has, each of whom has access to an oracle $A$ for the best chain given the last finalized block with the property that, as long as no new block is finalized, it achieves eventual consensus on some child of the last finalized block such that the following holds:
 
 \begin{itemize}
-\item{\bf Safety:} All honest voters finalise the same block at each block number.
-\item{\bf Liveness:} If the system $F, G, A$ achieves conditional eventual consensus, then all honest voters keep finalising blocks.
-\item{\bf Validity:} If an honest voter finalises a block $B$ then that block was seen in the best chain observed by some honest voter containing some previously finalised ancestor of $B$,
+\item{\bf Safety:} All honest voters finalize the same block at each block number.
+\item{\bf Liveness:} If the system $F, G, A$ achieves conditional eventual consensus, then all honest voters keep finalizing blocks.
+\item{\bf Validity:} If an honest voter finalizes a block $B$ then that block was seen in the best chain observed by some honest voter containing some previously finalized ancestor of $B$,
 \end{itemize}
 
 \end{definition}
 
-As an example, we could assume $F$ uses proof of work to build on the longest chain and includes the last block $G$ finalised. Then we take $A(v,s_v,B)$ as being the longest chain which includes $B$ and which $v$ sees in state $s_v$. It is well-known \cite{nakamoto08bitcoin} that longest chain with proof of work achieves eventual consensus under the right assumptions and similar arguments show that in this case we have conditional eventual consensus.
-As long as we do not change the chain we are building on by finalising another block, we will eventually agree on some prefix longer than the last finalised block.
-Thus, any finality gadget that satisfies Definition \ref{def:finality-gadget} will work in this system so that all honest voters finalise an increasingly long common chain.
+As an example, we could assume $F$ uses proof of work to build on the longest chain and includes the last block $G$ finalized. Then we take $A(v,s_v,B)$ as being the longest chain which includes $B$ and which $v$ sees in state $s_v$. It is well-known \cite{nakamoto08bitcoin} that the longest chain with proof of work achieves eventual consensus under the right assumptions and similar arguments show that in this case, we have conditional eventual consensus.
+As long as we do not change the chain we are building on by finalizing another block, we will eventually agree on some prefix longer than the last finalized block.
+Thus, any finality gadget that satisfies Definition \ref{def:finality-gadget} will work in this system so that all honest voters finalize an increasingly long common chain.
 Thanks to the abstraction above, we can switch $F$ for one of many possible alternative consensus algorithms and $G$ will still work.
 
 
@@ -263,12 +263,12 @@ Thanks to the abstraction above, we can switch $F$ for one of many possible alte
 
 \subsubsection{Comparison with Casper}
 
-The concept of finality gadget was introduced in Casper the friendly finality gadget and this remains the finality gadget which is most similar to ours. So it makes sense to compare these. However first, we should mention the other protocols that are also called Casper.
+The concept of finality gadget was introduced in Casper the friendly finality gadget and this remains the finality gadget that is most similar to ours. So it makes sense to compare these. However, first, we should mention the other protocols that are also called Casper.
 
-The first Casper was Casper TFG. Casper CBC\cite{CasperCBC} gives a recent and clearly specified version of this protocol. It's fork choice rule uses the GHOST selection rule on votes.
-In Casper TFG, votes are blocks, but they are counted by participants (proposers and validators) like votes, which differs from how GHOST would be used with proof of work. It also has a flexible way of subjectively finalising blocks based on graphs of votes. 
+The first Casper was Casper TFG. Casper CBC\cite{CasperCBC} gives a recent and clearly specified version of this protocol. Its fork choice rule uses the GHOST selection rule on votes.
+In Casper TFG, votes are blocks, but they are counted by participants (proposers and validators) like votes, which differs from how GHOST would be used with proof of work. It also has a flexible way of subjectively finalizing blocks based on graphs of votes. 
 
-In Casper FFG\cite{CasperFFG}, validators vote on links between checkpoints, which occur at block numbers that are multiples of, say, 50. If there are 2/3 votes for one block at consecutive checkpoints, then we can finalise a chain of blocks up to the first checkpoint.
+In Casper FFG\cite{CasperFFG}, validators vote on links between checkpoints, which occur at block numbers that are multiples of, say, 50. If there are 2/3 votes for one block at consecutive checkpoints, then we can finalize a chain of blocks up to the first checkpoint.
 
 Epochless Casper, 
 
@@ -276,15 +276,15 @@ Casper...
 
 There are two main differences between Casper FFG and GRANDPA. One is that in GRANDPA, different voters can cast votes simultaneously for blocks at different heights. This is achieved by borrowing the concept of GHOST on votes from Casper TFG and applying it in a more traditional Byzantine agreement protocol.
 
-The other main difference is how the finality gadget affects the fork-choice rule of the underlying block production mechanism. In GRANDPA, by default we will assume that this is only affected by having to include any finalised blocks. 
+The other main difference is how the finality gadget affects the fork-choice rule of the underlying block production mechanism. In GRANDPA, by default, we will assume that this is only affected by having to include any finalized blocks. 
 Casper FFG \cite{CasperFFG} does not specify a fork-choice rule, but it requires that we build on justified blocks for liveness. Later specifications of Casper use the GHOST rule on votes for fork-choice.
 
-Only depending on finalised blocks gives a clearer separation between the block production mechanism and finality gadget. It may therefore be easier to adapt to other types of protocol that achieve eventual consensus—and there have been many diverse protocols that do this developed in the last few years.
+Only depending on finalized blocks gives a clearer separation between the block production mechanism and finality gadget. It may, therefore, be easier to adapt to other types of protocol that achieve eventual consensus—and there have been many diverse protocols that do this developed in the last few years.
 It also makes it far easier to prove liveness properties.
-If the finality gadget has not finalised anything and so does not interfere, then the underlying mechanism should reach eventual consensus, which should be enough for the finality gadget to finalise whatever we have consensus on.
+If the finality gadget has not finalized anything and so does not interfere, then the underlying mechanism should reach eventual consensus, which should be enough for the finality gadget to finalize whatever we have consensus on.
 
-On the other hand, while building on the longest chain in the absence of a finality gadget to maximize block rewards may be rational if everyone else does, this is not always the case for building on the longest chain including the last finalised block.
-This is because it may be likely that a different chain is going to be finalised, in which case the rational thing to do might be to build on that. The GHOST on votes fork choice rule of ? and ? may be more rational.
+On the other hand, while building on the longest chain in the absence of a finality gadget to maximize block rewards may be rational if everyone else does, this is not always the case for building on the longest chain including the last finalized block.
+This is because it may be likely that a different chain is going to be finalized, in which case the rational thing to do might be to build on that. The GHOST on votes fork choice rule of ? and ? may be more rational.
 It is not clear that it is, nor is it clear how to prove liveness for such a rule. Further research may be needed to show that there is a fork choice rule which is rational and leads to liveness for the finality gadget. 
 
 
@@ -293,7 +293,7 @@ It is not clear that it is, nor is it clear how to prove liveness for such a rul
 \subsection{Preliminaries} \label{sec:prelims}
 
 \subsubsection{Network model}: We will be using a partially synchronous network model.
-We assume that any message sent or received by an honest participant reaches all honest participants within time $T$, but possibly only after some Global Synchronisation Time $\GST$.
+We assume that any message sent or received by an honest participant reaches all honest participants within time $T$, but possibly only after some Global Synchronization Time $\GST$.
 Concretely, any message sent or received by some honest participant at time $t$ is received by all honest participants by time $\GST+T$ at the latest.
 
 
@@ -306,7 +306,7 @@ We need $n-f$ of voters to agree on finality. Whether or not block producers eve
 \subsubsection{Votes:}A vote is a block hash, together with some metadata such as round number and the type of vote, such as {\em prevote} or {\em precommit}, all signed with a voter's private key.
 
 \subsubsection{Rounds:}Each participant has their own idea of what is the current round number. Every prevote and precommit has an associated round number. Honest voters only vote once (for each type of vote) in each round and do not vote in earlier rounds after later ones.
-Participants need to keep track of which block they see as currently being the latest finalised block and an estimate of which block could have been finalised in the last round. 
+Participants need to keep track of which block they see as currently being the latest finalized block and an estimate of which block could have been finalized in the last round. 
 
 
 For block $B$, we write $\mathrm{chain}(B)$ for the chain whose head is $B$. The block number, $n(B)$ of a block $B$ is the length of $\mathrm{chain}(B)$.
@@ -340,7 +340,7 @@ The third rule tells us that even if participants see different subsets of the v
 Next, we define a notion of possibility to have a supermajority which says that if the set of all votes in a vote $T$ is safe and some participant observes a subset $S \subseteq T$ that has a supermajority for a block $B$ then all participants who see some other subset $S' \subseteq T$ still see that it is possible for $S$ to have a supermajority for $B$. We need a definition that extends to unsafe sets.
 We say that it is {\em impossible} for a set $S$ to have a supermajority for $B$ if at least $(n+f+1)/2$ voters either vote for a block $\not \geq B$ or equivocate in $S$. Otherwise it is {\em possible} for $S$ to have a supermajority for $B$.
 
-Note that if $S$ is safe, it is possible for $S$ to have a supermajority for $B$ if and only if there is a safe $T \supseteq S$ that has a supermajority for $B$, which can be constructed by adding a vote from $B$ for all voters without votes in $S$ and enough voters who already have votes in $S$ to bring the number of equivocations up to $f$.
+Note that if $S$ is safe, it is possible for $S$ to have a supermajority for $B$ if and only if there is a safe $T \supseteq S$ that has a supermajority for $B$, which can be constructed by adding a vote from $B$ for all voters without votes in $S$ and enough voters who already have voted in $S$ to bring the number of equivocations up to $f$.
 
 We say that it is {\em impossible} for any child of $B$ to have a supermajority in $S$ if $S$ has votes from at least $2f+1$ voters and it is impossible for $S$ to have a supermajority for each child of $B$ appearing on the chain of any vote in $S$.
 Again, provided $S$ is safe, this holds if and only if for any possible child of $B$, there is no safe $T \subseteq S$ that has a supermajority for that child.
@@ -361,19 +361,19 @@ Note that it is possible for an unsafe $S$ to both have a supermajority for $S$ 
 \com{
 To discover up with a solution to the blockchain Byzantine finality gadget problem, we will typically look at various Byzantine agreement protocols and use those to find protocols for the multi-valued Byzantine finality gadget problem. 
 Agreement protocols with appropriate properties can be used to find protocols for the blockchain Byzantine finality gadget problem by considering running them in parallel at every block number.
-If the one block protocol has the right properties then they will agree on blocks consistently, so if we finalise a block then we also finalise its ancestors and we can come up with a succinct protocol.
+If the one block protocol has the right properties then they will agree on blocks consistently, so if we finalize a block then we also finalize its ancestors and we can come up with a succinct protocol.
 
-For example, suppose we have a one block protocol that calls for a vote on blocks which requires a participant to observe a supermajority, say votes from  $2/3$ of voters, for some block, or else the participant observes that the vote is undecided. Now imagine running this vote in parallel for every block number and have any honest voter vote for blocks from a particular chain.
+For example, suppose we have a one-block protocol that calls for a vote on blocks which requires a participant to observe a supermajority, said votes from  $2/3$ of voters, for some block, or else the participant observes that the vote is undecided. Now imagine running this vote in parallel for every block number and have any honest voter vote for blocks from a particular chain.
 Byzantine voters may vote more than once, but if we count a vote for a block as a vote for each ancestor of the block in the vote for the instance of the one block protocol with its number, then Byzantine voters must also vote for chains, though they can vote for multiple chains.
 If we do this, then we see that if a block has a supermajority in a vote, then so does all its ancestors in their votes. Thus the blocks with a supermajority form a chain.
 Furthermore, if only $1/3$ of voters equivocate then if a participant sees a subset of the votes for chains, then they must see a prefix of the chain of blocks for which all the votes have supermajorities. Intuitively, the protocol can agree on the prefix that $2/3$ of voters agree on using this. 
 
-To ensure safety, each participant maintains an estimate $E_r$ of the last block that could have been finalised in a round $r$. This has the property that in future rounds it overestimates the block that could have been finalised so that in round $r$, the chain with head $E_{r-1}$ contains all blocks that could have been finalised.
-Any honest voter only votes in round $r$ for chains containing their estimate $E_{r-1}$ and this guarantees that any block that could have been finalised in round $r-1$ will be finalised in round $r$.
+To ensure safety, each participant maintains an estimated $E_r$ of the last block that could have been finalized in a round $r$. This has the property that in future rounds it overestimates the block that could have been finalized so that in round $r$, the chain with head $E_{r-1}$ contains all blocks that could have been finalized.
+Any honest voter only votes in round $r$ for chains containing their estimate $E_{r-1}$ and this guarantees that any block that could have been finalized in round $r-1$ will be finalized in round $r$.
 }
 
-In order to find a solution to the finality gadget protocol we look in
-consensus protocols that solve the stronger problem as described in the previous section. The key idea for our solution is to inherit the safety properties of a consensus protocol, but use the underlying blockchain as the driving force of liveness. This results in a protocol which does not stop when for example the network is split. 
+In order to find a solution to the finality gadget protocol, we look in
+consensus protocols that solve the stronger problem as described in the previous section. The key idea for our solution is to inherit the safety properties of a consensus protocol, but use the underlying blockchain as the driving force of liveness. This results in a protocol that does not stop when for example the network is split. 
 Instead, only the finalization stops, but the blocks keep getting created and propagated to everyone.
 This means that when the conditions are safe again, the finality gadget only needs to finalize the head of the chain\footnote{Which the oracle will return quickly to a supermajority of miners.},
 instead of having to transmit and run consensus on every block. \com{
@@ -384,22 +384,22 @@ In Figure~\ref{fig:finality}, we analyze the differences between classic blockch
 
 
 \subsection{The GRANDPA Protocol}\label{sec:grandpa}
-In this section, we give our solution to the Byzantine finality gadget problem, GRANDPA.  Our finality gadget works the partially synchronous setting.
+In this section, we give our solution to the Byzantine finality gadget problem, GRANDPA.  Our finality gadget works a partially synchronous setting.
 
-GRANDPA works in rounds, each round has a set of $3f+1$ eligible voters, $2f+1$ of which are assumed honest. Furthermore, we assume that each round has a participant designated as primary and all participants agree on the voter sets and primary. We will can either choose the primary pseudorandomly from or rotate through the voter set.
+GRANDPA works in rounds, each round has a set of $3f+1$ eligible voters, $2f+1$ of which are assumed honest. Furthermore, we assume that each round has a participant designated as primary and all participants agree on the voter sets and primary. We will either choose the primary pseudo-randomly from or rotate through the voter set.
 On a high-level, each round consists of a double-echo protocol after which every party waits in order to detect whether we can finalize a block in this round (this block does not need to be the immediate ancestor of the last finalized block, it might be far ahead from the last finalized block). If the round is unsuccessful, the parties simply move on to the next round with a new primary. When a good primary is selected, the oracle is consistent (returns the same value to all honest parties),
-and the network is in synchrony (after $\GST$), then a new block will be finalized and it will transitively finalized all its ancestors.
+and the network is in synchrony (after $\GST$), then a new block will be finalized and it will transitively finalize all its ancestors.
 
 More specifically, we let $V_{r,v}$ and $C_{r,v}$ be the sets of prevotes and precommits respectively received by $v$ from round $r$ at the current time.
 
-We define $E_{r,v}$ to be $v$'s estimate of what might have been finalised in round $r$, given by the last block in the chain with head $g(V_{r,v})$ for which it is possible for $C_{r,r}$ to have a supermajority. Next we define a condition which will allow us to safely conclude that $E_{r,v} \geq B$ for all $B$ that might be finalised in round $r$:
+We define $E_{r,v}$ to be $v$'s estimate of what might have been finalized in round $r$, given by the last block in the chain with head $g(V_{r,v})$ for which it is possible for $C_{r,r}$ to have a supermajority. Next, we define a condition which will allow us to safely conclude that $E_{r,v} \geq B$ for all $B$ that might be finalized in round $r$:
 If either $E_{r,v} < g(V_{r,v})$ or it is impossible for $C_{r,v}$ to have a supermajority for any children of $g(V_{r,v})$, then we say that {\em $v$ sees that round $r$ is completable}.  $E_{0,v}$ is the genesis block, assuming we start at $r=1$.  
 
-In other words, a round $r$ is completable when our estimate chain $E_{r,v}$ contains everything that could have been finalised in round $r$, which makes it possible to begin the next round $r+1$.
+In other words, a round $r$ is completable when our estimate chain $E_{r,v}$ contains everything that could have been finalized in round $r$, which makes it possible to begin the next round $r+1$.
 
-We have a time bound $T$ that after $\GST$ suffices for all honest participants to communicate with each other.
+We have a time-bound $T$ that after $\GST$ suffices for all honest participants to communicate with each other.
 Inside a round, the properties both of $E_{r,v}$ having a supermajority, meaning $E_{r,v} < g(V_{r,v})$, as well as of it being impossible to have a supermajority for some given block are monotone, so the property of being completable is monotone as well.
-We therefore expect that, if anyone sees a round is completable, then everyone will see this within time $T$. Leaving a gap of $2T$ between steps is then enough to ensure that every party receives all honest votes before continuing.
+We, therefore, expect that, if anyone sees a round is completable, then everyone will see this within time $T$. Leaving a gap of $2T$ between steps is then enough to ensure that every party receives all honest votes before continuing.
 
 
 \subsubsection{Protocol Description.}
@@ -410,7 +410,7 @@ In round $r$ an honest participant $v$ does the following:
 \begin{enumerate}
 \item A voter $v$ can start round $r > 1$ when round $r-1$ is completable and $v$ has cast votes in all previous rounds where they are a voter. Let $t_{r,v}$ be the time $v$ starts round $r$.
 
-\item At time $t_{r,v}$, if $v$ is the primary of this round and has not finalised $E_{r-1,v}$ then they broadcast $E_{r-1,v}$. If they have finalised it, they can broadcast $E_{r-1,v}$ anyway (but do not need to).
+\item At time $t_{r,v}$, if $v$ is the primary of this round and has not finalized $E_{r-1,v}$ then they broadcast $E_{r-1,v}$. If they have finalized it, they can broadcast $E_{r-1,v}$ anyway (but do not need to).
 
 \item If $v$ is a voter for the prevote of round $r$, $v$ waits until either it is at least time $t_{r,v}+2T$ or round $r$ is completable, then broadcasts a prevote.
 They prevote for the head of the best chain containing $E_{r-1,v}$ unless we received a block $B$ from the primary and $g(V_{r-1,v}) \geq B > E_{r-1,v}$, in which case they use the best chain containing $B$ instead.
@@ -431,11 +431,11 @@ Note that $C_{r,v}$ and $V_{r,v}$ may change with time and also that $E_{r-1,v}$
 
 \subsubsection{Finalization.}
 
-If, for some round $r$, at any point after the precommit step of round $r$, we have that $B=g(C_{r,v})$ is later than our last finalised block and $V_{r,v}$ has a supermajority, then we finalise $B$.
+If, for some round $r$, at any point after the precommit step of round $r$, we have that $B=g(C_{r,v})$ is later than our last finalized block and $V_{r,v}$ has a supermajority, then we finalize $B$.
 We may also send a commit message for $B$ that consists of $B$ and a set of precommits for blocks $\geq B$.
 
-To avoid spam, we only send commit messages for $B$ if we have not receive any valid commit messages for $B$ and its descendants and we wait some time chosen uniformly at random from $[0,1]$ seconds or so before broadcasting.
-If we receive a valid commit message for $B$ for round $r$, then it contains enough precommits to finalise $B$ itself if we haven't already done so, so we'll finalise $B$ as long as we are past the precommit step of round $r$.
+To avoid spam, we only send commit messages for $B$ if we have not received any valid commit messages for $B$ and its descendants and we wait some time chosen uniformly at random from $[0,1]$ seconds or so before broadcasting.
+If we receive a valid commit message for $B$ for round $r$, then it contains enough precommits to finalize $B$ itself if we have not already done so, so we'll finalize $B$ as long as we are past the precommit step of round $r$.
 
 
 \com{
@@ -443,23 +443,23 @@ If we receive a valid commit message for $B$ for round $r$, then it contains eno
 
 \subsubsection{Wait at the end of a round before precommitting.}
 
-If the network  is badly behaved, then these steps may involve waiting an arbitrarily long time. When the network is well behaved (after the $\GST$ in our model), we should not be waiting. Indeed there is little point not waiting to receive $2f+1$ of voters' votes as we cannot finalise anything without them.
+If the network performs badly, then these steps may involve waiting for an arbitrarily long time. When the network is well behaved (after the $\GST$ in our model), we should not be waiting. Indeed there is little point not waiting to receive $2f+1$ of voters' votes as we cannot finalize anything without them.
 But if the  network is not perfect and some messages never arrive, then we may need to make voters asking other voters for votes from previous rounds.\com{ in a similar way to the challenge procedure, to avoid deadlock.}
 
-In exchange for our design choice of waiting, we get the property that we do not need to pay attention to votes from before the previous round in order to vote correctly in this one. Without waiting, we could be in a situation where we might have finalised a block in some round r, but the network becomes unreliable for many rounds and gets few votes on time, in which case we need to remember the votes from round r to finalise the block later. 
+In exchange for our design choice of waiting, we get the property that we do not need to pay attention to votes from before the previous round in order to vote correctly in this one. Without waiting, we could be in a situation where we might have finalized a block in some round r, but the network becomes unreliable for many rounds and gets few votes on time, in which case we need to remember the votes from round r to finalize the block later. 
 
 \subsubsection{Using a Primary}
 
 We only need the primary for liveness. 
-We need some form of coordination to defeat the repeated vote splitting attack. The idea behind that attack is that if we are in a situation where almost 2/3 of voters vote for something an the rest vote for another, then the Byzantine voters can control when we see a supermajority for something. If they can carefully time this, they may be able to split the next vote. 
-Without the primary, they could do this for prevotes, getting a supermajority for a block $B$ late, then split precommiher from being finalised like this even if the (unknown) fraction of Byzantine players is small.
+We need some form of coordination to defeat the repeated vote-splitting attack. The idea behind that attack is that if we are in a situation where almost 2/3 of voters vote for something and the rest vote for another, then the Byzantine voters can control when we see a supermajority for something. If they can carefully time this, they may be able to split the next vote. 
+Without the primary, they could do this for prevotes, getting a supermajority for a block $B$ late, then split precommiher from being finalized like this even if the (unknown) fraction of Byzantine players is small.
 
 When the network is well-behaved, an honest primary can defeat this attack by deciding how much we should agree on. We could also use a common coin for the same thing, where people would prevote for either the best chain containing $E_{r-1,v}$ or $g(V_{r-1,v})$ depending on the common coin.
-With on-chain voting, it is possible that we could use probabilistic finality of the block production mechanism - that if we don't finalise a block and always build on the best chain containing the last finalised block then not only will the best chain eventually converge, but if a block is behind the head of the best chain, then with positive probability, it will eventually be in the best chain everyone sees.
+With on-chain voting, it is possible that we could use probabilistic finality of the block production mechanism - that if we do not finalize a block and always build on the best chain containing the last finalized block then not only will the best chain eventually converge, but if a block is behind the head of the best chain, then with positive probability, it will eventually be in the best chain everyone sees.
 
 In our setup, having a primary is the simplest option for this.
-ts so we don't see that it is impossible for there to be a supermajority for $B$ until late. 
-If $B$ is not the best block given the last finalised block but $B'$  with the same block number, they could stop eit
+ts so we do not see that it is impossible for there to be a supermajority for $B$ until late. 
+If $B$ is not the best block given the last finalized block but $B'$  with the same block number, they could stop it
 
 }
 
@@ -468,28 +468,28 @@ If $B$ is not the best block given the last finalised block but $B'$  with the s
 \section{ Analysis }
 
 
-To analyse the performance of our finality gadget, we will need versions of our properties that appropriately depend on time: 
+To analyze the performance of our finality gadget, we will need versions of our properties that appropriately depend on time: 
 
 \begin{itemize}
-\item{\bf Fast termination:} {\em If the last finalised block has number $n$ and, until another block is finalised, the best chain observed by all participants will include the same block with block number $n+1$, then a block with number $n+1$ will be finalised within time $T$.}
-\item{\bf Recent validity:} {\em If an honest voter finalises a block $B$ then that block was seen in the best chain observed by some honest voter containing some previously finalised ancestor of $B$ more recently than time $T$ ago.}
+\item{\bf Fast termination:} {\em If the last finalized block has number $n$ and, until another block is finalized, the best chain observed by all participants will include the same block with block number $n+1$, then a block with number $n+1$ will be finalized within time $T$.}
+\item{\bf Recent validity:} {\em If an honest voter finalizes a block $B$ then that block was seen in the best chain observed by some honest voter containing some previously finalized ancestor of $B$ more recently than time $T$ ago.}
 \end{itemize}
 
-Intuitively, fast termination implies that we finalise blocks fast as long as the block production mechanism achieves consensus fast whereas recent validity bounds the cost of starting to agree on something the block production mechanism's consensus later decides is not the best. In this case, we may waste time building on a chain that is never finalised so it is important to bound how long we do that.
+Intuitively, fast termination implies that we finalize blocks fast as long as the block production mechanism achieves consensus fast whereas recent validity bounds the cost of starting to agree on something the block production mechanism's consensus later decides is not the best. In this case, we may waste time building on a chain that is never finalized so it is important to bound how long we do that.
 
 These properties will typically only hold with high probability. In the asynchronous case, we would need to measure time in rounds of the protocol rather than seconds to make sense of these properties.  We are also interested in being able to remove and punish Byzantine voters, for which we will need:
 
 \begin{itemize}
-	\item{\bf Accountable Safety:} {\em If blocks on different chains are finalised, then we can identify at least $f+1$ Byzantine voters.}
+    \item{\bf Accountable Safety:} {\em If blocks on different chains are finalized, then we can identify at least $f+1$ Byzantine voters.}
 \end{itemize}
 
 
 
 \subsection{ Accountable Safety}
 
-The first thing we want to show is asynchronous safety, assuming we have at most $f$ Byzantine voters. This follows from the property that if $v$ sees round $r$ as completable then any block $B$ with $E_{r,v} \not\leq B$ has that it is impossible for one of $C_{r,v}$ or $V_{r,v}$ to have a supermajority for $B$ and so $B$ was not finalised in round $r$. This ensures that all honest prevotes and precommits in round $r+1$ are for chains that include any blocks that could have been finalised in round $r$. With an induction, this is what ensures that we cannot finalise blocks on different chains. To show accountable safety, we need to turn this proof around to show the contrapositive, when we finalise different blocks , then there are $f+1$ Byzantine voters. If we make this proof constructive, then it gives us a challenge procedure, that can assign blame to such voters.
+The first thing we want to show is asynchronous safety, assuming we have at most $f$ Byzantine voters. This follows from the property that if $v$ sees round $r$ as completable then any block $B$ with $E_{r,v} \not\leq B$ has that it is impossible for one of $C_{r,v}$ or $V_{r,v}$ to have a supermajority for $B$ and so $B$ was not finalized in round $r$. This ensures that all honest prevotes and precommits in round $r+1$ are for chains that include any blocks that could have been finalized in round $r$. With an induction, this is what ensures that we cannot finalize blocks on different chains. To show accountable safety, we need to turn this proof around to show the contrapositive, when we finalize different blocks, then there are $f+1$ Byzantine voters. If we make this proof constructive, then it gives us a challenge procedure, that can assign blame to such voters.
 
-\begin{theorem} \label{thm:accountable} If the protocol finalises any two blocks $B,B'$ for which valid commit messages were sent, but which do not lie on the same chain, then there are at least $f+1$ Byzantine voters who all voted in a particular vote. Furthermore, there is a synchronous procedure to find some such set $X$ of $f+1$ Byzantine voters.
+\begin{theorem} \label{thm:accountable} If the protocol finalizes any two blocks $B,B'$ for which valid commit messages were sent, but which do not lie on the same chain, then there are at least $f+1$ Byzantine voters who all voted in a particular vote. Furthermore, there is a synchronous procedure to find some such set $X$ of $f+1$ Byzantine voters.
 \end{theorem}
 
 The challenge procedure works as follows: If $B$ and $B'$ are committed in the same round, then the union of their precommits must contain at least $f$ equivocations, so we are done.  Otherwise, we may assume by symmetry that $B$ was committed in round $r$ and $B'$ in round $r' > r$.  There are at least $n-f$ voters who precommitted $\geq B'$ or equivocated in round $r$ in their commit messages, so we ask those who precommitted $\geq B'$ why they did so.
@@ -502,10 +502,10 @@ Starting with $r''=r' $, we ask queries of the following form:
 
 The response is of the following form:
 \begin{itemize}
-\item A either a set $S$ of prevotes for round $r''-1$, or else a set $S$ of precommits for round $r''-1$, in either case such that it is impossible for $S$ to have a supermajority for $B$.
+\item A either a set $S$ of prevotes for round $r''-1$, or else a set $S$ of precommits for round $r''-1$, in either case, such that it is impossible for $S$ to have a supermajority for $B$.
 \end{itemize}
 
-Any honest voter should respond.  In particular, if no voter responds, then we consider all  voters how should have responded but didn't as Byzantine and we return this set of voters, along with any equivocators, which will be at least $n-f$ voters total. If any do respond, then if $r'' > r+1$, we can ask the same query for at least $n-f$ voters in round $r''-1$. We note however that if any voters do respond then we will not punish non-responders.
+Any honest voter should respond.  In particular, if no voter responds, then we consider all voters how should have responded but did not as Byzantine and we return this set of voters, along with any equivocators, which will be at least $n-f$ voters total. If any do respond, then if $r'' > r+1$, we can ask the same query for at least $n-f$ voters in round $r''-1$. We note however that if any voters do respond then we will not punish non-responders.
 
 If we ask such queries for a vote in all rounds between $r''=r'$ and $r''=r+1$ and get valid responses, since some voter responds when $r''=r+1$, then we have either a set $S$ of prevotes or precommits in round $r$ that show it is impossible for $S$ to have a supermajority for $B$ in round $r$.
 
@@ -521,7 +521,7 @@ If we get a set $S$ of prevotes for round $r$ that does not have a supermajority
 
 If any give a valid response, by a similar argument to the above, $S \cup T$ will have $f+1$ equivocations.
 
-So we either discover $f+1$ equivocations in a vote or else $n-f > f+1$ voters either equivocate or fail to validly respond like a honest voter could do to a query.
+So we either discover $f+1$ equivocations in a vote or else $n-f > f+1$ voters either equivocate or fail to validly respond as an honest voter could do to a query.
 
 
 \begin{lemma} \label{lem:honest-answer}
@@ -550,12 +550,12 @@ Thus we have that, at the time of the vote, for one of $V_{r-1,v}$, $C_{r-1,v}$,
 This is enough to show Theorem \ref{thm:accountable}.  Note that if $v$ sees a commit message for a block $B$ in round $r$ and has that $E_{r',v} \not\geq B$, for some completable round $r' \geq r$, then they should also be able to start a challenge procedure that successfully identifies at least $f+1$ Byzantine voters in some round. Thus we have that:
 
 \begin{corollary} \label{cor:overestimate-final}
-If there at most $f$ Byzantine voters in any vote, $B$ was finalised in round $r$, and an honest participant $v$ sees that round $r' \geq r$ is completable, then $E_{r',v} \geq B$.
+If there at most $f$ Byzantine voters in any vote, $B$ was finalized in round $r$, and an honest participant $v$ sees that round $r' \geq r$ is completable, then $E_{r',v} \geq B$.
 \end{corollary}
 
 \subsection{Liveness }
 
-We show the protocol is deadlock free and also that it finalises new blocks quickly in a weakly synchronous model.
+We show the protocol is deadlock-free and also that it finalizes new blocks quickly in a weakly synchronous model.
 For this section, we will assume that there are at most $f < n/3$ Byzantine voters for each vote, and so that the sets of prevotes and precommits for each round are safe.
 
 We define $V_{r,v,t}$ be the set $V_{r,v}$ at time $t$ and similarly for $C_{r,v,t}$ and the block $E_{r,v,t}$ .
@@ -579,9 +579,9 @@ As it is possible for $C_{r,v',t'}$ to have a supermajority for $E_{r,v',t'}$, t
  
 \subsubsection{Deadlock Freeness}
 
-Now we can show deadlock freeness for the asynchronous network model, when a message that is sent or received by any honest participant is eventually received by all honest participants. This holds because the oracle encapsulates this eventual delivery guarantee.
+Now we can show deadlock freeness for the asynchronous network model when a message that is sent or received by any honest participant is eventually received by all honest participants. This holds because the oracle encapsulates this eventual delivery guarantee.
 
-\begin{proposition} Suppose that we are in the asynchronous network model and that at most $f$ voters for any vote are Byzantine. Then the protocol is deadlock free.\end{proposition}
+\begin{proposition} Suppose that we are in the asynchronous network model and that at most $f$ voters for any vote are Byzantine. Then the protocol is deadlock-free.\end{proposition}
 
 \begin{proof} We need to show that if all honest participants reach some vote, then all of them eventually reach the next.
 
@@ -607,7 +607,7 @@ An easy induction completes the proof of the proposition.
 
 \subsubsection{Weakly synchronous liveness}
 
-Now we consider the weakly synchronous network model. The idea that there is some global stabilisation time($\GST$) such that any message received or sent by an honest participant at time $t$ is received by all honest participants at time $\max\{t,\GST\}+T$.
+Now we consider the weakly synchronous network model. The idea that there is some global stabilization time($\GST$) such that any message received or sent by an honest participant at time $t$ is received by all honest participants at time $\max\{t,\GST\}+T$.
 
 Let $t_r$ be the first time any honest participant enters round $r$ i.e. the minimum over honest participants $v$ of $t_{r,v}$.
 
@@ -636,7 +636,7 @@ Thus the block they prevoted has $B_{v''} \geq E_{r-1,v''} \geq E_{r-1,v,t_r+4T}
 By the network assumption an honest voter $v'$'s precommit will be received by all honest participants $v$ by time $t_{r,v'}+ 5T \leq t_r+6T$.
 Since $v$ will also have received all prevotes $v$ say when they precommitted by this time, their vote $B_{v'}$ will have $B_{v'}=g(V_{r,v'}) \leq g(V_{r,v,t_r+6T})$.
 Thus $C_{r, v, t_r+6T}$ contains precommits from $n-f$ voters $v'$ with $B_{v'} \leq g(V_{r,v,t_r+6T})$ and thus it is impossible for $C_{r,v,t_r+6T}$ to have a supermajority for any children of $g(V_{r,v, t_r+6T})$.
-Thus $v$ sees that round $r$ is completable at time $t_r+6T$. Since they have already prevoted and precommitted if they were a voter, they will move to round $r+1$ by at latest $t_t+6T$. This is (iv).
+Thus $v$ sees that round $r$ is completable at time $t_r+6T$. Since they have already prevoted and precommitted if they were a voter, they will move to round $r+1$ by at the latest $t_t+6T$. This is (iv).
 \end{proof}
 
 \begin{lemma} \label{lem:honest-prevote-timings}
@@ -644,7 +644,7 @@ Suppose $t_r \geq \GST$ and every vote has at most $f$ Byzantine voters. Let $H_
 \begin{itemize}
 \item[(a)] any honest voter precommits to a block $\geq  g(H_r)$,
 
-\item[(b)] every honest participant finalises $g(H_r)$ by time $t_r+6T$.
+\item[(b)] every honest participant finalizes $g(H_r)$ by time $t_r+6T$.
 \end{itemize}
 \end{lemma}
 
@@ -661,29 +661,29 @@ But by Lemma \ref{lem:ghost-monotonicity}, these are on the same chain and so $g
 For (iii), let $v$ be the voter in question. Note that since $n-f$ honest voters prevoted $\geq g(H_r)$, it is possible for $V_{r,v}$ to have a supermajority for $g(H_r)$. By Lemma \ref{lem:ghost-monotonicity}, $g(V_{r,v})$ is on the same chain as $g(H_r)$.
 For (iii), it is impossible for $V_{r,v}$ to have a supermajority for any children of $g(V_{r,v})$. If we had $g(V_{r,v}) < g(H_r)$, by Lemma \ref{lem:impossible}, this would mean that it would be impossible for $V_{r,v}$ to have a supermajority for $g(H_r)$ as well. So it must be that $g(V_{r,v} )\geq g(H_r)$ as required.
 
-For (b), combining (a) and Lemma \ref{lem:timings} (iii), we have that any honest voter $v$ precommits $\geq g(H_r)$ by time $t_{r,v}+4T$. By our network assumption, all honest participants receive these precommits by time $t_r+6T$ and so finalise $g(H_r)$ if they have not done so already.
+For (b), combining (a) and Lemma \ref{lem:timings} (iii), we have that any honest voter $v$ precommits $\geq g(H_r)$ by time $t_{r,v}+4T$. By our network assumption, all honest participants receive these precommits by time $t_r+6T$ and so finalize $g(H_r)$ if they have not done so already.
 \end{proof}
 
-\begin{lemma} \label{lem:primary-finalises}
- Suppose that $t_r \geq \GST$, the primary $v$ of round $r$ is honest and no vote has more than $f$ Byzantine voters. Let $B=E_{r-1,v,t_{v,r}}$ be the block $v$ broadcasts if it is not final. Then every honest prevoter prevotes for the best chain including $B$ and all honest voter finalise $B$ by time $t_r+6T$.
+\begin{lemma} \label{lem:primary-finalizes}
+ Suppose that $t_r \geq \GST$, the primary $v$ of round $r$ is honest and no vote has more than $f$ Byzantine voters. Let $B=E_{r-1,v,t_{v,r}}$ be the block $v$ broadcasts if it is not final. Then every honest prevoter prevotes for the best chain including $B$ and all honest voter finalize $B$ by time $t_r+6T$.
  \end{lemma}
 
 \begin{proof} By Lemma \ref{lem:timings} and our network assumptions, no honest voter  prevotes before time $t_r+2T \geq t_{r,v}+2T$ and so at this time, they will have seen all prevotes and precommits seen by $v$ at $t_{r,v}$ and the block $B$ if $v$ broadcast it then. By Lemma \ref{lem:message-monotonicity-completed-estimate}, any honest voter $v'$ has $E_{r-1,v'} \leq B \leq g(V_{r-1,v})$ then.
 
-So if the primary broadcast $B$, then $v'$ prevotes for the best chain including $B$. If the primary did not broadcast $B$, then they finalise it. By Corollary \ref{cor:overestimate-final}, it must be that $E_{r-1,v'} \geq B$ and so $E_{r-1,v'}=B$ and so in this case $v'$ also prevotes for the best chain including $B$.
+So if the primary broadcast $B$, then $v'$ prevotes for the best chain including $B$. If the primary did not broadcast $B$, then they finalize it. By Corollary \ref{cor:overestimate-final}, it must be that $E_{r-1,v'} \geq B$ and so $E_{r-1,v'}=B$ and so in this case $v'$ also prevotes for the best chain including $B$.
 
-Since all honest voters prevote $\geq B$, $g(H_r) \geq B$ and so by Lemma \ref{lem:honest-prevote-timings}, all honest participants finalise $B$ by time $t_r+6T$
+Since all honest voters prevote $\geq B$, $g(H_r) \geq B$ and so by Lemma \ref{lem:honest-prevote-timings}, all honest participants finalize $B$ by time $t_r+6T$
 \end{proof}
 
 
 
 \begin{lemma}
  Suppose that $t_r \geq \GST+T$ and the primary of round $r$ is honest. 
-Let $B$ be the latest block that is ever finalised in rounds  $<r$ (even if no honest participant finalises it until after $t_r$). If all honest voters for the prevote in round $r$ agree that the best chain containing $B$ include the same child $B'$ of $B$, then they all finalises some child of $B$ before $t_r+6T$.
+Let $B$ be the latest block that is ever finalized in rounds  $<r$ (even if no honest participant finalizes it until after $t_r$). If all honest voters for the prevote in round $r$ agree that the best chain containing $B$ includes the same child $B'$ of $B$, then they all finalize some child of $B$ before $t_r+6T$.
 \end{lemma}
 
-\begin{proof} By Corollary \ref{cor:overestimate-final}, any honest participant sees that $E_{r-1} \geq B$ during round $r$. Let $v$ be the primary of round $r$ and $B''=E_{r-1,v,t_{r,v}}$. If $B'' > B$, then by Lemma \ref{lem:primary-finalises}, all honest participants finalise $B''$ by time $t_r+6T$ which means they finalised a child of $B$. If $B''=B$, then by Lemma \ref{lem:honest-prevote-timings}, all honest voters prevote for the best chain including $B$.
-By assumption these chains include $B'$ and so $g(H_r) \geq B$. By Lemma \ref{lem:honest-prevote-timings}, this means that $B'$ is finalised by time $t_r+6T$.
+\begin{proof} By Corollary \ref{cor:overestimate-final}, any honest participant sees that $E_{r-1} \geq B$ during round $r$. Let $v$ be the primary of round $r$ and $B''=E_{r-1,v,t_{r,v}}$. If $B'' > B$, then by Lemma \ref{lem:primary-finalizes}, all honest participants finalize $B''$ by time $t_r+6T$ which means they finalized a child of $B$. If $B''=B$, then by Lemma \ref{lem:honest-prevote-timings}, all honest voters prevote for the best chain including $B$.
+By assumption these chains include $B'$ and so $g(H_r) \geq B$. By Lemma \ref{lem:honest-prevote-timings}, this means that $B'$ is finalized by time $t_r+6T$.
 \end{proof}
 
 
@@ -697,35 +697,35 @@ By assumption these chains include $B'$ and so $g(H_r) \geq B$. By Lemma \ref{le
 \begin{lemma} \label{lem:honest-recent-validity}
 Suppose that $t_r \geq \GST$, the primary of round $r$ is honest and all votes have at most $f$ Byzantine voters.
 Let $B$ be a block that less than $f+1$ honest prevoters in round $r$ saw as being in the best chain of an ancestor of $B$ at the time they prevoted.
-Then either all honest participants finalise $B$ before time $t_r+6T$ or no honest participant ever has $g(V_{r,v}) \geq B$ or $E_{r,v} \geq B$.
+Then either all honest participants finalize $B$ before time $t_r+6T$ or no honest participant ever has $g(V_{r,v}) \geq B$ or $E_{r,v} \geq B$.
 \end{lemma}
 
-\begin{proof} Let $v'$ be the primary of round $r$ and let $B'=E_{r-1,v',t_{r,v'}}$. If $B' \geq B$, then by Lemma \ref{lem:primary-finalises}, all honest participants finalise $B$ by time $t_r+6T$. If $B' \not\geq B$, then by Lemma \ref{lem:primary-finalises}, at most $f$ honest voters prevotes $\geq B$. In this case, less than $2f+1 \leq (n+f+1)/2$ prevoters vote $\geq B$ or equivocate and so no honest participant ever has $g(V_{r,v}) \geq B$.
+\begin{proof} Let $v'$ be the primary of round $r$ and let $B'=E_{r-1,v',t_{r,v'}}$. If $B' \geq B$, then by Lemma \ref{lem:primary-finalizes}, all honest participants finalize $B$ by time $t_r+6T$. If $B' \not\geq B$, then by Lemma \ref{lem:primary-finalizes}, at most $f$ honest voters prevotes $\geq B$. In this case, less than $2f+1 \leq (n+f+1)/2$ prevoters vote $\geq B$ or equivocate and so no honest participant ever has $g(V_{r,v}) \geq B$.
 \end{proof}
 
 
-\begin{corollary} For $t - 6T > t' \geq \GST$, suppose that an honest participant finalises $B$ at time $t$ but that no honest voter has seen $B$ as in the best chain containing some ancestor of $B$ in between times $t'$ and $t$, then at least $(t-t')/6T - 1$ rounds in a row had Byzantine primaries. \end{corollary}
+\begin{corollary} For $t - 6T > t' \geq \GST$, suppose that an honest participant finalizes $B$ at time $t$ but that no honest voter has seen $B$ as in the best chain containing some ancestor of $B$ in between times $t'$ and $t$, then at least $(t-t')/6T - 1$ rounds in a row had Byzantine primaries. \end{corollary}
 
 
 
 \section{Optimized version of GRANDPA}
 
- There are a few ways we can optimise the GRANDPA protocol.
+ There are a few ways we can optimize the GRANDPA protocol.
  Firstly, a participant that is offline for many rounds should be able to catch up to the latest round by only seeing recent messages.
- Secondly, we shouldn't need to actively use many rounds worth of votes, only needing old rounds for challenges for accountable safety and not finalising blocks.
- Thirdly, We should wait $2T$ as little as possible. Conversely if communication is faster than block production, we shouldn't be running many rounds before a new block arrives.
+ Secondly, we should not need to actively use many rounds worth of votes for challenges for accountable safety instead of finalizing blocks.
+ Thirdly, We should wait for $2T$ as rarely as possible. Conversely, if communication is faster than block production, we should not be running many rounds before a new block arrives.
  
  To achieve this, we need to have more complicated conditions for when to perform each step of the protocol. Here is the resulting protocol:
  
- To enter a round $r$, $v$ needs that round $r-1$ is completable and that $E_{r-2,v}$ is finalised. 
+ To enter a round $r$, $v$ needs that round $r-1$ is completable and that $E_{r-2,v}$ is finalized. 
  If $v$ sees messages that give this for a future round $r$, even if $v$ are not in round $r-1$, $v$ jumps straight to round $r$.
- (when checking this condition, for the finalisation, we need to relax not finalising using precommits from future rounds to all rounds $< r$).
+ (when checking this condition, for the finalization, we need to relax not finalizing using precommits from future rounds to all rounds $< r$).
  
  \noindent \fbox{\parbox{5.5in}{
  \begin{enumerate}
  \item If $v$ is the primary, it broadcast $E_{r-1,v}$ at the start time $t_{r,v}$
  
- \item We prevote when one of the folowing conditions tells us to.
+ \item We prevote when one of the following conditions tells us to.
  \begin{itemize}
  %\item[(i)] If it is impossible for $V_{r-1,v}$ to have a supermajority for any children of $E_{r-1,v}$, then $v$ prevotes for the best chain containing $E_{r-1,v}$
  \item[(i)] If $v$ has received $B$ from the primary, $v$ prevotes for the head of the  best chain containing $B$ as soon as one of the following holds:
@@ -733,34 +733,35 @@ Then either all honest participants finalise $B$ before time $t_r+6T$ or no hone
  \begin{itemize}
  \item[(a)] $g(V_{r-1,v}) \geq B \geq E_{r-1,v}$
  \item[(b)] The best chain containing $B$ is also the best chain containing $E_{r-1,v}$
- (equivalently if we evaluate the best chain containing the eariler of the two blocks, then it contains the other)
+ (equivalently if we evaluate the best chain containing the earlier of the two blocks, then it contains the other)
  \end{itemize}
  \item[(ii)] If round $r$ is completable and $E_{r,v} \geq E_{r-1,v}$, then we prevote for $E_{r,v}$.
- \item[(iii)] if we have reached time $t_{r,v}+2T$ then if we have not recieved a message from the primary or (i) (a) does not hold, then $v$ prevotes for the head of best chain containing $E_{r-1,v}$ anyway.
+ \item[(iii)] if we have reached time $t_{r,v}+2T$ then if we have not received a message from the primary or (i) (a) does not hold, then $v$ prevotes for the head of best chain containing $E_{r-1,v}$ anyway.
  \end{itemize}
  
  \item After prevoting, we wait until $g(V_{r,v}) \geq E_{r-1,v}$,  then when one of the following holds, we precommit $g(V_{r,v})$
  \begin{itemize}
  \item[(i)] if round $r$ is completable
- \item[(ii)] if $v$ has seen a child of the last finalised block and it is impossible for $V_{r,v}$ to have a supermajority for any child of $g(V_{r,v})$ .
- \item[(iii)] If $v$ has seen a child of the last finalised block and we have reached time $t_{r,v}+4T$.
+ \item[(ii)] if $v$ has seen a child of the last finalized block and it is impossible for $V_{r,v}$ to have a supermajority for any child of $g(V_{r,v})$ .
+ \item[(iii)] If $v$ has seen a child of the last finalized block and we have reached time $t_{r,v}+4T$.
  \end{itemize}
  \end{enumerate}
  }}
  
- We claim that all results we proved about the protocol described in Section \ref{sec:grandpa} apply to this protocol. the stronger properties this satisifies are that $v$ does not need to store votes from before round $r-1$ (except to answer challenges for accountable safety, which should be rare) and that if we have seen no descendants of the last finalised block, we pause until we do. 
+ We claim that all results we proved about the protocol described in Section \ref{sec:grandpa} apply to this protocol. the stronger properties this satisfies are that $v$ does not need to store votes from before round $r-1$ (except to answer challenges for accountable safety, which should be rare) and that if we have seen no descendants of the last finalized block, we pause until we do. 
 
 
 
 \section{Conclusion}
 
-In this paper we formalized the abstraction of a finality gadget, showed that it is impossible in asynchrony and proposed GRANDPA, a partially synchronous protocol. 
-Finality gadgets strike a balance between the classic BFT consensus protocols that aggressively commit transaction and the Bitcoin-style consensus protocols that probabilistically commit transactions with a direct dependency on the underlying network's synchrony. 
+In this paper, we formalized the abstraction of a finality gadget, showed that it is impossible in asynchrony and proposed GRANDPA, a partially synchronous protocol. 
+Finality gadgets strike a balance between the classic BFT consensus protocols that aggressively commit transactions and the Bitcoin-style consensus protocols that probabilistically commit transactions with a direct dependency on the underlying network's synchrony. 
 
 Using a finality gadget on top of a blockchain (which is used as an oracle) has multiple benefits.
-First, it remains live during network instability and is able to commit a lot of transactions quickly when the network re-stabilized. Second, it allows for optimistic commitment and efficient roll-back of transactions, using the blockchain as an unsafe-but-probably-correct broadcast channel. Finally, it provide flexibility to the light-clients on verifying only small parts of the blockchain. 
+First, it remains live during network instability and is able to commit a lot of transactions quickly when the network stabilizes. Second, it allows for optimistic commitment and efficient roll-back of transactions, using the blockchain as an unsafe-but-probably-correct broadcast channel. Finally, it provides flexibility to the light-clients on verifying only small parts of the blockchain. 
 
-In the future, we envision using finality gadgets in order to federate multiple insecure blockchains (i.e., sharding state) to a global secure one and enabling them to communicate. The main chain will provide optimistic commitment of the state of the sub-chains and after verification the finality gadget will either commit or roll-back the transactions efficiently.
+In the future, we envision using finality gadgets in order to federate multiple insecure blockchains (i.e., sharding state) to a global secure one and enabling them to communicate. The main chain will provide optimistic commitment of the state of the sub-chains and after verification, the finality gadget will either commit or roll-back the transactions efficiently.
+
 
 
 
@@ -777,14 +778,14 @@ In the future, we envision using finality gadgets in order to federate multiple 
 
 \subsubsection{Changing the voter set in an asynchronously safe way}
 
-Suppose we have an on-chain protocol that decides we need a different voter set. Once everyone finalises the block, they know that we need to change the set. The protocol can cope with changing the voter set from some round $r$.
-The main difficulty is that the chain has no idea what the current round number is and even if we have a block that instructs us to change the voter set at round $r$, we might only finalise the block after round $r$.
+Suppose we have an on-chain protocol that decides we need a different voter set. Once everyone finalizes the block, they know that we need to change the set. The protocol can cope with changing the voter set from some round $r$.
+The main difficulty is that the chain has no idea what the current round number is and even if we have a block that instructs us to change the voter set at round $r$, we might only finalize the block after round $r$.
 So instead we will not take advantage of the ability to change set from one round to the next. 
 
 A block $B$ can contain an instruction that we should change to the voter set to some other set after some integer $m \geq 0$ blocks. If our best chain for a prevote contains such a block $B$, then we do not prevote for more than $m$ blocks after $B$, even if our best chain is longer.
-Thus if the current voter set has $n-f$ honest voters, they will only finalise $m$ blocks after such a $B$. We only accept votes and commit messages up top $m$ blocks after $B$ from the current set of voters.  
+Thus if the current voter set has $n-f$ honest voters, they will only finalize $m$ blocks after such a $B$. We only accept votes and commit messages up top $m$ blocks after $B$ from the current set of voters.  
 
-When some block $B'$ that is $m$ blocks after $B$ has been finalised, then the new voter set starts again at round $1$ with $E_{0}=B'$. Votes will need to contain additional metadata that indicates the voter set somehow.
+When some block $B'$ that is $m$ blocks after $B$ has been finalized, then the new voter set starts again at round $1$ with $E_{0}=B'$. Votes will need to contain additional metadata that indicates the voter set somehow.
 
 \subsubsection{Unsafe fallback for changing the voter set after stalling}
 
@@ -793,29 +794,29 @@ There is no asynchronously safe way of doing this. It also breaks the chain of s
 However if we are in a state when many voters go offline but the network is not partitioned, then we want a way to agree on a set of new voters to restart the finality gadget.
 
 Every 100 blocks or so, we should put a valid commit message on chain. Honest block producers should put the most recent message on the chain, provided that there is one for a more recent block than 100 blocks ago.
-Then if a participant sees that their best chain has not had such a message for 1000 blocks and are not aware of any more recent blocks being finalised, then they set a new voter set to be one determined by the 900th block since the last commit message on chain. 
+Then if a participant sees that their best chain has not had such a message for 1000 blocks and are not aware of any more recent blocks being finalized, then they set a new voter set to be one determined by the 900th block since the last commit message on chain. 
 
 The protocol for selecting voters should require recent messages on chain signed by those voters so that this is likely to give a set of voters very few of whom are offline.
 
-We should consider having to manually approve finality agreed upon by this new set to alleviate the security concerns above. But this still gives a way to canonically agree on a new set, in the event of WW3 or bad initialisation of a new chain.
+We should consider having to manually approve finality agreed upon by this new set to alleviate the security concerns above. But this still gives a way to canonically agree on a new set, in the event of WW3 or bad initialization of a new chain.
 
-If we do not want to put commit messages on chain, then we can alternatively do the following. Every block producer puts the highest block number that they see as finalised in their block.
+If we do not want to put commit messages on chain, then we can alternatively do the following. Every block producer puts the highest block number that they see as finalized in their block.
 
 Then any participant sees that if there is an $n$ such that
 \begin{itemize}
 \item[(i)] their best chain is at least length $n+100$
-\item[(ii)] the indicators the last finalised block height of blocks $n-100$ to $n$ in their best chain have median at most $n-1050$ and
+\item[(ii)] the indicators the last finalized block height of blocks $n-100$ to $n$ in their best chain have median at most $n-1050$ and
 \item[(iii]) $n$ is the minimum that satisifies (i) and (ii)
 \end{itemize}
-then they switch to the best voter set given by block $n$. If the same block at height $n$ is on everyone's best chain, which can be shown to occur with high probability given (i) for many block production mechanisms, then everyone will eventually agree that we should switch to the voter set given by that block. If any $100$ consectutive blocks of the best chain are produced by honest and synchronised block producers then this will only happen if GRANDPA fails to finalise any block in the time it took to produce $1000$ blocks.
+then they switch to the best voter set given by block $n$. If the same block at height $n$ is on everyone's best chain, which can be shown to occur with high probability given (i) for many block production mechanisms, then everyone will eventually agree that we should switch to the voter set given by that block. If any $100$ consectutive blocks of the best chain are produced by honest and synchronised block producers then this will only happen if GRANDPA fails to finalize any block in the time it took to produce $1000$ blocks.
 
 \subsection{Alternatives to the last block hash}
 
 The danger with voting for the last blockhash in the best chain is that maybe no one else will have seen and processed the next block. It would also be nice to make the most of BLS multisig/aggregation, which allows a single signature for many messages/signers than can be checked in time proportional to the number of different messages signed. 
 
-To get round the first alone, it might be better to vote for a block 3/4 along (rounding further) the unfinalised chain , rather than for th head.
+To get round the first alone, it might be better to vote for a block 3/4 along (rounding further) the unfinalized chain , rather than for th head.
 
-But the second suggests that maybe we should be including signatures for several of the latest blocks in a chain. We could include that last 2 or 3. We could also do e.g. the the blocks with block numbers with the last 2 multiples of each power of two since the last finalised block, which gives log unfinalised chain length messages but should have many blocks in common.
+But the second suggests that maybe we should be including signatures for several of the latest blocks in a chain. We could include that last 2 or 3. We could also do e.g. the the blocks with block numbers with the last 2 multiples of each power of two since the last finalized block, which gives log unfinalized chain length messages but should have many blocks in common.
 
 When presented with a vote that includes many blocks, we should interpret them as being for the last block we've seen if any. Then we need to be able to update that vote to a later block when that is seen. This retains monotonicity of a supermajority for/ it is impossible to have a supermajority for over time.
 
@@ -825,18 +826,18 @@ Then if we need to BLS aggregate votes that are $\geq B$ for a commit message or
 
 \subsection{  Block production rule}
 
-If we adopt that rule that block producers should build on the best chain including the last finalised block, then if we don't finalise another block this will eventually include some prefix  beyond the last finalised block, and therefore the protocol is live by Lemma \ref{lem:honest-recent-validity}.
+If we adopt that rule that block producers should build on the best chain including the last finalized block, then if we do not finalize another block this will eventually include some prefix  beyond the last finalized block, and therefore the protocol is live by Lemma \ref{lem:honest-recent-validity}.
 
-But the issue is that if agreement is much slower than block production, then we might have a prevote for a short chain on the last finalised block, then the best chain does not include that block and we build a long chain that is eventually never finalised. This could be fixed by building on $E_{r-1}$ or $E_r$. But if we do that, and these change very quickly, then we may never come to agreement on the best chain. 
+But the issue is that if agreement is much slower than block production, then we might have a prevote for a short chain on the last finalized block, then the best chain does not include that block and we build a long chain that is eventually never finalized. This could be fixed by building on $E_{r-1}$ or $E_r$. But if we do that, and these change very quickly, then we may never come to agreement on the best chain. 
 
 So we have two possible chain selection rules for block producers:
 
 \begin{enumerate}
-\item Build on the best chain including the last finalise block B.
+\item Build on the best chain including the last finalize block B.
 \item Build on best chain including whichever of $\{E_r,E_{r-1},B\}$ is latest and $\geq B$.
 \end{enumerate}
 
-1 is better if finalisation is happening quickly compared to block production and 2 is best if block production is much faster. We could also consider hybrid rules like adopt 1 unless we see that the protocol is stuck or slow, then we switch to 2.}
+1 is better if finalization is happening quickly compared to block production and 2 is best if block production is much faster. We could also consider hybrid rules like adopt 1 unless we see that the protocol is stuck or slow, then we switch to 2.}
 \com{
 \section{The asynchronous finality gadget problem}
 
@@ -855,7 +856,7 @@ For every vote, We have $n$ voters , at most $f$ of which are Byzantine and $n =
 \item Call a precommit for $B$ justified if $B \leq g_{3/5}(V_{r,v})$ and if $B < g_{3/5}(V_{r,v})$ then the child $B'$ of $B$ on the chain of $g_{3/5}(V_{r,v})$ has that there are votes from $f+1$ voters in $V_{r,v}$ that are not $\geq B'$.
 Wait until $C_{r,v}$ has justified precommits from $n-f$ voters. 
 \item Call the common coin, $s_r$
-\item If $s_r=1$, finalise $g_{4/5}(C_r)$
+\item If $s_r=1$, finalize $g_{4/5}(C_r)$
 \item lock to $g_{(4-3s_r)/5}(C_r)$ for next round.
 \end{enumerate}
 
@@ -893,35 +894,35 @@ Our network assumption and a simple induction shows that we do not deadlock.
 \begin{corollary} All honest voters eventually prevote and precommit in every round and all honest participants reach every round.\end{corollary}
 
 \begin{lemma} \label{lem:possibly-final-implies-permanent-lock}
-If there are enough precommits to finalise a block $B$ in round $r$, then all honest voters who prevote in future rounds will be locked to $B$ or its descendants when they do. At the end of the next round $r' > r$ with $s_{r'}=1$, all participants will have finalised $B$.
+If there are enough precommits to finalize a block $B$ in round $r$, then all honest voters who prevote in future rounds will be locked to $B$ or its descendants when they do. At the end of the next round $r' > r$ with $s_{r'}=1$, all participants will have finalized $B$.
 \end{lemma}
 \begin{proof}
-For $B$ to be finalised in round $r$, there need to be votes from more than $n-f$ voters that are $\geq B$ and $s_r=1$. Any honest participant $v$ also sees that $s_r=1$ and so they lock $g_{1/5}(C_{r,v})$. $C_{r,v}$ contains votes from at least $4f+1$ voters. At most $f$  voters can have votes  $\not\geq B$ in $C_{r,v}$ if they also voted $\geq B$ and at most $f$ voters do not have votes in $C_{r,v}$.
+For $B$ to be finalized in round $r$, there need to be votes from more than $n-f$ voters that are $\geq B$ and $s_r=1$. Any honest participant $v$ also sees that $s_r=1$ and so they lock $g_{1/5}(C_{r,v})$. $C_{r,v}$ contains votes from at least $4f+1$ voters. At most $f$  voters can have votes  $\not\geq B$ in $C_{r,v}$ if they also voted $\geq B$ and at most $f$ voters do not have votes in $C_{r,v}$.
  Thus at least $2f+1$ voters have votes $\geq B$ in $C_{r,v}$. Because $g_{1/5}$ is not unique in general, to show that $g_{1/5}(C_{r,v}) \geq B$, we also need to show that no block $B' \nsim B$ has $f+1$ voters have votes $\geq B'$ in $C_{r,v}$. If this holds then the procedure to calculate $g_{1/5}$ will not follow chain that does not include $B$ and so it will return a block $\geq B$.
  Letting $V_r$ be the set of prevotes ever cast, note that any honest voter $v'$ prevotes for a block $g_{3/5}(V_{r,v'}) \leq g_{3/5}{V_r}$ and so as before honest voters precommit to blocks in one chain.
  Since many honest voters precommit $\geq B$, all precommit $\sim B$, and so if $f+1$ voters have votes $\geq B'$ in $B$ then since at least one of those are honest $B' \sim B$. Thus we have $g_{1/5}(C_{r,v}) \geq B$.
 
 Since all honest voters prevote $\geq B$ in round $r+1$, any participant who waits for votes from $4f+1$ voters will see $g_{3/5}(V_{r+1}) \geq B$ and so all honest voters precommit $\geq B$ in round $r+1$. Since only at most $f$ voters vote $\not \geq B$, only precommits $\geq B$ are ever seen as justified by honest participants. Therefore all honest participants will see $g_{345}(C_{r+1}) \geq 
 B$.
-If $s_r=1$, this is enough to finalise $B$.Since $g_{1/5}(C_{r+1}) \geq g_{4/5}(C_{r+1}) \geq 
-B$, whatever the common coin, all honest particupants lock $\geq B$. By induction, this holds for all future rounds.
+If $s_r=1$, this is enough to finalize $B$.Since $g_{1/5}(C_{r+1}) \geq g_{4/5}(C_{r+1}) \geq 
+B$, whatever the common coin, all honest participants lock $\geq B$. By induction, this holds for all future rounds.
 
 \end{proof}
 
 We want to show that this is asynchronously live:
 
-\begin{proposition} Suppose that block $B$ is finalised before round $r$. With probability at least $1/2$ over the common coin in round $r$, if all voters agree that the best chain including the last finalised block $B$ includes a decedent $B''$, at the prevote step of rounds $r+1$ and $r+2$, then a descendant of $B$ is finalised the next time $s_r=1$ after round $r+2$ or earlier.
+\begin{proposition} Suppose that block $B$ is finalized before round $r$. With probability at least $1/2$ over the common coin in round $r$, if all voters agree that the best chain including the last finalized block $B$ includes a decedent $B''$, at the prevote step of rounds $r+1$ and $r+2$, then a descendant of $B$ is finalized the next time $s_r=1$ after round $r+2$ or earlier.
 \end{proposition}
 
 \begin{proof} By the Lemma \ref{lem:possibly-final-implies-permanent-lock}, all honest voters prevote in round $r$ for $B$ or its descendants and so all honest voters precommit to $B$ or its descendants.
 
-Let $V_r$ be the set of prevotes of all voters.  Using Lemma \ref{lem:ghost-monotonicity-general}, all honest voters precommit $g_{3/5}(V_r)$ or its ancestors. Since some must precommit $\geq B$ for it to be finalised,  $g_{3/5}(V_r) \geq B$.
+Let $V_r$ be the set of prevotes of all voters.  Using Lemma \ref{lem:ghost-monotonicity-general}, all honest voters precommit $g_{3/5}(V_r)$ or its ancestors. Since some must precommit $\geq B$ for it to be finalized,  $g_{3/5}(V_r) \geq B$.
 
 For the case $g_{3/5}(V_r)=B$, all honest voters precommit $B$ and so any honest participant sees that
 $B = g_{1/5}(C_r) = g_{4/5}(C_r)$. Thus all honest participants
-lock $B$ and so are free to prevote for $B''$ or its descendants in round $r+1$. Thus we finalise $B''$ in round $r+1$ or the next round when $s_r=1$ after that.
+lock $B$ and so are free to prevote for $B''$ or its descendants in round $r+1$. Thus we finalize $B''$ in round $r+1$ or the next round when $s_r=1$ after that.
 
-Otherwise, let $B'$ be the child of $B$ in the chain of $g_{3/5}(V_r)$. We seek to show that we finalise either $B'$ or $B''$.
+Otherwise, let $B'$ be the child of $B$ in the chain of $g_{3/5}(V_r)$. We seek to show that we finalize either $B'$ or $B''$.
 
 Let $S$ be the set of honest voters who precommit in round $r$ before $4f+1$ voters call the common coin. Let $S'$ be the set of honest voters who call the common coin before it is decided. % Note that $S' \subset S$. 
 Since $4f+1$  voters call the coin before it decided and honest voters who do so saw precommits from $4f+1$ voters, $S'$ and $S$ each contain at least $3f+1$ voters.
@@ -931,16 +932,16 @@ Let $h$ be the number of voters in $S$ that precommit $B'$ or its descendants. N
 Now consider a particular voter $v$ and the set $C_{r,v}$ of precommits they received in step 4. the number of voters with precommits in  $C_{r,v}$ is at least $4f+1$. 
 If $v \in S'$,
 All the honest voters  
-with precommits in $C_{r,v}$ are in $S$. In this case we have that the number of votes for $B'$ or its descendants in $C_{r,v}$, $m_v$ has $h-f \leq m_v < h+f$. For $v \notin S'$, since $f$ honest vali8dators can be outside $S$, we have $h-2f \leq m_v \leq h+2f$ 
+with precommits in $C_{r,v}$ are in $S$. In this case we have that the number of votes for $B'$ or its descendants in $C_{r,v}$, $m_v$ has $h-f \leq m_v < h+f$. For $v \notin S'$, since $f$ honest validators can be outside $S$, we have $h-2f \leq m_v \leq h+2f$ 
 
 Since any descendant of $B$ that is not $B'$ or its descendants receives less than $f$ precommits for it or its descendants, we have that either $g_{1/5}(C_{r,v})=B$ or $g_{1/5}(C_{r,v})\geq B'$ and similarly for $g_{4/5}(C_{r,v})$. Now note that if $h \geq 3f+1$, $m_v \geq f+1$ and so $g_{1/5}(C_{r,v}) \geq B'$. On the other hand if $h < 3f+1$, for $v \in S'$, $m_v < 4f+1$ and so $g_{4/5}(C_{r,v})=B$.
 
 If $h \geq 3f+1$ and $s_r=1$, then every honest voter locks a block $\geq B'$. Thus is round $r+1$, they all prevote $\geq B'$.
- By similar reasoning to Lemma \ref{lem:possibly-final-implies-permanent-lock}, we finalise $B'$, the next round $r' > r$ that we have $s_{r'}=1$.
+ By similar reasoning to Lemma \ref{lem:possibly-final-implies-permanent-lock}, we finalize $B'$, the next round $r' > r$ that we have $s_{r'}=1$.
  
-If $h < 3f+1$ and $s_r=0$, then every $v \in S'$ locks only $B$. But then all such $v$ will prevote their best chain containing $B$ and so a block $\geq B''$. There are only at most $2f$ voters who might not do this, the Byantine voters and the honest voters outside of $|S|$ who prevote $\geq B$. Thus any honest voter who has seen prevotes from $n-f$ voters either sees $g_{3/5}(V_{r+1,v})=B$ or $g_{3/5}(V_{r+1,v}) \geq B'$. Since all honest precommits are either $B$ or $\geq B''$, evry honest voter locks either $B$ or $\geq B''$. Since in round $r+2$, all honest voters see that the best chain including $B$ also includes $B''$, this time they all prevote $\geq B''$.  By similar reasoning to Lemma \ref{lem:possibly-final-implies-permanent-lock}, we finalise $B''$, by the next round $r' > r+1$ that we have $s_{r'}=1$.
+If $h < 3f+1$ and $s_r=0$, then every $v \in S'$ locks only $B$. But then all such $v$ will prevote their best chain containing $B$ and so a block $\geq B''$. There are only at most $2f$ voters who might not do this, the Byzantine voters and the honest voters outside of $|S|$ who prevote $\geq B$. Thus any honest voter who has seen prevotes from $n-f$ voters either sees $g_{3/5}(V_{r+1,v})=B$ or $g_{3/5}(V_{r+1,v}) \geq B'$. Since all honest precommits are either $B$ or $\geq B''$, every honest voter locks either $B$ or $\geq B''$. Since in round $r+2$, all honest voters see that the best chain including $B$ also includes $B''$, this time they all prevote $\geq B''$.  By similar reasoning to Lemma \ref{lem:possibly-final-implies-permanent-lock}, we finalize $B''$, by the next round $r' > r+1$ that we have $s_{r'}=1$.
 
-Crucially note that $h$ depends only on $S$, which is determined when $4f+1$ voters call the common coin and before it is flipped. Thus $s_r$ is independent of $h$. If $h < 3f+1$ then $s_r=0$ with probability $1/2$ and if $h \geq 3f+1$ then $s_r=1$ with probability $1/2$. So with probability $1/2$, we have either both $h < 3f+1$ and $s_r=0$ or both $h \geq 3f+1$ and $s_r=1$. Thus with probability at least $1/2$, we finalise $B'$ or $B''$ before the next round after $r+1$ when $s_r=1$.
+Crucially note that $h$ depends only on $S$, which is determined when $4f+1$ voters call the common coin and before it is flipped. Thus $s_r$ is independent of $h$. If $h < 3f+1$ then $s_r=0$ with probability $1/2$ and if $h \geq 3f+1$ then $s_r=1$ with probability $1/2$. So with probability $1/2$, we have either both $h < 3f+1$ and $s_r=0$ or both $h \geq 3f+1$ and $s_r=1$. Thus with probability at least $1/2$, we finalize $B'$ or $B''$ before the next round after $r+1$ when $s_r=1$.
 \end{proof}
 }
 
