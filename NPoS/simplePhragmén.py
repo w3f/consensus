@@ -5,6 +5,7 @@ class edge:
         self.valiid=valiid
         #self.validator
         self.load=0
+        self.weight=0
 
 class nominator:
     def __init__(self,votetuple):
@@ -21,6 +22,7 @@ class candidate:
         self.elected=False
         self.backedstake=0
         self.score=0
+        self.scoredenom=0
 
 def setuplists(votelist):
     #Instead of Python's dict here, you can use anything with O(log n) addition and lookup.
@@ -84,11 +86,59 @@ def seqPhragmén(votelist,numtoelect):
     for nom in nomlist:
             for edge in nom.edges:
                 if nom.load > 0.0:
-                    edge.backingstake = nom.budget * edge.load/nom.load
-                    edge.candidate.backedstake += edge.backingstake
+                    edge.weight = nom.budget * edge.load/nom.load
+                    edge.candidate.backedstake += edge.weight
                 else:
-                    edge.backingstake = 0
+                    edge.weight = 0
     return (nomlist,electedcandidates)
+
+def calculateMaxScoreNoCutoff(nomlist,candidates):
+    # First we compute the denominator of the score
+    for candidate in candidates:
+        if not candidate.elected:
+            candidate.scoredenom=1.0
+    for nom in nomlist:
+        denominatorcontrib = 0
+        for edge in nom.edges:
+             if edge.candidate.elected:
+                denominatorcontrib += edge.weight/edge.candidate.backedstake
+        # print(nom.nomid, denominatorcontrib)
+        for edge in nom.edges:
+            if not edge.candidate.elected:
+               edge.candidate.scoredenom += denominatorcontrib
+               # print(edge.candidate.valiid, nom.nomid, denominatorcontrib, edge.candidate.scoredenom) 
+    # Then we divide. Not that score here is comparable to the recipricol of the score in seqPhragmen.
+    # In particular there low scores are good whereas here high scores are good.
+    bestcandidate=0
+    bestscore = 0.0
+    for candidate in candidates:
+        print(candidate.valiid, candidate.approvalstake, candidate.scoredenom)
+        if candidate.approvalstake > 0.0:
+            candidate.score = candidate.approvalstake/candidate.scoredenom
+            if not candidate.elected and candidate.score > bestscore:
+                bestscore=candidate.score
+                bestcandidate=candidate
+        else:
+            candidate.score=0.0
+    # print(len(candidates), bestcandidate, bestscore)
+    return (bestcandidate,bestscore)
+
+def electWithScore(nomlist, electedcandidate, cutoff):
+    for nom in nomlist:
+        for newedge in nom.edges:
+            if newedge.valiid == electedcandidate.valiid:
+                usedbudget = sum([edge.weight for edge in nom.edges])
+                newedge.weight = nom.budget-usedbudget
+                electedcandidate.backedstake += nom.budget-usedbudget
+                for edge in nom.edges:
+                    if edge.valiid != electedcandidate.valiid and edge.weight > 0.0:
+                        if edge.candidate.backedstake > cutoff:
+                            staketotake = edge.weight * cutoff / edge.candidate.backedstake
+                            newedge.weight += staketotake
+                            edge.weight -= staketotake
+                            edge.candidate.backedstake -= staketotake
+                            electedcandidate.backedstake += staketotake
+
 
 def approvalvoting(votelist,numtoelect):
     nomlist,candidates=setuplists(votelist)
@@ -96,8 +146,8 @@ def approvalvoting(votelist,numtoelect):
     for nom in nomlist:
         for edge in nom.edges:
             edge.candidate.approvalstake += nom.budget
-            edge.backingstake = nom.budget/min(len(nom.edges),numtoelect)
-            edge.candidate.backedstake += edge.backingstake
+            edge.weight = nom.budget/min(len(nom.edges),numtoelect)
+            edge.candidate.backedstake += edge.weight
     candidates.sort( key = lambda x : x.approvalstake, reverse=True)
     electedcandidates=candidates[0:numtoelect]
     return nomlist,electedcandidates
@@ -109,7 +159,7 @@ def printresult(nomlist,electedcandidates):
     for nom in nomlist:
         print(nom.nomid," has load ",nom.load, "and supported ")
         for edge in nom.edges:
-            print(edge.valiid," with stake ",edge.backingstake, end=" ")
+            print(edge.valiid," with stake ",edge.weight, end=" ")
         print()
 
 def equalise(nom, tolerance):
@@ -120,9 +170,9 @@ def equalise(nom, tolerance):
     electededges=[edge for edge in nom.edges if edge.candidate.elected]
     if len(electededges)==0:
         return 0.0
-    stakeused = sum([edge.backingstake for edge in electededges])
+    stakeused = sum([edge.weight for edge in electededges])
     backedstakes=[edge.candidate.backedstake for edge in electededges]
-    backingbackedstakes=[edge.candidate.backedstake for edge in electededges if edge.backingstake > 0.0]
+    backingbackedstakes=[edge.candidate.backedstake for edge in electededges if edge.weight > 0.0]
     if len(backingbackedstakes) > 0:
         difference = max(backingbackedstakes)-min(backedstakes)
         difference += nom.budget-stakeused
@@ -132,8 +182,8 @@ def equalise(nom, tolerance):
         difference = nom.budget
     #remove all backing
     for edge in nom.edges:
-        edge.candidate.backedstake -= edge.backingstake
-        edge.backingstake=0
+        edge.candidate.backedstake -= edge.weight
+        edge.weight=0
     electededges.sort(key=lambda x: x.candidate.backedstake)
     cumulativebackedstake=0
     lastcandidateindex=len(electededges)-1
@@ -148,8 +198,8 @@ def equalise(nom, tolerance):
     waystosplit=lastcandidateindex+1
     excess = nom.budget + cumulativebackedstake -  laststake*waystosplit
     for edge in electededges[0:waystosplit]:
-        edge.backingstake = excess / waystosplit + laststake - edge.candidate.backedstake
-        edge.candidate.backedstake += edge.backingstake
+        edge.weight = excess / waystosplit + laststake - edge.candidate.backedstake
+        edge.candidate.backedstake += edge.weight
     return difference
 
 import random
@@ -168,7 +218,24 @@ def equaliseall(nomlist,maxiterations,tolerance):
 def seqPhragménwithpostprocessing(votelist,numtoelect):
     nomlist,electedcandidates = seqPhragmén(votelist,numtoelect)
     equaliseall(nomlist,2,0.1)
-    return nomlist,electedcandidates    
+    return nomlist,electedcandidates
+
+def factor3point15(votelist, numtoelect,tolerance=0.1):
+    nomlist,candidates=setuplists(votelist)
+    # Compute the total possible stake for each candidate
+    for nom in nomlist:
+        for edge in nom.edges:
+            edge.candidate.approvalstake += nom.budget
+        
+    electedcandidates=list()
+    for round in range(numtoelect):
+        electedcandidate,score=calculateMaxScoreNoCutoff(nomlist,candidates)
+        electWithScore(nomlist, electedcandidate, score)
+        electedcandidate.elected=True
+        electedcandidates.append(electedcandidate)
+        electedcandidate.electedpos=round
+        equaliseall(nomlist,100,tolerance)
+    return nomlist,electedcandidates
 
 def example1():
     votelist=[("A",10.0,["X","Y"]),("B",20.0,["X","Z"]),("C",30.0,["Y","Z"])]
@@ -182,6 +249,9 @@ def example1():
     printresult(nomlist, electedcandidates)
     nomlist, electedcandidates = seqPhragménwithpostprocessing(votelist,2)
     print("Sequential Phragmén with post processing gives")
+    printresult(nomlist, electedcandidates)
+    nomlist, electedcandidates = factor3point15(votelist,2)
+    print("Factor 3.15 thing gives")
     printresult(nomlist, electedcandidates)
 
 def example2():
@@ -203,6 +273,9 @@ def example2():
     printresult(nomlist, electedcandidates)
     nomlist, electedcandidates = seqPhragménwithpostprocessing(votelist,2)
     print("Sequential Phragmén with post processing gives")
+    printresult(nomlist, electedcandidates)
+    nomlist, electedcandidates = factor3point15(votelist,2)
+    print("Factor 3.15 thing gives")
     printresult(nomlist, electedcandidates)
 
 import unittest
