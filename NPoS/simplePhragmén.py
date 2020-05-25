@@ -112,7 +112,7 @@ def calculateMaxScoreNoCutoff(nomlist,candidates):
     bestcandidate=0
     bestscore = 0.0
     for candidate in candidates:
-        print(candidate.valiid, candidate.approvalstake, candidate.scoredenom)
+        # print(candidate.valiid, candidate.approvalstake, candidate.scoredenom)
         if candidate.approvalstake > 0.0:
             candidate.score = candidate.approvalstake/candidate.scoredenom
             if not candidate.elected and candidate.score > bestscore:
