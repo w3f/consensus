@@ -36,7 +36,7 @@
 \begin{document}
 
 
-\title{Byzantine Finality Gadgets}
+\title{GRANDPA: a Byzantine Finality Gadget}
 \date{\today}
 \maketitle
 
@@ -44,33 +44,51 @@
 
 
 Bitcoin~\cite{nakamoto08bitcoin} and its descendants~\cite{wood14ethereum,sasson2014zerocash} are cryptocurrencies that provide 
-secure automated value exchange without the need for a central managing authority. 
-In order to achieve this, they build on peer-to-peer networks where special nodes (usually called miners) 
-collect transactions from users and run a consensus protocol in order to maintain a distributed public ledger
-known as the \textit{blockchain}.
-One of the challenges of the consensus protocols run by these systems is that they only have the property of eventual consensus - that an ever growing prefix of the chain will be agreed upon by all participants forever onward. But this eventual consensus process generally takes tens of minutes and only gives probabilistic guarantees - if we see a few blocks building on a given block, we can estimate the probability that it is final.
-Unfortunately these guarantees only hold if the underlying network is well-connected and the client able to find an uncensored source of information, two assumptions that
+secure automated value exchange where instead of central managing authority a consensus protocol maintains a distributed public ledger
+known as the \textit{blockchain}. To be able to rely on public ledger one needs to know that it has reached consensus on a certain block, i.e., when a block will not be reverted anymore, which we refer to as reaching finality.  
+One of the challenges of Nakomoto-like consensus protocols is that they only satiesfy eventual consensus, where it only guarantees that an ever growing prefix of the chain will be agreed upon by all participants forever onward. The eventual consensus process generally takes tens of minutes and at a certain point of time for a certain block the consunsus only gives probabilistic guarantees. 
+
+Unfortunately these guarantees only hold if the underlying network is well-connected and the client is able to find an uncensored source of information, two assumptions that
 do not hold in adversarial environments~\cite{apostolaki16hijacking, gervais15tampering, heilman15eclipse}.
 
 The underlying problem which enables these attacks is that first generation blockchain protocols do not consider finality (i.e., when will a block never be reverted) as a first class property, prioritizing liveness instead.
-New generation protocols~\cite{kokoris16enhancing,decker16bitcoin,pass16hybrid} propose the complete opposite, to forfeit liveness when finality is not readily achievable.
-This can  only happen if we  change the existing infrastructure and has multiple additional shortcomings.
-First, these ``hybrid'' consensus protocols are exclusive. The protocol needs to put a limit on the number of participating miners in order to achieve good performance, which might lead to centralization. 
-Second, tying consensus with liveness of the chain means that there is no optimism and blocks are committed only when all verification information are available. As a result, they lose the ability to make some (unsafe) progress when the network is unstable, which can help speedup the recovery process when the network heals. \xxx{Al:Describe why this is a problem in the context of polkadot and other probabilistic protocols.}
+
+An alternative to probablistic finality is having \emph{provable finality} that anyone can be convinced of the fianlty of a block, regardless whether they are consensus partipants or are acticvly follwoing the network.% Provable fnality can be reached for example, a signed statement by a set of authorities, the set of whom can be tracked, that the block is final. 
+
+%This is useful to prove what happened to light clients, who do not have the full chain or are not actively listening to the network, and to communicate with other chains, possibly as part of a scalability solution, where not anyone receives or stores all the data in the system.
+
+New generation protocols~\cite{Tendermint,AlgorandAgreement,kokoris16enhancing,decker16bitcoin,pass16hybrid} propose the complete opposite, where every blocks are finalized one by one that forfeits liveness when finality is not readily achievable. This gives provable finality immediately.% However this is slow if we have a large set of participants in the Byzantine agreement.
+
+Protocols that finalize blocks one by one has the shortcomings that many consensus particpants leads to slow performance. Hence, they need to put a limit on the number of consensus participats which might lead to centralization. 
+
+%Secondly, tying consensus with liveness of the chain means that there is no optimism and blocks are committed only when all verification information are available. As a result, they lose the ability to make some (unsafe) progress when the network is unstable, which can help speedup the recovery process when the network heals. 
+
+In this work we show the that the middle ground also merits exploration. The approach that we will take is similar to the approach that Ethereum plans to take with Casper the Friendly Finality Gadget (Casper FFG)[2].
+
+%We will use a block production mechanism and chain selection rule that give eventual consensus and then add a finality gadget, a protocol that finalises blocks that the participants already agree on, to get provable finality.
+
+We use and formalize the idea of lazy finality which is encapsulated in the abstraction of a \emph{finality gadget.} Separating the liveness of the consensus protocol from the finality of the blocks can have three concrete benefits for the overlying blockchain protocol. 
+
+First, since consensus is not tied to liveness of the chain we can have optimistic execution. That is the chain can grow before we have certainty that blocks are valid. We can finalize blocks only when we are sure they are correct i.e., all verification information is available. 
 
 
-In this work we show the  that the middle ground also merits exploration. We introduce the idea of lazy finality which is encapsulated in the abstraction of a \emph{finality gadget.}
-Separating the liveness of the consensus protocol from the finality of the blocks can have four concrete benefits for the overlying blockchain protocol. First, not every node that is competing to mine a block needs to be part of the finality gadget, hence we can get the \textit{best of both worlds} (i.e., full inclusive decentralization and scalable fast finality). Second we can reorganize the chain for blocks that have not yet been finalized \xxx{Al put a sentence on why this is a cool property.}. Third, a finality gadget can be deployed gradually and light clients can choose to consult it or follow the longest chain rule and ignore it, enabling light client heterogeneity. 
+Second, we can make some (unsafe) progress when the network is unstable, which can help speedup the recovery process when the network heals. Similarly, we can make progress in chain growth even when finlzation is slow, e.g., when we have many particiapnts thus promoting decentenralization. 
+
+%First, not every node that is competing to mine a block needs to be part of the finality gadget, hence we can get the \textit{best of both worlds} (i.e., full inclusive decentralization and scalable fast finality). 
+
+%Second, we can reorganize the chain for blocks that have not yet been finalized \xxx{Al put a sentence on why this is a cool property.}. 
+
+Third, a finality gadget can be deployed gradually and light clients can choose to consult it or follow the longest chain rule and ignore it, enabling light client heterogeneity. 
 The light client that trust the gadget do not need to have the full chain or actively listen to the network. 
 This can in turn enable scalability~\cite{avarikioti19divide} in an ecosystem of multiple chains (weather sharding~\cite{kokoris17omniledger,al18chainspace,androulaki18channels} or heterogeneous~\cite{zamyatin19sok}), where no single party receives or stores all the data in the system. 
-Finally, the finality gadget protocol is simpler than consensus protocols since they do not require a complex and costly view change phase.
 
+%Finally, the finality gadget protocol is simpler than consensus protocols since they do not require a complex and costly view change phase.
 
-More specifically, this work introduces the abstraction of a \emph{finality gadget} that runs along any block production mechanism (e.g., Nakamoto consensus) and
-provides provable finality guarantees instead of probabilistic.
-To this end we formalise the finality gadget problem and show that it is impossible to satisfy its properties with a deterministic asynchronous protocol. 
-To circumvent this impossibility result , we introduce the GRANDPA finality gadget that works in a partially synchronous network model, in the presence of up to $1/3$ Byzantine actors. 
-The combination of GRANDPA with a classic block production mechanism like GHOST~\cite{lewenberg15inclusive} results in the existing deployment of the polkadot network which provides fast finality under good network conditions and protects the clients without compromising the liveness when under attack. The implementation of GRANDPA will be made available on github.
+We formalize the abstraction of a \emph{finality gadget} that runs along any block production mechanism (e.g., Nakamoto consensus) providing provable finality guarantees. We show that it is impossible to satisfy its properties with a deterministic asynchronous protocol. To circumvent this impossibility result, we introduce the GRANDPA finality gadget that works in a partially synchronous network model, in the presence of up to $1/3$ Byzantine actors. 
+%To this end we formalise the finality gadget problem and 
+ 
+
+The combination of GRANDPA with a classic block production mechanism like GHOST~\cite{lewenberg15inclusive} results in the existing deployment of the polkadot network \footnote{https://polkadot.network} which provides fast finality under good network conditions and protects the clients without compromising the liveness when under attack. The implementation of GRANDPA is available on github \cite{LINK}.
 
 
 In summary we make the following contributions:
