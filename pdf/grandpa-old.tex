@@ -40,6 +40,12 @@
 \date{\today}
 \maketitle
 
+\begin{abstract}
+Classic Byzantine fault-tolerant consensus protocols forfeit liveness in the face of asynchrony in order to preserve safety, whereas most deployed blockchain protocols forfeit safety in order to remain live. 
+In this work, we achieve the best of both worlds by proposing a novel abstractions called the \emph{finality gadget}.
+A finality gadget allows for transactions to always optimistically commit but informs the clients that these transactions might be unsafe. As a result, a blockchain can execute transactions optimistically and only commit them after they have been sufficiently and provably audited.
+In this work, we formally model the finality gadget abstraction, prove that it is impossible to solve it deterministically in full asynchrony (even though it is stronger than consensus) and provide a partially synchronous protocol which is currently securing a major blockchain. This way we show that the protocol designer can decouple safety and liveness in order to speed up recovery from failures. We believe that there can be other types of finality gadgets that provide weaker safety (e.g., probabilistic) in order to gain more efficiency and this can depend on the probability that the network is not in synchrony.
+\end{abstract}
 \section{Introduction}
 
 
@@ -148,14 +154,14 @@ We say an oracle $A$ in a protocol is {\em eventually consistent} if it returns 
 \end{definition}
 
 \paragraph{Impossibility of Deterministic Agreement with an Oracle.}\label{ssec:impossibility}
-\xxx{Al can you extend this?}
+%\xxx{Al can you extend this?}
 For the binary case, i.e. when $|S|=2$, the Byzantine finality gadget problem is reducible to Byzantine agreement. This does not hold for $|S| > 2$, because the definition of validity is stronger in our protocol. Note that it is impossible for multi-valued Byzantine agreement to make the validity condition require that we decide an initial value of some honest voter and tolerate more than a $1/|S|$ fraction of faults, since we may have a $1/|S|$ fraction of voters reporting each initial value and Byzantine voters can act honestly enough not to be detectable. For finality gadgets, this stronger validity condition is possible. A natural question is then weather the celebrated FLP~\cite{fischer85impossibility} impossibility holds for our stronger requirements.
 Next, we show that an asynchronous, deterministic binary finality gadget is impossible, even with one fault. 
 This means that the extra information voters have here, that $A$ will eventually agree for all voters, is not enough to make this possible.
 
 
 \paragraph{Proof:}
-\xxx{TODO:Al}
+%\xxx{TODO:Al}
 The asynchronous binary fault tolerant agreement problem is as follows:
 
 We have  number of voters which each have an initial $v_i$ in $\{0,1\}$
@@ -267,7 +273,7 @@ It is not clear that it is, nor is it clear how to prove liveness for such a rul
 }
 \subsection{Preliminaries} \label{sec:prelims}
 
-\paragraph{Network model}: We will mostly be using a partially synchronous network model.
+\paragraph{Network model}: We will be using the partially synchronous network model introduced by \cite{DLS} and in particular the gossip network variant used in \cite{Tendermint}.
 We assume that any message sent or received by an honest participant reaches all honest participants within time $T$, but possibly only after some Global Synchronisation Time $\GST$.
 Concretely, any message sent or received by some honest participant at time $t$ is received by all honest participants by time $\GST+T$ at the latest.
 
