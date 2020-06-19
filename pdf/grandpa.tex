@@ -37,6 +37,7 @@
 
 
 \title{GRANDPA: a Byzantine Finality Gadget}
+\author{Alistair Stewart \and Eleftherios Kokoris-Kogia}
 \date{\today}
 \maketitle
 
@@ -69,7 +70,7 @@ Protocols that finalize blocks one by one has the shortcomings that many consens
 
 %Secondly, tying consensus with liveness of the chain means that there is no optimism and blocks are committed only when all verification information are available. As a result, they lose the ability to make some (unsafe) progress when the network is unstable, which can help speedup the recovery process when the network heals. 
 
-In this work we show the that the middle ground also merits exploration. The approach that we will take is similar to the approach that Ethereum plans to take with Casper the Friendly Finality Gadget (Casper FFG)[2].
+In this work we show the that the middle ground also merits exploration. The approach that we will take is similar to the approach that Ethereum plans to take with Casper the Friendly Finality Gadget (Casper FFG)\cite{CasperFFG}.
 
 %We will use a block production mechanism and chain selection rule that give eventual consensus and then add a finality gadget, a protocol that finalises blocks that the participants already agree on, to get provable finality.
 
