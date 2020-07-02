@@ -11,6 +11,8 @@
 \usepackage[numbers]{natbib}
 
 
+
+
 \usepackage{tabu} %requires array.
 
 %This should be the last package before \input{Version.tex}
@@ -37,8 +39,8 @@
 
 
 \title{GRANDPA: a Byzantine Finality Gadget}
-\author{Alistair Stewart \and Eleftherios Kokoris-Kogia}
-\date{\today}
+\author{Alistair Stewart \\ {\tt stewart.al@gmail.com} \and Eleftherios Kokoris-Kogia \\ {\tt eleftherios.kokoriskogias@epfl.ch}}
+\date{June 30, 2020}
 \maketitle
 
 \begin{abstract}
@@ -151,7 +153,7 @@ We say an oracle $A$ in a protocol is {\em eventually consistent} if it returns 
 
 \paragraph{Impossibility of Deterministic Agreement with an Oracle.}\label{ssec:impossibility}
 %\xxx{Al can you extend this?}
-For the binary case, i.e. when $|S|=2$, the Byzantine finality gadget problem is reducible to Byzantine agreement. This does not hold for $|S| > 2$, because the definition of validity is stronger in our protocol. Note that it is impossible for multi-valued Byzantine agreement to make the validity condition require that we decide an initial value of some honest voter and tolerate more than a $1/|S|$ fraction of faults, since we may have a $1/|S|$ fraction of voters reporting each initial value and Byzantine voters can act honestly enough not to be detectable. For finality gadgets, this stronger validity condition is possible. A natural question is then weather the celebrated FLP~\cite{fischer85impossibility} impossibility holds for our stronger requirements.
+For the binary case, i.e. when $|S|=2$, the Byzantine finality gadget problem is reducible to Byzantine agreement. This does not hold for $|S| > 2$, because the definition of validity is stronger in our protocol. Note that it is impossible for multi-valued Byzantine agreement to make the validity condition require that we decide an initial value of some honest voter and tolerate more than a $1/|S|$ fraction of faults, since we may have a $1/|S|$ fraction of voters reporting each initial value and Byzantine voters can act honestly enough not to be detectable. For finality gadgets, this stronger validity condition is possible. A natural question is then weather the celebrated FLP~\cite{flp} impossibility holds for our stronger requirements.
 Next, we show that an asynchronous, deterministic binary finality gadget is impossible, even with one fault. 
 This means that the extra information voters have here, that $A$ will eventually agree for all voters, is not enough to make this possible.
 
@@ -165,7 +167,7 @@ We have  number of voters which each have an initial $v_i$ in $\{0,1\}$
 We may have one or more faulty nodes, which here means going offline at some point. Nodes have asynchronous communication - so any message arrives but we have no guarantee when it will.
 The goal is to have all non-faulty nodes output the same $v$, which must be $0$ if all inputs $v_i$ are $0$ and $1$ if all are $1$.
 
-Fischer, Lynch and Paterson\cite{fischer85impossibility} showed that this is impossible if there is one faulty node.
+Fischer, Lynch and Paterson\cite{flp} showed that this is impossible if there is one faulty node.
 
 The binary fault-safe finality gadget problem is similar, except now there is an oracle $A$ that any node can call at any time with the following properties:
 
@@ -178,7 +180,7 @@ and we want that if A never switches, then all non-faulty nodes output x. If A d
 Then this is also impossible, even for one faulty node, which just goes offline. Note that this generalises Byzantine agreement, since if we could each node $i$ could call $A$ once at the start and use the output as $v_i$. (For the multi-valued case, we will define the problem so that this reduction does not hold.)
 
 
-\begin{proof}[Proof sketch] We follow the notation of  \cite{fischer85impossibility} and assume for a contradiction that we use a correct protocol. 
+\begin{proof}[Proof sketch] We follow the notation of  \cite{flp} and assume for a contradiction that we use a correct protocol. 
 Let $r$ be a run of the protocol where $A$ gives $0$ all the time.
 Then by correctness $r$ decides $0$. Now we consider what can happen when $A$ switches to $1$ after each configuration in $r$. If it switches to $1$ at the start, then the protocol decides $1$.
 If we switch to $1$ when all node have already decided $0$, then we decide $0$.
@@ -354,8 +356,8 @@ consensus protocols that solve the stronger problem as described in the previous
 Instead, only the finalization stops, but the blocks keep getting created and propagated to everyone.
 This means that when the conditions are safe again, the finality gadget only needs to finalize the head of the chain\footnote{Which the oracle will return quickly to a supermajority of miners.},
 instead of having to transmit and run consensus on every block. 
-In Figure~\ref{fig:finality}, we analyze the differences between classic blockchain protocols~\cite{nakamoto08bitcoin,wood14ethereum}, finality gadget, and hybrid consensus solutions~\cite{kokoris16enhancing,gilad17algorand}
-\xxx{Experiment: Catchup 100s of blocks Hotstuff vs GRANDPA}.
+%In Figure~\ref{fig:finality}, we analyze the differences between classic blockchain protocols~\cite{nakamoto08bitcoin,wood14ethereum}, finality gadget, and hybrid consensus solutions~\cite{kokoris16enhancing,gilad17algorand}
+%\xxx{Experiment: Catchup 100s of blocks Hotstuff vs GRANDPA}.
 
 
 
@@ -686,6 +688,6 @@ Then either all honest participants finalise $B$ before time $t_r+6T$ or no hone
 
 
 
-\bibliography{net,os,sec,soc,theory, grandpa}
+\bibliography{grandpa} % net,os,sec,soc,theory, 
 
 \end{document}
