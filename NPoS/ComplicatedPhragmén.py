@@ -7,7 +7,7 @@ class edge:
         #self.index
         #self.voterindex
         #self.canindex
-        
+
 
 class voter:
     def __init__(self,votetuple):
@@ -83,7 +83,7 @@ class assignment:
     def unelect(self,candidate):
         self.canelected[candidate.index]=False
         self.electedcandidates.remove(candidate)
-    
+
 def setuplists(votelist):
     #Instead of Python's dict here, you can use anything with O(log n) addition and lookup.
     #We can also use a hashmap, by generating a random constant r and useing H(canid+r)
@@ -94,7 +94,7 @@ def setuplists(votelist):
     numcandidates=0
     numvoters=0
     numedges=0
-    
+
     #Get an array of candidates that we can reference these by index
     for nom in voterlist:
         nom.index=numvoters
@@ -115,13 +115,13 @@ def setuplists(votelist):
                 edge.canindex=numcandidates
                 numcandidates += 1
     return(voterlist,candidatearray)
-    
+
 
 def seqPhragmén(votelist,numtoelect):
     nomlist,candidates=setuplists(votelist)
     #creating an assignment now also computes the total possible stake for each candidate
     a=assignment(nomlist,candidates)
-    
+
     for round in range(numtoelect):
         for canindex in range(len(candidates)):
             if not a.canelected[canindex]:
@@ -172,8 +172,8 @@ def calculateScores(a,cutoff):
         #if not a.canelected[canindex]:
             #print(a.candidates[canindex].canid," has score ", a.canscore[canindex]," with cutoff ",cutoff)
             #print("Approval stake: ", a.canapproval[canindex]," support: ",a.cansupport[canindex]," denominator: ",a.canscoredenominator[canindex], " numerator: ",a.canscorenumerator[canindex])
-                                                                                                                                                       
-                  
+
+
 def calculateMaxScore(a):
     supportList=[a.cansupport[can.index] for can in a.electedcandidates]
     supportList.append(0.0)
@@ -249,7 +249,7 @@ def equalise(a, nom, tolerance):
     # Attempts to redistribute the nominators budget between elected validators
     # Assumes that all elected validators have backedstake set correctly
     # returns the max difference in stakes between sup
-    
+
     electededges=[edge for edge in nom.edges if a.canelected[edge.canindex]]
     if len(electededges)==0:
         return 0.0
@@ -310,7 +310,7 @@ def seqPhragménwithpostprocessing(votelist,numtoelect, ratio=1):
 def factor3point15(votelist, numtoelect,tolerance=0.1):
     nomlist,candidates=setuplists(votelist)
     a=assignment(nomlist,candidates)
-    
+
     for round in range(numtoelect):
         bestcandidate,score=calculateMaxScore(a)
         insertWithScore(a,bestcandidate, score)
@@ -325,7 +325,7 @@ def maybecandidate(a,newcandidate,shouldremoveworst, tolerance):
     if shouldremoveworst:
         worstcanidate =min(electedcandidates, key = lambda x: b.cansupport[x.index])
         b.unelect(worstcandidate)
-    b.elect(newcandidate) 
+    b.elect(newcandidate)
     equaliseall(b,100000000,tolerance)
     newvalue=min([b.cansupport[candidate.index] for candidate in b.electedcandidates])
     return b, newvalue
@@ -395,7 +395,7 @@ def binarysearchfeasible(votelist,numtoelect,tolerance=0.1):
             else:
                 targetvalue=currentvalue
         #print(targetvalue,lastgoodindex, maxvalue,bestknownvalue,currentvalue)
-        
+
 
         for round in range(lastgoodindex+1,numtoelect):
             # First try maxscore candidate, which will help with PJR
@@ -460,22 +460,22 @@ def doall(votelist, numtoelect, listvoters=True, listcans=True):
     if listvoters:
         print("Votes ",votelist)
     alglist=[(approvalvoting,"Approval voting"), (seqPhragmén, "Sequential Phragmén"),
-             (seqPhragménwithpostprocessing, "Sequential Phragmén with post processing"),            
+             (seqPhragménwithpostprocessing, "Sequential Phragmén with post processing"),
              (factor3point15, "The factor 3.15 thing"), (binarysearchfeasible,"Factor 2 by binary search"), (SFFB18, "SFFB18")]
     for alg,name in alglist:
-        st=time.perf_counter() 
+        st=time.perf_counter()
         a = alg(votelist,numtoelect)
-        et=time.perf_counter() 
+        et=time.perf_counter()
         print(name, " gives")
         printresult(a,listvoters,listcans)
         print(" in ",et-st," seconds.")
         print()
-    
+
 
 def example1():
     votelist=[("A",10.0,["X","Y"]),("B",20.0,["X","Z"]),("C",30.0,["Y","Z"])]
     doall(votelist,2)
-    
+
 
 def example2():
     # Approval voting does not do so well for this kind of thing.
@@ -491,7 +491,7 @@ def example3():
     bluevoters = [("BlueV"+str(i),20.0,blueparty) for i in range(20)]
     votelist= redvoters+bluevoters
     doall(votelist, 20, False)
-   
+
 
 def example4():
     #Now we want an example where seq Phragmén is not so good.
@@ -518,7 +518,7 @@ def example6():
               ("M",50.0, ["M"])]
     print("Votes ",votelist)
     doall(votelist,5)
-    
+
 def exampleLine():
     votelist = [
 		("a", 2000, ["A"]),
@@ -530,7 +530,7 @@ def exampleLine():
                 ("g", 1000, ["F","G"])
 	]
     doall(votelist,7)
-          
+
 def ri(vals=20,noms=2000, votesize=10):
     #Let's try a random instance
     candidates=["Val"+str(i) for i in range(vals)]
@@ -560,28 +560,28 @@ def riparty(vals=200,noms=2000, votesize=10,seed=1):
 
 
 
-            
-
-    
 
 
-    
-            
-
-    
-        
-        
-        
-            
-            
-
-                
-        
 
 
-            
-    
-    
-    
-    
-    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
