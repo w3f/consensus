@@ -1,5 +1,4 @@
 import unittest
-import sys
 
 
 def print_list(ll):
@@ -16,7 +15,7 @@ class edge:
         self.candidate = None
 
     def __str__(self):
-        return "Edge({}, weight = {})".format(
+        return "Edge({}, weight = {:,})".format(
             self.validator_id,
             self.weight,
         )
@@ -30,7 +29,7 @@ class nominator:
         self.load = 0
 
     def __str__(self):
-        return "Nominator({}, budget = {}, load = {}, edges = {})".format(
+        return "Nominator({}, budget = {:,}, load = {}, edges = {})".format(
             self.nominator_id,
             self.budget,
             self.load,
@@ -49,12 +48,10 @@ class candidate:
         self.scoredenom = 0
 
     def __str__(self):
-        return "Candidate({}, approval = {}, backed = {}, score = {}, scoredenom = {})".format(
+        return "Candidate({}, approval = {:,}, backed_stake = {:,})".format(
             self.validator_id,
             self.approval_stake,
-            self.backed_stake,
-            self.score,
-            self.scoredenom,
+            int(self.backed_stake),
         )
 
 
@@ -194,7 +191,6 @@ def calculateMaxScoreNoCutoff(nomlist, candidates):
     for candidate in candidates:
         if candidate.approval_stake > 0.0:
             candidate.score = candidate.approval_stake / candidate.scoredenom
-            print("score of {} in this round is {}".format(candidate.validator_id, candidate.score))
             if not candidate.elected and candidate.score > best_score:
                 best_score = candidate.score
                 best_candidate = candidate
@@ -209,19 +205,23 @@ def electWithScore(nomlist, elected_candidate, cutoff):
         for new_edge in nom.edges:
             if new_edge.validator_id == elected_candidate.validator_id:
                 used_budget = sum([edge.weight for edge in nom.edges])
+
                 new_edge.weight = nom.budget - used_budget
                 elected_candidate.backed_stake += nom.budget - used_budget
+
                 for edge in nom.edges:
                     if edge.validator_id != elected_candidate.validator_id and edge.weight > 0.0:
                         if edge.candidate.backed_stake > cutoff:
                             stake_to_take = edge.weight * cutoff / edge.candidate.backed_stake
+
                             new_edge.weight += stake_to_take
-                            edge.weight -= stake_to_take
-                            edge.candidate.backed_stake -= stake_to_take
                             elected_candidate.backed_stake += stake_to_take
 
+                            edge.weight -= stake_to_take
+                            edge.candidate.backed_stake -= stake_to_take
 
-def balanced_heuristic(votelist, num_to_elect, tolerance=0.1):
+
+def phragmms(votelist, num_to_elect, tolerance=0.1):
     nomlist, candidates = setuplists(votelist)
     calculate_approval(nomlist)
 
@@ -229,16 +229,12 @@ def balanced_heuristic(votelist, num_to_elect, tolerance=0.1):
     for round in range(num_to_elect):
         (elected_candidate, score) = calculateMaxScoreNoCutoff(nomlist, candidates)
         electWithScore(nomlist, elected_candidate, score)
-        print("####\nRound {} max candidate {} with score {}".format(round, elected_candidate.validator_id, score))
-        print_list(nomlist)
 
         elected_candidate.elected = True
         elected_candidates.append(elected_candidate)
         elected_candidate.electedpos = round
 
         equalise_all(nomlist, 10, tolerance)
-        print("After balancing")
-        print_list(nomlist)
 
     return nomlist, elected_candidates
 
@@ -309,7 +305,7 @@ def run_and_print_all(votelist, to_elect):
     printresult(nomlist, elected_candidates)
 
     print("\nBalanced Heuristic (3.15 factor) gives")
-    nomlist, elected_candidates = balanced_heuristic(votelist, to_elect)
+    nomlist, elected_candidates = phragmms(votelist, to_elect)
     printresult(nomlist, elected_candidates)
 
 
@@ -367,7 +363,7 @@ class MaxScoreTest(unittest.TestCase):
             (20, 20.0, [1, 3]),
             (30, 30.0, [2, 3]),
         ]
-        nomlist, winners = balanced_heuristic(votelist, 2, 0)
+        nomlist, winners = phragmms(votelist, 2, 0)
         self.assertEqual(winners[0].validator_id, 3)
         self.assertEqual(winners[1].validator_id, 2)
 
@@ -385,7 +381,7 @@ class MaxScoreTest(unittest.TestCase):
             (130, 1000, [61, 71]),
         ]
 
-        nomlist, winners = balanced_heuristic(votelist, 4, 0)
+        nomlist, winners = phragmms(votelist, 4, 0)
         self.assertEqual(winners[0].validator_id, 11)
         self.assertEqual(winners[0].backed_stake, 3000)
 
@@ -430,12 +426,3 @@ def main():
     # example1()
     example2()
     # example3()
-
-
-if len(sys.argv) >= 2:
-    if sys.argv[1] == "run":
-        main()
-    else:
-        unittest.main()
-else:
-    unittest.main()
