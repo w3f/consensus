@@ -264,7 +264,7 @@ def setuplists(votelist):
     flat list of nominators and the latter is a flat list of validator candidates.
 
     Instead of Python's dict here, you can use anything with O(log n) addition and lookup. We can
-    also use a hashmap like dict, by generating a random constant r and useing H(canid+r) since the
+    also use a hashmap like dict, by generating a random constant r and using H(canid+r) since the
     naive thing is obviously attackable.
     '''
     nomlist = [nominator(votetuple[0], votetuple[1], votetuple[2]) for votetuple in votelist]
